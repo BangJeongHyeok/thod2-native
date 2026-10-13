@@ -31,7 +31,7 @@
 
 ### G3. 기존 도구와 비교 — 대기
 
-- [ ] G3-1 `00_Setup.bat`의 `~ WINXPSP3` 호환 모드 적용 결과
+- [ ] G3-1 `00_Setup.bat`의 `~ WINXPSP3` 호환 모드 적용 결과 (환경 변수 방식은 시험함. 레지스트리 방식은 사용자 확인 대기)
 - [ ] G3-2 DxWnd(동봉 v2.04.65) 창 모드 프로필 결과
 - [ ] G3-3 dgVoodoo2 적용 결과 (사용자 확인 후 다운로드)
 - [ ] G3-4 DDrawCompat 적용 결과 (사용자 확인 후 다운로드)
@@ -52,6 +52,8 @@
 | 10 | 해상도 설정 | 해상도를 바꾸는 설정이 없음. `Config.exe`는 컨트롤러·밝기·번쩍임 설정 전용 | 정적 분석 | renderer |
 | 11 | 보안 경고 | `Config.exe`에 인터넷 다운로드 표시(Zone.Identifier)가 남아 있어서 실행할 때 "파일 열기 - 보안 경고"가 뜬다. `Hod2.exe`에는 표시가 없다 | 탐색기나 `Start-Process`로 실행 | (배포 안내) |
 | 12 | 사운드, 조준, 진행 | 사용자 플레이 결과 "정상" | 사용자 플레이 | — |
+| 13 | XP SP3 호환 모드 (환경 변수) | `__COMPAT_LAYER=WinXPSP3`로 실행해도 결과 동일 (640×480 전체 화면, CPU 93%). 단, 어떤 레이어를 지정해도 호환성 DLL(`AcLayers` 등)이 로드되지 않아 **실제 적용 여부가 불확실** | 32비트 PowerShell에서 환경 변수 설정 후 실행, 모듈 목록 확인 | — |
+| 14 | DX7 실행 경로 | Windows 11이 DX7을 `DDRAW.dll` → `D3DIM700.DLL` → `dxgi.dll` + `nvd3dum.dll`(NVIDIA) 순서로 처리한다. 즉 DXGI 위에서 DX7을 흉내 낸다 | 32비트 PowerShell로 모듈 목록 확인 (64비트에서는 32비트 모듈이 안 보임) | renderer |
 
 ## 테스트 환경
 
@@ -74,14 +76,24 @@
 ## 미해결 질문
 
 - Alt+Tab이 실제 키보드에서만 무반응인 이유. 가설:
-  - DirectInput이 키보드를 독점 모드(`DISCL_EXCLUSIVE`)로 잡아서 시스템이 Alt+Tab을 처리하기 전에 입력을 가져감. `keybd_event`로 주입한 입력은 경로가 달라서 통과했을 수 있음
+  - DirectInput 독점 모드: 찾은 `SetCooperativeLevel` 호출은 `0x41EBA3` 한 곳이고 플래그가 `9`(`DISCL_EXCLUSIVE | DISCL_BACKGROUND`)다. 장치 배열(`0x7DAE18`)에서 꺼내므로 컨트롤러·라이트건 장치로 보인다. 키보드는 이 조합을 허용하지 않으므로 **이 가설은 약해짐**. 플래그를 레지스터로 넘기는 다른 호출이 있는지는 미확인
+  - 테스트 도구의 키 입력은 모두 소프트웨어 주입(`keybd_event`, computer-use도 같은 방식)이라 실제 키보드와 조건이 다를 수 있음
   - 사용자가 실행한 조건(원본 폴더 + `DWM8And16BitMitigation` 플래그, 또는 DxWnd 경유)이 테스트 조건과 다름
 - 사용자가 실행한 경로와 게임 상태(메뉴/플레이 중)
 - 고주사율 테스트 방법 (Parsec 가상 디스플레이로 120/144Hz를 만들 수 있는지)
-- 외부 래퍼를 받을지, 받는다면 어느 버전으로 할지 (사용자 확인 필요)
+- 외부 래퍼를 받을지 (사용자 확인 필요). 2026-10-14 기준 최신 배포:
+  - dgVoodoo2 v2.87.5 — `dgVoodoo2_87_5.zip` (9,268,078 bytes), github.com/dege-diosg/dgVoodoo2 releases
+  - DDrawCompat v0.7.1 (프리릴리스) — `DDrawCompat-v0.7.1.zip` (1,067,481 bytes), github.com/narzoul/DDrawCompat releases
+- 동봉 `dxwnd.exe`에 인터넷 다운로드 표시가 있어서 실행 전 사용자 확인 필요
 - 게임이 실제로 몇 fps로 그리는지, vsync를 기다리는지
 
 ## 작업 기록
+
+### 2026-10-14 — XP 호환 모드 시험, DirectInput 협력 수준 확인 (관련: G1-4, G3-1)
+
+- **한 일:** `__COMPAT_LAYER` 환경 변수로 XP SP3 호환 모드를 이번 실행에만 적용해서 시험했다. 32비트 PowerShell로 로드된 모듈을 확인했다. 실행 파일에서 DirectInput `SetCooperativeLevel`(vtable `+0x34`) 호출 패턴을 찾았다.
+- **결과:** 표 13, 14번과 "미해결 질문"의 Alt+Tab 가설에 정리했다. 호환 모드는 겉으로 달라진 점이 없었고 실제 적용 여부도 확인하지 못했다.
+- **다음:** 레지스트리 방식 호환 모드, DxWnd, dgVoodoo2, DDrawCompat 시험은 사용자 확인 후 진행한다.
 
 ### 2026-10-14 — Alt+Tab 사용자 보고 (관련: G1-4)
 
