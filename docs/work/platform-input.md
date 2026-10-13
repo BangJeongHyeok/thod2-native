@@ -3,7 +3,7 @@
 - **상태:** 시작 전
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/`
-- **마지막 갱신:** 2026-10-13
+- **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
 
@@ -27,7 +27,11 @@
 - `Hod2.ini`의 `PLAYER*_INDEX`, `PLAYER*_DEVID` 의미
 - 마우스 좌표가 조준점으로 변환되는 위치
 - 라이트건이 원본에서 어떤 장치로 인식되는지
+- "MC PC Light Gun"이 어떤 장치인지, `DeviceIoControl`로 무엇을 주고받는지
 
 ## 작업 기록
 
-아직 없음.
+### 2026-10-14 — 호환성 조사에서 넘어온 내용
+
+- **결과:** `Config.exe`(MFC 앱 `Hod2_Tool`)는 Player1/Player2 컨트롤러 선택, "MC PC Light Gun" 속성, 화면 밝기, 번쩍임 시간·색상을 설정해서 `Hod2.ini`에 저장한다. `Hod2.exe`와 `Config.exe` 둘 다 `DeviceIoControl`을 임포트한다 (당시 전용 라이트건 드라이버와 통신한 것으로 추정). 사용자 플레이 결과 마우스 조준은 정상이다.
+- **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)

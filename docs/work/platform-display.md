@@ -3,7 +3,7 @@
 - **상태:** 시작 전
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/`
-- **마지막 갱신:** 2026-10-13
+- **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
 
@@ -26,7 +26,12 @@
 
 - 원본이 화면 모드를 바꾸는 시점과 방법 (DirectDraw `SetDisplayMode`, `SetCooperativeLevel`)
 - 렌더러 도메인과의 경계 (백버퍼 크기는 어느 쪽이 정하는지)
+- 원본 해상도는 640×480 고정이고, 이를 바꾸는 설정이 없다 (`hglCore.ini`의 `FullScreen` 키는 쓰이지 않음)
+- 사용자가 겪은 Alt+Tab 문제의 정확한 조건
 
 ## 작업 기록
 
-아직 없음.
+### 2026-10-14 — 호환성 조사에서 넘어온 내용
+
+- **결과:** 원본은 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다 (창: `WS_POPUP` + `WS_EX_TOPMOST`). 해상도가 바뀌는 동안 보조 모니터 위치가 이동한다. 시작할 때마다 Direct3D 장치 확인창("Attention")이 뜬다. Alt+Tab은 자동 테스트에서는 정상이었지만 사용자는 문제를 보고했다 (조건 확인 중).
+- **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)
