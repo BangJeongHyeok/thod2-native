@@ -36,9 +36,11 @@ for ($i = 0; $i -lt 20 -and -not $p.HasExited; $i++) {
 }
 Start-Sleep -Seconds $Seconds
 "=== state"; Probe
-$r = New-Object WP+RECT; [WP]::GetWindowRect([WP]::GetForegroundWindow(), [ref]$r) | Out-Null
-$w = [Math]::Max(640, [Math]::Min(1920, $r.R)); $hgt = [Math]::Max(480, [Math]::Min(1080, $r.B))
-$b = New-Object System.Drawing.Bitmap $w, $hgt; $g = [System.Drawing.Graphics]::FromImage($b); $g.CopyFromScreen(0, 0, 0, 0, $b.Size)
+# 게임 창 영역을 캡처한다 (창이 없으면 주 모니터 왼쪽 위 640x480)
+$r = New-Object WP+RECT; $r.L = 0; $r.T = 0; $r.R = 640; $r.B = 480
+foreach ($h in [WP]::Wins($p.Id)) { if (([WP]::Desc($h)) -match "class='The House" -and [WP]::IsWindowVisible($h)) { [WP]::GetWindowRect($h, [ref]$r) | Out-Null } }
+$w = [Math]::Max(1, $r.R - $r.L); $hgt = [Math]::Max(1, $r.B - $r.T)
+$b = New-Object System.Drawing.Bitmap $w, $hgt; $g = [System.Drawing.Graphics]::FromImage($b); $g.CopyFromScreen($r.L, $r.T, 0, 0, $b.Size)
 $shot = Join-Path $OutDir "$Tag.png"; $b.Save($shot); $g.Dispose(); $b.Dispose()
 "saved $shot ($w x $hgt)"
 if (-not $p.HasExited) { $c1 = $p.CPU; Start-Sleep 2; $p.Refresh(); "cpu: {0:P0}" -f (($p.CPU - $c1) / 2) } else { "exited code=$($p.ExitCode)" }

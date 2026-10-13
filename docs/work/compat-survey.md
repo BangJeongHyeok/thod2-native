@@ -33,7 +33,8 @@
 
 - [ ] G3-1 `00_Setup.bat`의 `~ WINXPSP3` 호환 모드 적용 결과 (환경 변수 방식은 시험함. 레지스트리 방식은 사용자 확인 대기)
 - [ ] G3-2 DxWnd(동봉 v2.04.65) 창 모드 프로필 결과
-- [ ] G3-3 dgVoodoo2 적용 결과 (사용자 확인 후 다운로드)
+- [x] G3-3 dgVoodoo2 적용 결과 (v2.87.5, 아래 "dgVoodoo2 시험 결과")
+- [ ] G3-5 dgVoodoo2 테두리 없는 창 모드에서 실제 키보드 Alt+Tab 확인 (사용자)
 - [ ] G3-4 DDrawCompat 적용 결과 (사용자 확인 후 다운로드)
 
 ## 확인 결과 요약
@@ -54,6 +55,34 @@
 | 12 | 사운드, 조준, 진행 | 사용자 플레이 결과 "정상" | 사용자 플레이 | — |
 | 13 | XP SP3 호환 모드 (환경 변수) | `__COMPAT_LAYER=WinXPSP3`로 실행해도 결과 동일 (640×480 전체 화면, CPU 93%). 단, 어떤 레이어를 지정해도 호환성 DLL(`AcLayers` 등)이 로드되지 않아 **실제 적용 여부가 불확실** | 32비트 PowerShell에서 환경 변수 설정 후 실행, 모듈 목록 확인 | — |
 | 14 | DX7 실행 경로 | Windows 11이 DX7을 `DDRAW.dll` → `D3DIM700.DLL` → `dxgi.dll` + `nvd3dum.dll`(NVIDIA) 순서로 처리한다. 즉 DXGI 위에서 DX7을 흉내 낸다 | 32비트 PowerShell로 모듈 목록 확인 (64비트에서는 32비트 모듈이 안 보임) | renderer |
+
+## dgVoodoo2 시험 결과
+
+- 버전: v2.87.5 `dgVoodoo2_87_5.zip` (9,268,078 bytes, SHA-256 `5ffde692…1040850`, GitHub 공개 digest와 일치)
+- 받은 위치: `E:\Repos\hod2-native\external\dgVoodoo2_87_5\` (저장소 밖)
+- 설치: `MS\x86\DDraw.dll`, `MS\x86\D3DImm.dll`, `dgVoodoo.conf`를 게임 폴더에 복사 (`tools/compat/dgvoodoo-setup.py install`)
+- 적용 확인: 시작 확인창의 장치 이름이 "dgVoodoo Hardware Accelerated Transform & Light Device"로 바뀐다.
+- 모든 시험에서 `DirectX.dgVoodooWatermark=false`
+
+| 시험 | 주요 설정 | 결과 |
+|---|---|---|
+| A | 기본값 (전체 화면, 해상도 그대로) | 정상 동작. 그러나 **주 모니터가 아니라 보조 모니터(DISPLAY1)를 640×480으로 바꿔서** 띄웠다 (`FullScreenOutput=default`) |
+| B | `FullScreenMode=false`, `Resolution=2x` | 게임이 전체 화면을 요청하면 그대로 따라서(`AppControlledScreenMode=true`) 보조 모니터가 1280×960이 됐다. **2배 렌더링은 정상** — 3D와 HUD가 선명해짐 |
+| B2 | B + `AppControlledScreenMode=false` | 창 모드 성공. 모니터 해상도 변화 없음. 창 크기는 640×480 그대로 |
+| **C (권장)** | B2 + `WindowedAttributes=borderless,fullscreensize`, `Resolution=max`, `ScalingMode=stretched_ar` | **테두리 없는 1920×1080 창, 4:3 영역(1440×1080)에 렌더링하고 좌우 여백.** 모니터 해상도·배치 변화 없음. Alt+Tab(주입) 나가기/돌아오기 정상, 나가 있는 동안 CPU 2% |
+
+시험 C의 `dgVoodoo.conf` 변경 값 (기본값 대비):
+
+```
+[General]     FullScreenMode = false
+              ScalingMode = stretched_ar
+[GeneralExt]  WindowedAttributes = borderless,fullscreensize
+[DirectX]     Resolution = max
+              AppControlledScreenMode = false
+              dgVoodooWatermark = false
+```
+
+남은 문제: CPU 코어 1개 100% 사용은 그대로다 (렌더러 문제가 아니라 메인 루프 문제로 보임 → platform-timing).
 
 ## 테스트 환경
 
@@ -88,6 +117,12 @@
 - 게임이 실제로 몇 fps로 그리는지, vsync를 기다리는지
 
 ## 작업 기록
+
+### 2026-10-14 — dgVoodoo2 시험 (관련: G3-3)
+
+- **한 일:** 사용자 확인 후 dgVoodoo2 v2.87.5를 공식 GitHub 릴리스에서 받아 해시를 확인했다. 테스트 사본에 설치하고 설정을 바꿔 가며 A, B, B2, C 네 가지를 시험했다. 설치·설정용 스크립트 `tools/compat/dgvoodoo-setup.py`를 만들었다. `runtest.ps1`이 게임 창 위치를 기준으로 캡처하도록 고쳤다.
+- **결과:** 위 "dgVoodoo2 시험 결과" 표. 시험 C(테두리 없는 창 + 최대 해상도 + 4:3 유지)로 1단계 완료 기준의 "테두리 없는 창으로 시작"과 고해상도 렌더링을 기존 도구만으로 얻을 수 있음을 확인했다.
+- **다음:** 사용자가 시험 C 설정에서 실제 키보드로 Alt+Tab을 확인한다 (테스트 사본에 설치된 상태로 둠). DDrawCompat 비교는 사용자 판단에 따라 보류.
 
 ### 2026-10-14 — XP 호환 모드 시험, DirectInput 협력 수준 확인 (관련: G1-4, G3-1)
 
