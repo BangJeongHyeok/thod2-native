@@ -18,7 +18,7 @@
 - [x] G1-1 테스트용 게임 사본 만들기 (`E:\Repos\hod2-native\test-game\THOTD2`)
 - [x] G1-2 실행 흐름, 화면 모드, 창 상태 기록
 - [x] G1-3 Alt+Tab 나가기/돌아오기 시험
-- [ ] G1-4 Alt+Tab 문제 재현 (사용자 보고와 자동 테스트 결과가 다름 → 조건 확인 필요)
+- [x] G1-4 Alt+Tab 문제 재현 → 사용자가 Alt+Enter와 혼동한 것으로 확인. Alt+Tab은 정상
 - [ ] G1-5 고주사율(120Hz 이상) 환경에서 게임 속도 확인 (현재 모니터 60Hz뿐)
 - [ ] G1-6 DPI 배율 100%가 아닌 환경에서 확인
 - [ ] G1-7 세이브 파일 생성 위치 확인
@@ -34,7 +34,7 @@
 - [ ] G3-1 `00_Setup.bat`의 `~ WINXPSP3` 호환 모드 적용 결과 (환경 변수 방식은 시험함. 레지스트리 방식은 사용자 확인 대기)
 - [ ] G3-2 DxWnd(동봉 v2.04.65) 창 모드 프로필 결과
 - [x] G3-3 dgVoodoo2 적용 결과 (v2.87.5, 아래 "dgVoodoo2 시험 결과")
-- [ ] G3-5 dgVoodoo2 테두리 없는 창 모드에서 실제 키보드 Alt+Tab 확인 (사용자)
+- [x] G3-5 dgVoodoo2 테두리 없는 창 모드에서 실제 키보드 Alt+Tab 확인 (사용자: 정상, 화면 정상, 게임 속도 원본과 같음)
 - [ ] G3-4 DDrawCompat 적용 결과 (사용자 확인 후 다운로드)
 
 ## 확인 결과 요약
@@ -44,8 +44,8 @@
 | 1 | 실행 | 정상 실행. 시작할 때마다 "Attention" 확인창이 뜬다 ("NVIDIA GeForce RTX 3080 \ Microsoft Direct3D Hardware Transform and Lighting acceleration capable device will be used." 예/아니요) | 그냥 실행 | renderer (장치 선택), platform-display |
 | 2 | 화면 모드 | **전용 전체 화면, 640×480 32bpp 60Hz 고정.** 주 모니터의 해상도를 바꾼다. 창은 `WS_POPUP`, `WS_EX_TOPMOST`, 크기 640×480 | 실행 후 `EnumDisplaySettings` | platform-display, renderer |
 | 3 | 다중 모니터 | 게임이 해상도를 바꾸는 동안 **보조 모니터의 위치가 이동한다** (`(1920,511)` → `(640,480)`). 종료하거나 Alt+Tab으로 나가면 원래대로 돌아온다 | 모니터 2개 환경에서 실행 | platform-display |
-| 4 | Alt+Tab (자동 테스트) | 나가기: 창 최소화, 해상도 복구, CPU 사용 1%로 정지. 돌아오기(Alt+Tab, 작업 표시줄 복원 둘 다): 640×480으로 다시 바뀌고 화면 갱신 계속됨 → **정상** | `keybd_event`로 Alt+Tab 전송 | platform-display |
-| 5 | Alt+Tab (사용자 보고) | **실제 키보드로 Alt+Tab을 누르면 아무 반응이 없다.** 깜빡임이나 해상도 변경도 일어나지 않는다. 자동 테스트(`keybd_event` 주입)와 결과가 다름. 실행 경로와 게임 상태(메뉴/플레이 중)는 미확인 | 실제 키보드로 Alt+Tab | platform-display, platform-input |
+| 4 | Alt+Tab | 나가기: 창 최소화, 해상도 복구, CPU 사용 1%로 정지. 돌아오기(Alt+Tab, 작업 표시줄 복원 둘 다): 640×480으로 다시 바뀌고 화면 갱신 계속됨 → **정상**. 사용자 실제 키보드로도 정상 (dgVoodoo2 시험 C) | `keybd_event`로 Alt+Tab 전송, 사용자 확인 | platform-display |
+| 5 | **Alt+Enter** | **아무 반응이 없다** (깜빡임, 해상도 변경 없음). 원본에는 창 모드가 없다 (`hglCore.ini`의 `FullScreen` 키도 쓰이지 않음). 처음에 "Alt+Tab이 안 된다"로 보고됐으나 사용자가 Alt+Enter와 혼동한 것으로 확인 | 실제 키보드로 Alt+Enter | platform-display |
 | 6 | CPU 사용 | 실행 중 **CPU 코어 1개를 100% 사용** (대기 없이 도는 루프로 추정). 최소화하면 1% | 5초간 프로세스 CPU 시간 측정 | platform-timing |
 | 7 | 고주사율 모니터 속도 | **미확인** (테스트 PC 모니터가 60Hz) | — | platform-timing |
 | 8 | CD 확인 | CD 없이 실행됨. 실행 파일의 CD 확인 호출이 NOP으로 지워진 것으로 보임 (reverse-engineering 참고) | — | platform-filesystem, loader |
@@ -104,11 +104,7 @@
 
 ## 미해결 질문
 
-- Alt+Tab이 실제 키보드에서만 무반응인 이유. 가설:
-  - DirectInput 독점 모드: 찾은 `SetCooperativeLevel` 호출은 `0x41EBA3` 한 곳이고 플래그가 `9`(`DISCL_EXCLUSIVE | DISCL_BACKGROUND`)다. 장치 배열(`0x7DAE18`)에서 꺼내므로 컨트롤러·라이트건 장치로 보인다. 키보드는 이 조합을 허용하지 않으므로 **이 가설은 약해짐**. 플래그를 레지스터로 넘기는 다른 호출이 있는지는 미확인
-  - 테스트 도구의 키 입력은 모두 소프트웨어 주입(`keybd_event`, computer-use도 같은 방식)이라 실제 키보드와 조건이 다를 수 있음
-  - 사용자가 실행한 조건(원본 폴더 + `DWM8And16BitMitigation` 플래그, 또는 DxWnd 경유)이 테스트 조건과 다름
-- 사용자가 실행한 경로와 게임 상태(메뉴/플레이 중)
+- Alt+Enter로 창 모드 ↔ 전체 화면을 전환하는 기능을 어디서 제공할지 (dgVoodoo2는 `DisableAltEnterToToggleScreenMode` 옵션이 있음, 최종적으로는 platform-display에서 직접 구현)
 - 고주사율 테스트 방법 (Parsec 가상 디스플레이로 120/144Hz를 만들 수 있는지)
 - 외부 래퍼를 받을지 (사용자 확인 필요). 2026-10-14 기준 최신 배포:
   - dgVoodoo2 v2.87.5 — `dgVoodoo2_87_5.zip` (9,268,078 bytes), github.com/dege-diosg/dgVoodoo2 releases
@@ -117,6 +113,14 @@
 - 게임이 실제로 몇 fps로 그리는지, vsync를 기다리는지
 
 ## 작업 기록
+
+### 2026-10-14 — Alt+Tab 보고 정정, dgVoodoo2 사용자 확인 (관련: G1-4, G3-5)
+
+- **한 일:** 사용자가 dgVoodoo2 시험 C 설정으로 직접 플레이했다.
+- **결과:**
+  - 앞서 "Alt+Tab이 안 된다"는 보고는 **Alt+Enter와 혼동한 것**이었다. Alt+Tab은 정상이고, 문제는 Alt+Enter(창/전체 화면 전환)가 원본에서 아무 동작도 하지 않는 것이다.
+  - dgVoodoo2 시험 C: 실제 키보드 Alt+Tab 정상, 화면 정상, **게임 속도가 원본과 같다**.
+- **다음:** Alt+Enter 전환 기능은 platform-display의 요구 사항으로 넘긴다. 호환성 조사의 남은 항목(G1-5 고주사율, G1-6 DPI, G1-7 세이브 위치)은 환경이 준비되면 이어서 한다.
 
 ### 2026-10-14 — dgVoodoo2 시험 (관련: G3-3)
 
@@ -130,7 +134,7 @@
 - **결과:** 표 13, 14번과 "미해결 질문"의 Alt+Tab 가설에 정리했다. 호환 모드는 겉으로 달라진 점이 없었고 실제 적용 여부도 확인하지 못했다.
 - **다음:** 레지스트리 방식 호환 모드, DxWnd, dgVoodoo2, DDrawCompat 시험은 사용자 확인 후 진행한다.
 
-### 2026-10-14 — Alt+Tab 사용자 보고 (관련: G1-4)
+### 2026-10-14 — Alt+Tab 사용자 보고 (관련: G1-4) — *이후 Alt+Enter 혼동으로 정정됨*
 
 - **한 일:** 사용자에게 Alt+Tab 증상을 확인했다.
 - **결과:** 실제 키보드로 Alt+Tab을 누르면 아무 반응이 없다 (깜빡임, 해상도 변경 없음). 자동 테스트와 다르다. 가설은 "미해결 질문"에 적었다.
