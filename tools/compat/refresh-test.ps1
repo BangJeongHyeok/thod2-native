@@ -15,6 +15,7 @@ param(
   [int]$Seconds = 26,
   [string]$GameDir = (Join-Path $PSScriptRoot '..\..\..\test-game\THOTD2')
 )
+. "$PSScriptRoot\winprobe.ps1"
 $GameDir = (Resolve-Path $GameDir).Path
 $ini = Join-Path $GameDir 'thod2-native.ini'
 $log = Join-Path $GameDir 'thod2-native.log'
@@ -43,13 +44,19 @@ try {
 
     Stop-Process -Name Hod2 -ErrorAction SilentlyContinue; Start-Sleep 1
     $p = Start-Process -FilePath (Join-Path $GameDir 'Hod2.exe') -WorkingDirectory $GameDir -PassThru
-    Start-Sleep -Seconds $Seconds
+    # Record the monitor modes and the game window while the game is running,
+    # so every result states the refresh rate it was measured at.
+    Start-Sleep -Seconds 6
+    $state = @([WP]::Mode('\\.\DISPLAY1'), [WP]::Mode('\\.\DISPLAY2'))
+    $state += [WP]::Wins($p.Id) | ForEach-Object { [WP]::Desc($_) } | Where-Object { $_ -match "class='The House" -and $_ -match 'vis=True' }
+    Start-Sleep -Seconds ($Seconds - 6)
     Stop-Process -Id $p.Id -ErrorAction SilentlyContinue; Start-Sleep 1
 
     $lines = Get-Content $log
     $title = $lines | Where-Object { $_ -match 'CreateFileA "cam\\cp_title\.bin"' } | Select-Object -First 1
     $demo = $lines | Where-Object { $_ -match 'CreateFileA "cam\\cp_tuto\.bin"' } | Select-Object -First 1
     "########## flip_override = $override"
+    $state | ForEach-Object { "  $_" }
     if ($title -and $demo) {
       "title -> demo: {0:N2} s" -f ((Time-Of $demo) - (Time-Of $title)).TotalSeconds
     } else {
