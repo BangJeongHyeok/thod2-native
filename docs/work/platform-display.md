@@ -28,11 +28,11 @@
 - [x] G2-4 테두리 없는 창 모드 → dgVoodoo2 시험 C 설정
 - [x] G2-5 Alt+Enter 창/전체 화면 전환 → dgVoodoo2 `DisableAltEnterToToggleScreenMode = false`
 
-### G3. dgVoodoo2 권장 구성 제공 — 대기
+### G3. dgVoodoo2 권장 구성 제공 — 완료
 
-- [ ] G3-1 dgVoodoo2 재배포 조건(라이선스) 확인
-- [ ] G3-2 권장 설정(시험 C + Alt+Enter)을 저장소에 프리셋으로 두고, 설치 도구(`tools/compat/dgvoodoo-setup.py`)에서 한 번에 적용
-- [ ] G3-3 사용자용 설치 안내 문서
+- [x] G3-1 dgVoodoo2 재배포 조건(라이선스) 확인 → 명시된 라이선스 없음, 함께 배포하지 않음
+- [x] G3-2 권장 설정(시험 C + Alt+Enter)을 저장소에 프리셋으로 두고, 설치 도구에서 한 번에 적용 → `config/dgvoodoo-recommended.ini`, `tools/dgvoodoo-setup.py preset`
+- [x] G3-3 사용자용 설치 안내 문서 → [docs/INSTALL.md](../INSTALL.md)
 
 ## 화면 모드 분석 결과 (2026-10-14)
 
@@ -93,17 +93,30 @@
 | 2026-10-14 | 장치 확인창은 호출 위치(`0x4A4758`)와 제목(`Attention`)이 둘 다 맞을 때만 가로챈다 | 같은 `MessageBoxA`로 띄우는 다른 창(종료 확인, CD 요청, 장치 미지원)을 건드리지 않기 위해. 대안: 제목·본문 문자열만으로 판별(다른 빌드에서도 동작하지만 오판 가능) |
 | 2026-10-14 | 확인창 처리 결과는 "예"(`IDYES`)로 고정 | 사용자가 항상 "예"를 눌러 왔고, "아니요"의 동작은 아직 분석하지 않음 |
 | 2026-10-14 | **창 모드·Alt+Enter·고해상도는 지금은 dgVoodoo2로 처리한다 (B안, 사용자 결정).** DX7 수준의 창 모드 직접 구현(A안)은 하지 않고, 자체 렌더러(ROADMAP 2-3)에서 구현한다 | A안은 16bpp→32bpp 변환, apphelp 호환 모드와의 충돌, 백버퍼 획득 방식 미확인 등 공수가 크고, 자체 렌더러가 생기면 버리는 코드다. dgVoodoo2 시험 C + Alt+Enter 옵션은 이미 검증됨. 위험: 외부 도구 의존, 재배포 조건 확인 필요 |
+| 2026-10-14 | **dgVoodoo2는 배포물에 넣지 않는다.** 사용자가 공식 릴리스에서 받고, 우리는 설정 프리셋과 설치 도구만 제공한다 | GitHub 저장소(`dege-diosg/dgVoodoo2`)에 명시된 라이선스가 없다. README의 "freely ship" 문구는 64비트 개발자용 API DLL에 대한 것이다 |
 | 2026-10-14 | `skip_device_dialog` 기본값은 켜짐(1)으로 유지 (사용자 결정) | 검토한 위험: 잘못된 장치(예: 내장 그래픽)가 골라져도 화면에서 알 수 없고 로그에만 남는다. 대안: 기본 꺼짐 |
 
 ## 미해결 질문
 
-- dgVoodoo2를 저장소 배포물에 함께 넣어도 되는지 (재배포 조건)
 - 백버퍼를 어떻게 가져오는지 (`GetAttachedSurface`는 불리지 않음)
 - PCA 호환 모드가 없는 환경에서의 동작 (HKLM 등록 삭제는 관리자 권한 필요)
 - 렌더러 도메인과의 경계 (백버퍼 크기는 어느 쪽이 정하는지)
 - 원본 해상도는 640×480 고정이고, 이를 바꾸는 설정이 없다 (`hglCore.ini`의 `FullScreen` 키는 쓰이지 않음)
 
 ## 작업 기록
+
+### 2026-10-14 — dgVoodoo2 권장 구성 제공 (관련: G3)
+
+- **한 일:**
+  - dgVoodoo2 GitHub 저장소의 라이선스를 확인했다 (GitHub API `license: null`, README 확인).
+  - 권장 설정 프리셋 `config/dgvoodoo-recommended.ini`를 만들었다 (설정마다 이유를 주석으로 적음).
+  - 설치 도구를 사용자용으로 `tools/compat/dgvoodoo-setup.py` → `tools/dgvoodoo-setup.py`로 옮기고 `preset` 명령을 추가했다.
+  - 값을 바꿀 때 줄 끝의 `\r`이 지워지던 버그를 고쳤다 (원본 `dgVoodoo.conf`는 CRLF).
+  - 사용자용 설치 안내 [docs/INSTALL.md](../INSTALL.md)를 썼다.
+- **결과:**
+  - 테스트 사본에서 `uninstall` → `install` → `preset`으로 다시 설치한 `dgVoodoo.conf`가 손으로 맞춘 이전 설정과 내용이 같다. 줄 끝은 원본처럼 전부 CRLF(365줄).
+  - 실행 결과: 테두리 없는 1920×1080 창, 모니터 해상도 변화 없음, 시작 확인창 없음.
+- **다음:** 타이밍(CPU 100%) 분석.
 
 ### 2026-10-14 — 화면 모드 분석 (관련: G2-1, G2-2)
 

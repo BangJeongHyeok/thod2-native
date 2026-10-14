@@ -60,7 +60,7 @@
 
 - 버전: v2.87.5 `dgVoodoo2_87_5.zip` (9,268,078 bytes, SHA-256 `5ffde692…1040850`, GitHub 공개 digest와 일치)
 - 받은 위치: `E:\Repos\hod2-native\external\dgVoodoo2_87_5\` (저장소 밖)
-- 설치: `MS\x86\DDraw.dll`, `MS\x86\D3DImm.dll`, `dgVoodoo.conf`를 게임 폴더에 복사 (`tools/compat/dgvoodoo-setup.py install`)
+- 설치: `MS\x86\DDraw.dll`, `MS\x86\D3DImm.dll`, `dgVoodoo.conf`를 게임 폴더에 복사 (`tools/dgvoodoo-setup.py install`, 2026-10-14에 `tools/compat/`에서 옮김)
 - 적용 확인: 시작 확인창의 장치 이름이 "dgVoodoo Hardware Accelerated Transform & Light Device"로 바뀐다.
 - 모든 시험에서 `DirectX.dgVoodooWatermark=false`
 

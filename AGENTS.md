@@ -29,7 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`)가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`)가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -210,8 +210,8 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 thod2-native/
 ├─ AGENTS.md          ← 이 문서 (있음)
 ├─ CMakeLists.txt     ← 최상위 빌드 (있음). CMakePresets.json의 x86 프리셋 사용
-├─ config/            ← 배포용 예제 설정 thod2-native.ini (있음)
-├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 설계 문서 (있음)
+├─ config/            ← 배포용 예제 설정 thod2-native.ini, dgVoodoo2 권장 프리셋 (있음)
+├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
 │  ├─ work/           ← 도메인별 작업 문서 (있음)
 │  └─ formats/        ← 게임 데이터 파일 포맷 문서
 ├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
@@ -228,7 +228,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, compat/ 조사 스크립트(runtest, alttab-run, altenter-run 등) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run 등) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
