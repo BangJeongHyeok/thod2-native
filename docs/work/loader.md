@@ -19,13 +19,13 @@
 - [x] G1-2 측정용 `dinput.dll` 프록시로 초기화 시점 측정
 - [x] G1-3 방식 결정: `dinput.dll` 프록시 (사용자 승인)
 
-### G2. 정식 로더 구현 — 진행 중
+### G2. 정식 로더 구현 — 완료 (코드 후킹 도우미는 필요할 때)
 
 - [x] G2-1 `src/loader/`: `dinput.dll` 프록시 (내보내기 7개 전달, 시스템 DLL 지연 로드)
 - [x] G2-2 `DllMain`에서 `GetCommandLineA` IAT 후킹 → 첫 호출에서 `thod2_core.dll` 로드와 `Thod2Core_Initialize()`
 - [x] G2-3 안전장치: `DirectInputCreateEx`에서 초기화 재시도
 - [ ] G2-4 IAT·코드 후킹 도우미 (`src/interop/`). **IAT 후킹(`HookImport`) 완료.** 코드 후킹(함수 중간·내부 함수)은 필요해질 때 MinHook 등을 사용자 확인 후 추가
-- [ ] G2-5 첫 예제: 시작 확인창(`MessageBoxA` "Attention", `0x4A4758`) 자동으로 "예" 처리 → 목적이 달라서 별도 브랜치(`시작 확인창 자동 처리`)
+- [x] G2-5 첫 예제: 시작 확인창(`MessageBoxA` "Attention", `0x4A4758`) 자동으로 "예" 처리 → 별도 PR로 구현 ([platform-display.md](platform-display.md) G1)
 - [x] G2-6 `deploy.ps1`에 로더 추가, 문서화
 
 ## 로더 동작 (구현됨)

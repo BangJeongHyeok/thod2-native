@@ -29,7 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드)가 설치되어 있다. 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`)가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -215,7 +215,7 @@ thod2-native/
 │  └─ formats/        ← 게임 데이터 파일 포맷 문서
 ├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
 ├─ src/
-│  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API (있음)
+│  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
 │  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
 │  ├─ launcher/       ← (보류) 필요해지면 만드는 런처 thod2.exe
 │  ├─ interop/        ← 후킹·패치 도우미 (있음: IAT 후킹). 이후 원본 함수/전역 변수 주소 정의

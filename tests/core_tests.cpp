@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "exe_id.h"
+#include "patches/device_dialog.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -62,13 +63,18 @@ void TestSha256() {
 void TestConfig() {
   using thod2::core::LogLevel;
   const auto missing = thod2::core::LoadConfig(TestDir() / L"no_such_config.ini");
-  Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe, "LoadConfig defaults");
+  Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe &&
+            missing.skip_device_dialog,
+        "LoadConfig defaults");
 
   const auto file = TestDir() / L"core_tests_config.ini";
-  WriteText(file, "[core]\r\nlog_level = debug\r\nallow_unknown_exe = 1\r\n");
+  WriteText(file,
+            "[core]\r\nlog_level = debug\r\nallow_unknown_exe = 1\r\n"
+            "[display]\r\nskip_device_dialog = 0\r\n");
   const auto parsed = thod2::core::LoadConfig(file);
   Check(parsed.log_level == LogLevel::Debug, "LoadConfig log_level = debug");
   Check(parsed.allow_unknown_exe, "LoadConfig allow_unknown_exe = 1");
+  Check(!parsed.skip_device_dialog, "LoadConfig skip_device_dialog = 0");
   std::filesystem::remove(file);
 }
 
@@ -80,6 +86,15 @@ void TestExeId() {
   Check(thod2::core::FindKnownExe(known) != nullptr, "FindKnownExe(known build)");
   Check(thod2::core::FindKnownExe(known_lower) != nullptr, "FindKnownExe is case-insensitive");
   Check(thod2::core::FindKnownExe(kAbcSha256) == nullptr, "FindKnownExe(unknown) is null");
+}
+
+void TestDeviceDialog() {
+  using thod2::core::patches::IsDeviceDialog;
+  Check(IsDeviceDialog("Attention", 0x4A4758), "IsDeviceDialog: device dialog call site");
+  Check(!IsDeviceDialog("Attention", 0x4A4000), "IsDeviceDialog: other call site is ignored");
+  Check(!IsDeviceDialog("The House of the Dead 2", 0x4A4758),
+        "IsDeviceDialog: other caption is ignored");
+  Check(!IsDeviceDialog(nullptr, 0x4A4758), "IsDeviceDialog: null caption is ignored");
 }
 
 void TestDll() {
@@ -119,6 +134,7 @@ int main() {
   TestSha256();
   TestConfig();
   TestExeId();
+  TestDeviceDialog();
   TestDll();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;

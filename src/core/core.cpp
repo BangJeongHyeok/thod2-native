@@ -3,6 +3,7 @@
 #include "config.h"
 #include "exe_id.h"
 #include "log.h"
+#include "patches/device_dialog.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -17,6 +18,16 @@ std::atomic<bool> g_initialized{false};
 
 // Window class of Hod2.exe's main window (created at 0x4A588B).
 constexpr char kGameWindowClass[] = "The House of the Dead 2";
+
+// Installs the patches enabled in the config. Runs only on a supported (or
+// explicitly allowed) Hod2.exe, before the game creates its main window.
+void ApplyPatches(const CoreConfig& config) {
+  if (config.skip_device_dialog) {
+    patches::InstallSkipDeviceDialog();
+  } else {
+    Log(LogLevel::Info, "skip_device_dialog: disabled in config");
+  }
+}
 
 }  // namespace
 
@@ -46,15 +57,15 @@ int Initialize(HMODULE self, const char* loader_info) {
 
   if (const KnownExe* known = FindKnownExe(*hash)) {
     Log(LogLevel::Info, "supported build: {}", known->name);
-    return THOD2_CORE_OK;
+  } else if (config.allow_unknown_exe) {
+    Log(LogLevel::Warn, "unknown host executable, continuing because allow_unknown_exe = 1");
+  } else {
+    Log(LogLevel::Error, "unknown host executable, patches disabled (set [core] allow_unknown_exe = 1 to override)");
+    return THOD2_CORE_UNKNOWN_EXE;
   }
 
-  if (config.allow_unknown_exe) {
-    Log(LogLevel::Warn, "unknown host executable, continuing because allow_unknown_exe = 1");
-    return THOD2_CORE_OK;
-  }
-  Log(LogLevel::Error, "unknown host executable, patches disabled (set [core] allow_unknown_exe = 1 to override)");
-  return THOD2_CORE_UNKNOWN_EXE;
+  ApplyPatches(config);
+  return THOD2_CORE_OK;
 }
 
 }  // namespace thod2::core

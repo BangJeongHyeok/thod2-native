@@ -4,6 +4,7 @@ add_library(thod2_core_lib STATIC
   core.cpp
   exe_id.cpp
   log.cpp
+  patches/device_dialog.cpp
   sha256.cpp
   util.cpp
 )
@@ -12,7 +13,7 @@ target_include_directories(thod2_core_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_compile_definitions(thod2_core_lib PUBLIC THOD2_VERSION="${PROJECT_VERSION}")
-target_link_libraries(thod2_core_lib PUBLIC bcrypt)
+target_link_libraries(thod2_core_lib PUBLIC bcrypt thod2_interop_lib)
 
 # The DLL that gets loaded into Hod2.exe. Only the C API in include/thod2/core.h is exported.
 add_library(thod2_core SHARED dllmain.cpp)

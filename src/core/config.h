@@ -11,9 +11,13 @@ namespace thod2::core {
 //   [core]
 //   log_level = info          ; debug | info | warn | error
 //   allow_unknown_exe = 0     ; 1 = keep running on an unsupported Hod2.exe
+//
+//   [display]
+//   skip_device_dialog = 1    ; 1 = answer the startup "Attention" device dialog with Yes
 struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
+  bool skip_device_dialog = true;
 };
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path);

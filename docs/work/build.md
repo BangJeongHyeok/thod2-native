@@ -56,7 +56,8 @@ ctest --preset x86-release          # 테스트
   1. DLL 옆의 `thod2-native.ini`를 읽는다 (`[core] log_level`, `allow_unknown_exe`).
   2. DLL 옆에 `thod2-native.log`를 새로 만든다. 초기화 주체(`loader_info`)와 그 시점에 게임 메인 창이 있는지 기록한다.
   3. 호스트 실행 파일의 SHA-256을 계산해서 지원 빌드 목록(`src/core/exe_id.cpp`)과 비교한다.
-  4. 결과 코드: `0` OK, `1` 알 수 없는 실행 파일, `2` 이미 초기화됨, `3` 실패.
+  4. 지원 빌드(또는 `allow_unknown_exe = 1`)이면 설정에서 켜진 패치를 설치한다. 지금 있는 패치: `skip_device_dialog` ([platform-display.md](platform-display.md) G1).
+  5. 결과 코드: `0` OK, `1` 알 수 없는 실행 파일, `2` 이미 초기화됨, `3` 실패.
 - `DllMain`에서는 모듈 핸들만 저장한다 (로더 락 안에서 파일·해시 작업을 하지 않기 위해).
 
 ## 개발 환경 (현재 PC, 2026-10-14 확인)

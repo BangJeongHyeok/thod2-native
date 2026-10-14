@@ -41,7 +41,7 @@
 
 | # | 항목 | 증상 / 결과 | 재현 방법 | 담당 도메인 |
 |---|---|---|---|---|
-| 1 | 실행 | 정상 실행. 시작할 때마다 "Attention" 확인창이 뜬다 ("NVIDIA GeForce RTX 3080 \ Microsoft Direct3D Hardware Transform and Lighting acceleration capable device will be used." 예/아니요) | 그냥 실행 | renderer (장치 선택), platform-display |
+| 1 | 실행 | 정상 실행. 시작할 때마다 "Attention" 확인창이 뜬다 ("NVIDIA GeForce RTX 3080 \ Microsoft Direct3D Hardware Transform and Lighting acceleration capable device will be used." 예/아니요) | 그냥 실행 | renderer (장치 선택), platform-display. **해결:** thod2-native `skip_device_dialog`로 자동 처리 (platform-display G1) |
 | 2 | 화면 모드 | **전용 전체 화면, 640×480 32bpp 60Hz 고정.** 주 모니터의 해상도를 바꾼다. 창은 `WS_POPUP`, `WS_EX_TOPMOST`, 크기 640×480 | 실행 후 `EnumDisplaySettings` | platform-display, renderer |
 | 3 | 다중 모니터 | 게임이 해상도를 바꾸는 동안 **보조 모니터의 위치가 이동한다** (`(1920,511)` → `(640,480)`). 종료하거나 Alt+Tab으로 나가면 원래대로 돌아온다 | 모니터 2개 환경에서 실행 | platform-display |
 | 4 | Alt+Tab | 나가기: 창 최소화, 해상도 복구, CPU 사용 1%로 정지. 돌아오기(Alt+Tab, 작업 표시줄 복원 둘 다): 640×480으로 다시 바뀌고 화면 갱신 계속됨 → **정상**. 사용자 실제 키보드로도 정상 (dgVoodoo2 시험 C) | `keybd_event`로 Alt+Tab 전송, 사용자 확인 | platform-display |
