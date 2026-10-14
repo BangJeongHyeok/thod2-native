@@ -63,6 +63,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[core] allow_unknown_exe` | `0` | `1`이면 지원하지 않는 `Hod2.exe`에서도 패치를 적용 (충돌 가능) |
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
 | `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
+| `[debug] profile` | `0` | 개발용. 메인 스레드가 CPU를 어디에 쓰는지 5초마다 로그에 기록 |
 
 ## 되돌리기
 
