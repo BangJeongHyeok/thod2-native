@@ -5,6 +5,7 @@
 #include "log.h"
 #include "patches/ddraw_trace.h"
 #include "patches/device_dialog.h"
+#include "patches/profiler.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -30,6 +31,10 @@ void ApplyPatches(const CoreConfig& config) {
   }
   if (config.trace_ddraw) {
     patches::InstallDDrawTrace();
+  }
+  if (config.profile) {
+    // Initialize runs on Hod2.exe's main thread (first GetCommandLineA).
+    patches::StartProfiler(GetCurrentThreadId());
   }
 }
 

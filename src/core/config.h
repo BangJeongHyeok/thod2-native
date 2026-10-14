@@ -17,11 +17,13 @@ namespace thod2::core {
 //
 //   [debug]
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
+//   profile = 0               ; 1 = sample the main thread and log where CPU time goes
 struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
   bool skip_device_dialog = true;
   bool trace_ddraw = false;
+  bool profile = false;
 };
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path);
