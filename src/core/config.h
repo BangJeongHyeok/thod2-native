@@ -22,6 +22,7 @@ namespace thod2::core {
 //   [debug]
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
+//   trace_files = 0           ; 1 = log the game's file system calls
 struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
@@ -30,6 +31,7 @@ struct CoreConfig {
   float frame_wait_margin_ms = 1.0f;
   bool trace_ddraw = false;
   bool profile = false;
+  bool trace_files = false;
 };
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path);
