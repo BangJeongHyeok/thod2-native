@@ -28,8 +28,10 @@ enum Thod2CoreResult {
 THOD2_CORE_API const char* __cdecl Thod2Core_Version(void);
 
 // Reads thod2-native.ini, opens thod2-native.log (both next to the DLL) and
-// identifies the host executable. Returns a Thod2CoreResult value.
-THOD2_CORE_API int __cdecl Thod2Core_Initialize(void);
+// identifies the host executable. `loader_info` is a short description of who
+// called it and when (written to the log; may be null).
+// Returns a Thod2CoreResult value.
+THOD2_CORE_API int __cdecl Thod2Core_Initialize(const char* loader_info);
 
 #ifdef __cplusplus
 }
