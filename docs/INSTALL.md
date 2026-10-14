@@ -12,6 +12,7 @@ PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)
 | 3D 해상도 | 640×480 | 화면에 맞는 최대 4:3 해상도 (1080p 모니터에서 1440×1080) |
 | Alt+Enter | 반응 없음 | 창 ↔ 전체 화면 전환 |
 | CPU 사용 | 코어 1개 100% | 약 25% (프레임 끝 바쁜 대기를 잠자기로 바꿈) |
+| 세이브 위치 | 게임 폴더의 데이터 파일 4개. 폴더에 쓸 수 없으면 조용히 저장 실패 | `%APPDATA%\thod2-native\save\`. 게임 폴더가 읽기 전용이어도 저장됨. 처음 실행할 때 기존 세이브를 옮겨 옴 |
 
 ## 준비물
 
@@ -63,6 +64,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[core] log_level` | `info` | `debug`, `info`, `warn`, `error` |
 | `[core] allow_unknown_exe` | `0` | `1`이면 지원하지 않는 `Hod2.exe`에서도 패치를 적용 (충돌 가능) |
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
+| `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
 | `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
 | `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
 | `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
@@ -78,12 +80,14 @@ python tools\dgvoodoo-setup.py uninstall "<게임 폴더>"
 
 `thod2-native.ini`는 남는다. 필요 없으면 직접 지운다.
 
+세이브는 `%APPDATA%\thod2-native\save\`에 남는다. thod2-native 없이 원본으로 돌아가면 게임은 다시 게임 폴더의 세이브를 쓴다. 최신 기록을 이어 쓰려면 `save\` 안의 파일 4개를 게임 폴더의 같은 위치(`pol\`, `tex\`)에 덮어쓴다.
+
 ## 문제 해결
 
-- **thod2-native.log가 생기지 않는다:** `dinput.dll`과 `thod2_core.dll`이 `Hod2.exe`와 같은 폴더에 있는지 확인한다.
+- **thod2-native.log가 생기지 않는다:** `dinput.dll`과 `thod2_core.dll`이 `Hod2.exe`와 같은 폴더에 있는지 확인한다. 게임 폴더에 쓸 수 없으면 로그는 `%LOCALAPPDATA%\thod2-native\thod2-native.log`에 생긴다.
 - **로그에 `unknown host executable`:** 지원하지 않는 `Hod2.exe`다. 패치는 적용되지 않고 게임은 원래대로 실행된다.
 - **실행할 때 "보안 경고"가 뜬다:** 인터넷에서 받은 파일에 붙는 Windows 표시 때문이다. 파일 속성에서 "차단 해제"를 하면 사라진다.
-- **세이브가 저장되지 않는다:** 원본 게임은 세이브를 게임 폴더 안의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`)에 정상 종료할 때 쓴다. 게임 폴더에 쓰기 권한이 있어야 한다 (예: `Program Files` 아래에 두지 않는다). 강제 종료하면 저장되지 않는다.
+- **세이브가 저장되지 않는다:** 게임은 **정상 종료할 때**("Are you sure you want to quit?"에서 예) 저장한다. 강제 종료하면 저장되지 않는다. 원본 게임은 세이브를 게임 폴더 안의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`)에 쓰고, 폴더에 쓸 수 없으면 아무 표시 없이 실패한다. thod2-native는 이 파일들을 `%APPDATA%\thod2-native\save\`에 쓰므로 게임 폴더 권한과 상관없이 저장된다 (`redirect_user_files = 0`이면 원본처럼 동작).
 - **Windows가 자동으로 호환 모드를 건다:** Windows는 `Hod2.exe`를 처음 실행한 뒤 `DWM8And16BitMitigation` 호환 모드를 자동으로 등록하는 경우가 있다. thod2-native와 dgVoodoo2는 이 상태에서 시험했다.
 
 ## 왜 dgVoodoo2를 같이 배포하지 않나

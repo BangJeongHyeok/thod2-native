@@ -19,6 +19,8 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.allow_unknown_exe = GetPrivateProfileIntW(L"core", L"allow_unknown_exe", 0, file) != 0;
   config.skip_device_dialog =
       GetPrivateProfileIntW(L"display", L"skip_device_dialog", 1, file) != 0;
+  config.redirect_user_files =
+      GetPrivateProfileIntW(L"files", L"redirect_user_files", 1, file) != 0;
   config.frame_wait_sleep = GetPrivateProfileIntW(L"timing", L"frame_wait_sleep", 1, file) != 0;
   wchar_t margin[32] = {};
   GetPrivateProfileStringW(L"timing", L"frame_wait_margin_ms", L"", margin, ARRAYSIZE(margin), file);

@@ -4,6 +4,7 @@
 #include "config.h"
 #include "exe_id.h"
 #include "patches/device_dialog.h"
+#include "patches/file_redirect.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -66,13 +67,14 @@ void TestConfig() {
   Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe &&
             missing.skip_device_dialog && !missing.trace_ddraw && !missing.profile &&
             missing.frame_wait_sleep && missing.frame_wait_margin_ms == 1.0f &&
-            !missing.trace_files,
+            !missing.trace_files && missing.redirect_user_files,
         "LoadConfig defaults");
 
   const auto file = TestDir() / L"core_tests_config.ini";
   WriteText(file,
             "[core]\r\nlog_level = debug\r\nallow_unknown_exe = 1\r\n"
             "[display]\r\nskip_device_dialog = 0\r\n"
+            "[files]\r\nredirect_user_files = 0\r\n"
             "[timing]\r\nframe_wait_sleep = 0\r\nframe_wait_margin_ms = 2.5\r\n"
             "[debug]\r\ntrace_ddraw = 1\r\nprofile = 1\r\ntrace_files = 1\r\n");
   const auto parsed = thod2::core::LoadConfig(file);
@@ -82,6 +84,7 @@ void TestConfig() {
   Check(parsed.trace_ddraw, "LoadConfig trace_ddraw = 1");
   Check(parsed.profile, "LoadConfig profile = 1");
   Check(parsed.trace_files, "LoadConfig trace_files = 1");
+  Check(!parsed.redirect_user_files, "LoadConfig redirect_user_files = 0");
   Check(!parsed.frame_wait_sleep, "LoadConfig frame_wait_sleep = 0");
   Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
 
@@ -111,6 +114,32 @@ void TestDeviceDialog() {
   Check(!IsDeviceDialog("The House of the Dead 2", 0x4A4758),
         "IsDeviceDialog: other caption is ignored");
   Check(!IsDeviceDialog(nullptr, 0x4A4758), "IsDeviceDialog: null caption is ignored");
+}
+
+void TestMapUserFile() {
+  using thod2::core::patches::MapUserFile;
+  thod2::core::patches::RedirectPaths p;
+  p.game_dir = L"C:\\Games\\THOTD2";
+  p.windows_dir = L"C:\\WINDOWS";
+  p.save_dir = L"C:\\Users\\u\\AppData\\Roaming\\thod2-native\\save";
+  p.local_dir = L"C:\\Users\\u\\AppData\\Local\\thod2-native";
+
+  Check(MapUserFile(L"C:\\Games\\THOTD2\\pol\\tv2.bin", p) == p.save_dir / L"pol\\tv2.bin",
+        "MapUserFile: save file goes to the save folder");
+  Check(MapUserFile(L"c:\\games\\thotd2\\TEX\\SCR_TOD_ITM_ITAMIDOME2.BIN", p) ==
+            p.save_dir / L"tex\\scr_tod_itm_itamidome2.bin",
+        "MapUserFile: comparison ignores case");
+  Check(MapUserFile(L"C:\\Games\\THOTD2\\pol/../pol/bg_adv19.bin", p) ==
+            p.save_dir / L"pol\\bg_adv19.bin",
+        "MapUserFile: forward slashes and .. are normalized");
+  Check(MapUserFile(L"C:\\WINDOWS\\d3dx.dat", p) == p.local_dir / L"d3dx.dat",
+        "MapUserFile: d3dx.dat goes to the local folder");
+  Check(MapUserFile(L"C:\\Games\\THOTD2\\exception.log", p) == p.local_dir / L"exception.log",
+        "MapUserFile: exception.log goes to the local folder");
+  Check(!MapUserFile(L"C:\\Games\\THOTD2\\pol\\b6boss1z.bin", p),
+        "MapUserFile: other game data is not redirected");
+  Check(!MapUserFile(L"D:\\Other\\pol\\tv2.bin", p),
+        "MapUserFile: same name in another folder is not redirected");
 }
 
 void TestDll() {
@@ -151,6 +180,7 @@ int main() {
   TestConfig();
   TestExeId();
   TestDeviceDialog();
+  TestMapUserFile();
   TestDll();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;
