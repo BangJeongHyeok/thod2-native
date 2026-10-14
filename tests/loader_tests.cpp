@@ -2,6 +2,7 @@
 // Same style as core_tests: the exit code is the failure count.
 
 #include <thod2/interop/iat_hook.h>
+#include <thod2/interop/vtable_hook.h>
 
 #include <windows.h>
 
@@ -85,6 +86,40 @@ void TestHookImport() {
         "HookImport on a missing DLL returns null");
 }
 
+// ---- HookVtable ----
+
+struct Counter {
+  virtual int Value() { return 1; }
+  virtual ~Counter() = default;
+};
+
+using ValueFn = int(__thiscall*)(Counter*);
+ValueFn g_original_Value = nullptr;
+
+int __fastcall Hook_Value(Counter* self, void* /*edx*/) {
+  return g_original_Value(self) + 41;
+}
+
+// Virtual call through a pointer the compiler cannot see through.
+__declspec(noinline) int CallValue(Counter* c) {
+  return c->Value();
+}
+
+void TestHookVtable() {
+  Counter counter;
+  Check(CallValue(&counter) == 1, "virtual call before HookVtable");
+  g_original_Value = reinterpret_cast<ValueFn>(
+      thod2::interop::HookVtable(&counter, 0, reinterpret_cast<void*>(Hook_Value)));
+  Check(g_original_Value != nullptr, "HookVtable returns the original entry");
+  Check(CallValue(&counter) == 42, "hooked virtual function is called");
+  Counter other;
+  Check(CallValue(&other) == 42, "vtable hook applies to every object of the class");
+  thod2::interop::HookVtable(&counter, 0, reinterpret_cast<void*>(g_original_Value));
+  Check(CallValue(&counter) == 1, "restoring the vtable entry removes the hook");
+  Check(thod2::interop::HookVtable(nullptr, 0, reinterpret_cast<void*>(Hook_Value)) == nullptr,
+        "HookVtable on null object returns null");
+}
+
 // ---- dinput.dll loader ----
 
 void TestLoader() {
@@ -133,6 +168,7 @@ void TestLoader() {
 
 int main() {
   TestHookImport();
+  TestHookVtable();
   TestLoader();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;

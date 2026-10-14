@@ -31,6 +31,14 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 
 ## 작업 기록
 
+### 2026-10-14 — 화면 모드 분석에서 넘어온 내용
+
+- **결과:**
+  - 렌더 구성: `SetDisplayMode(640, 480, 16bpp)`, primary 플립 체인(백버퍼 1장, `3DDEVICE`), 16비트 Z 버퍼 640×480, 16비트 텍스처 약 700개(일부 알파 포함). 매 프레임 `Flip(DDFLIP_WAIT)`.
+  - Direct3D는 `IDirectDraw7::QueryInterface(IID_IDirect3D7)`로 얻는다 (호출 위치 `0x4BD2F3`).
+  - Windows 호환 모드(`DWM8And16BitMitigation`, `apphelp.dll`)가 DirectDraw 함수 표를 덮어쓴다. DX7 수준에서 후킹하는 코드는 이것을 고려해야 한다.
+- **상세:** [platform-display.md](platform-display.md) "화면 모드 분석 결과"
+
 ### 2026-10-14 — 호환성 조사에서 넘어온 내용
 
 - **결과:**

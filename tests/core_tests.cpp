@@ -64,17 +64,19 @@ void TestConfig() {
   using thod2::core::LogLevel;
   const auto missing = thod2::core::LoadConfig(TestDir() / L"no_such_config.ini");
   Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe &&
-            missing.skip_device_dialog,
+            missing.skip_device_dialog && !missing.trace_ddraw,
         "LoadConfig defaults");
 
   const auto file = TestDir() / L"core_tests_config.ini";
   WriteText(file,
             "[core]\r\nlog_level = debug\r\nallow_unknown_exe = 1\r\n"
-            "[display]\r\nskip_device_dialog = 0\r\n");
+            "[display]\r\nskip_device_dialog = 0\r\n"
+            "[debug]\r\ntrace_ddraw = 1\r\n");
   const auto parsed = thod2::core::LoadConfig(file);
   Check(parsed.log_level == LogLevel::Debug, "LoadConfig log_level = debug");
   Check(parsed.allow_unknown_exe, "LoadConfig allow_unknown_exe = 1");
   Check(!parsed.skip_device_dialog, "LoadConfig skip_device_dialog = 0");
+  Check(parsed.trace_ddraw, "LoadConfig trace_ddraw = 1");
   std::filesystem::remove(file);
 }
 
