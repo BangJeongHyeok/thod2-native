@@ -15,6 +15,9 @@ namespace thod2::core {
 //   [display]
 //   skip_device_dialog = 1    ; 1 = answer the startup "Attention" device dialog with Yes
 //
+//   [files]
+//   redirect_user_files = 1   ; 1 = keep saves, d3dx.dat and exception.log in the user's AppData
+//
 //   [timing]
 //   frame_wait_sleep = 1      ; 1 = sleep instead of busy-waiting at the end of a frame
 //   frame_wait_margin_ms = 1.0 ; time left to the game's own busy wait before the deadline
@@ -27,6 +30,7 @@ struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
   bool skip_device_dialog = true;
+  bool redirect_user_files = true;
   bool frame_wait_sleep = true;
   float frame_wait_margin_ms = 1.0f;
   bool trace_ddraw = false;

@@ -5,6 +5,7 @@
 #include "log.h"
 #include "patches/ddraw_trace.h"
 #include "patches/device_dialog.h"
+#include "patches/file_redirect.h"
 #include "patches/file_trace.h"
 #include "patches/frame_wait.h"
 #include "patches/profiler.h"
@@ -36,6 +37,14 @@ void ApplyPatches(const CoreConfig& config) {
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
   }
+  // Both hook CreateFileA. The trace is installed last so that it sees the
+  // game's calls first (with the game's call site and the original path) and
+  // then hands them to the redirect.
+  if (config.redirect_user_files) {
+    patches::InstallFileRedirect();
+  } else {
+    Log(LogLevel::Info, "redirect_user_files: disabled in config");
+  }
   if (config.trace_files) {
     patches::InstallFileTrace();
   }
@@ -57,7 +66,14 @@ int Initialize(HMODULE self, const char* loader_info) {
 
   const std::filesystem::path dir = ModulePath(self).parent_path();
   const CoreConfig config = LoadConfig(dir / L"thod2-native.ini");
-  OpenLog(dir / L"thod2-native.log", config.log_level);
+  // The game folder may be read-only (e.g. under Program Files); fall back to the user's profile.
+  if (!OpenLog(dir / L"thod2-native.log", config.log_level)) {
+    const auto local = LocalDataDir();
+    std::error_code ec;
+    std::filesystem::create_directories(local, ec);
+    OpenLog(local / L"thod2-native.log", config.log_level);
+    Log(LogLevel::Warn, "game folder is not writable, logging to {}", ToUtf8(local.native()));
+  }
   Log(LogLevel::Info, "thod2-native core {} loaded from {}", THOD2_VERSION, ToUtf8(dir.native()));
   Log(LogLevel::Info, "initialized by: {} (thread {})", loader_info ? loader_info : "(unknown)",
       GetCurrentThreadId());

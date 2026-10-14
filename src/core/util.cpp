@@ -1,5 +1,9 @@
 #include "util.h"
 
+#include <objbase.h>
+#include <shlobj.h>
+#include <knownfolders.h>
+
 #include <vector>
 
 namespace thod2::core {
@@ -29,6 +33,20 @@ std::filesystem::path ModulePath(HMODULE module) {
     }
     buffer.resize(buffer.size() * 2);
   }
+}
+
+std::filesystem::path KnownFolderPath(REFKNOWNFOLDERID id) {
+  PWSTR raw = nullptr;
+  std::filesystem::path out;
+  if (SUCCEEDED(SHGetKnownFolderPath(id, 0, nullptr, &raw))) {
+    out = raw;
+  }
+  CoTaskMemFree(raw);
+  return out;
+}
+
+std::filesystem::path LocalDataDir() {
+  return KnownFolderPath(FOLDERID_LocalAppData) / L"thod2-native";
 }
 
 }  // namespace thod2::core

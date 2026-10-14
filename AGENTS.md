@@ -29,7 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`은 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -155,7 +155,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - 시작할 때마다 Direct3D 장치 확인창("Attention", 예/아니요)이 뜬다.
 - 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다. 보조 모니터 위치가 이동한다.
 - 실행 중 CPU 코어 1개를 100% 쓴다. 원인은 프레임 끝의 바쁜 대기 (thod2-native `frame_wait_sleep`으로 약 25%, [platform-timing.md](docs/work/platform-timing.md)).
-- **세이브는 게임 폴더의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`, 각 987 bytes)에 정상 종료 때 쓴다.** 이 파일들은 원본과 달라질 수 있다 (테스트 사본의 `pol/tv2.bin`은 이미 다름). `C:\WINDOWS\d3dx.dat`도 쓴다 ([platform-filesystem.md](docs/work/platform-filesystem.md)).
+- **세이브는 게임 폴더의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`, 각 987 bytes)에 정상 종료 때 쓴다.** 이 파일들은 원본과 달라질 수 있다 (테스트 사본의 `pol/tv2.bin`은 이미 다름). `C:\WINDOWS\d3dx.dat`도 쓴다. **thod2-native(`redirect_user_files`, 기본 켬)는 이 파일들을 `%APPDATA%\thod2-native\save\`와 `%LOCALAPPDATA%\thod2-native\`로 옮긴다** ([platform-filesystem.md](docs/work/platform-filesystem.md)).
 - 상세 결과는 [docs/work/compat-survey.md](docs/work/compat-survey.md)에 있다.
 
 ## 4. 게임 리소스 구조 (`original-game\THOTD2\`)
