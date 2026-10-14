@@ -62,6 +62,12 @@
 | `0x7DCDFC` | 전역 변수 (함수 포인터) | `g_frameWaitCallback` | 대기 루프에서 남은 ms를 인자로 부르는 콜백. `0x49DF0B`에서 `0x49E0C0` 저장 (즉시값 위치 `0x49DF11`). 코드: `hod2::kFrameWaitCallbackSlot`, `kFrameWaitCallbackImmediate` (frame_wait_sleep이 즉시값을 바꿈) | 바이트 해석 | 확인 |
 | `0x49E0C0` | 함수 | (대기 콜백) | `cdecl(float 남은 ms)`. 1.0ms보다 크면 `0x41D5D0`으로 점프 | 바이트 해석 | 확인 |
 | `0x41D620` | 함수 | (작업 대기열 처리) | 64칸 순환 대기열(`0x7D8EB0`, 항목 16바이트)에서 하나를 꺼내 `0x41D670`으로 처리. 읽기 위치 `[0x7D8AA8]`, 쓰기 위치 `[0x7D8AAC]`. 처리 함수 표 `0x587C30` | 바이트 해석 | 확인 (작업 종류는 미확인) |
+| `0x49F990` | 호출 위치 | — | 세이브 파일 4개 읽기 `CreateFileA` 직후 주소 (시작 때) | file_trace 기록 | 확인 |
+| `0x49FA17`, `0x49FA8C` | 호출 위치 | — | 세이브 파일 4개 쓰기: `CREATE_ALWAYS` 직후, 이어서 `OPEN_EXISTING` 쓰기 직후 주소 (정상 종료 때) | file_trace 기록 | 확인 |
+| `0x4BBF28` | 호출 위치 | — | `<Windows>\d3dx.dat`를 `OPEN_ALWAYS` 읽기·쓰기로 여는 `CreateFileA` 직후 주소. 경로는 `GetWindowsDirectoryA`(`0x4C0E13`)로 만듦 | file_trace 기록 | 확인 |
+| `0x41DF23` | 호출 위치 | — | `\.\SEGAJOY.VXD` 열기 시도 직후 주소 (라이트건 드라이버) | file_trace 기록 | 확인 |
+| `0x40E4EB`, `0x41DF88`, `0x49DF2F`, `0x4A6093` | 호출 위치 | — | `Toddebug.ini`, `Hod2.ini`(×2), `hglCore.ini`의 `GetFullPathNameA` 직후 주소 | file_trace 기록 | 확인 |
+| `0x4A0899` | 명령 | — | 원본 폴더 `exception.log`의 접근 위반 주소 (`Eax = 0`, `Esi = 0`) | exception.log | 확인 (원인 미확인) |
 | `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |
 | `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
 | `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
@@ -98,6 +104,11 @@
 - 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-15 — 파일 접근 호출 위치 (관련: G1)
+
+- **한 일:** `file_trace`로 파일 API 호출 위치를 기록했다 ([platform-filesystem.md](platform-filesystem.md) "파일 접근 분석 결과").
+- **결과:** "확인된 주소" 표에 세이브 읽기·쓰기, `d3dx.dat`, 라이트건 드라이버, 설정 파일 호출 위치와 원본 비정상 종료 주소를 추가했다.
 
 ### 2026-10-14 — 프레임 대기 루프와 작업 대기열 (관련: G1)
 

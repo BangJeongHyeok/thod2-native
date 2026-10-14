@@ -67,6 +67,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
 | `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
 | `[debug] profile` | `0` | 개발용. 메인 스레드가 CPU를 어디에 쓰는지 5초마다 로그에 기록 |
+| `[debug] trace_files` | `0` | 개발용. 게임의 파일 접근(경로, 읽기·쓰기, 호출 위치)을 로그에 기록 |
 
 ## 되돌리기
 
@@ -82,6 +83,7 @@ python tools\dgvoodoo-setup.py uninstall "<게임 폴더>"
 - **thod2-native.log가 생기지 않는다:** `dinput.dll`과 `thod2_core.dll`이 `Hod2.exe`와 같은 폴더에 있는지 확인한다.
 - **로그에 `unknown host executable`:** 지원하지 않는 `Hod2.exe`다. 패치는 적용되지 않고 게임은 원래대로 실행된다.
 - **실행할 때 "보안 경고"가 뜬다:** 인터넷에서 받은 파일에 붙는 Windows 표시 때문이다. 파일 속성에서 "차단 해제"를 하면 사라진다.
+- **세이브가 저장되지 않는다:** 원본 게임은 세이브를 게임 폴더 안의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`)에 정상 종료할 때 쓴다. 게임 폴더에 쓰기 권한이 있어야 한다 (예: `Program Files` 아래에 두지 않는다). 강제 종료하면 저장되지 않는다.
 - **Windows가 자동으로 호환 모드를 건다:** Windows는 `Hod2.exe`를 처음 실행한 뒤 `DWM8And16BitMitigation` 호환 모드를 자동으로 등록하는 경우가 있다. thod2-native와 dgVoodoo2는 이 상태에서 시험했다.
 
 ## 왜 dgVoodoo2를 같이 배포하지 않나

@@ -155,6 +155,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - 시작할 때마다 Direct3D 장치 확인창("Attention", 예/아니요)이 뜬다.
 - 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다. 보조 모니터 위치가 이동한다.
 - 실행 중 CPU 코어 1개를 100% 쓴다. 원인은 프레임 끝의 바쁜 대기 (thod2-native `frame_wait_sleep`으로 약 25%, [platform-timing.md](docs/work/platform-timing.md)).
+- **세이브는 게임 폴더의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`, 각 987 bytes)에 정상 종료 때 쓴다.** 이 파일들은 원본과 달라질 수 있다 (테스트 사본의 `pol/tv2.bin`은 이미 다름). `C:\WINDOWS\d3dx.dat`도 쓴다 ([platform-filesystem.md](docs/work/platform-filesystem.md)).
 - 상세 결과는 [docs/work/compat-survey.md](docs/work/compat-survey.md)에 있다.
 
 ## 4. 게임 리소스 구조 (`original-game\THOTD2\`)
@@ -228,7 +229,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run 등) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

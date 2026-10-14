@@ -32,6 +32,7 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   }
   config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   config.profile = GetPrivateProfileIntW(L"debug", L"profile", 0, file) != 0;
+  config.trace_files = GetPrivateProfileIntW(L"debug", L"trace_files", 0, file) != 0;
   return config;
 }
 
