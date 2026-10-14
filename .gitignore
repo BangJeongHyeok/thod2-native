@@ -1,0 +1,15 @@
+# Build output
+/build/
+/out/
+
+# IDE
+/.vs/
+*.user
+CMakeUserPresets.json
+
+# Never commit game files or third-party binaries
+*.exe
+*.dll
+*.bin
+*.zip
+*.z[0-9][0-9]

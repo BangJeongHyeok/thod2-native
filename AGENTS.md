@@ -42,6 +42,8 @@ E:\Repos\hod2-native\
 6. 외부 도구나 라이브러리(dgVoodoo2, DDrawCompat, MinHook 등)를 받기 전에 사용자에게 파일명과 출처를 알리고 확인을 받는다.
 7. 문서는 한국어로 쓴다. 코드, 식별자, 커밋 메시지 형식은 일반적인 영어 관례를 따른다.
 8. **모든 작업은 해당 도메인의 작업 문서에 기록한다.** 아래 "작업 문서" 규칙을 따른다.
+9. 코드를 작성하기 전에 [docs/CONVENTIONS.md](docs/CONVENTIONS.md)(코딩 규칙)를 읽는다. 빌드·테스트·배포 명령은 [docs/work/build.md](docs/work/build.md)의 "빌드 방법"에 있다.
+10. 작업은 기능별 브랜치에서 하고 PR로 `main`에 머지한다. PR은 GitHub CLI(`gh`)로 만든다.
 
 ### 작업 문서
 
@@ -168,18 +170,21 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - **리버싱:** Ghidra(정적 분석)와 x32dbg(동적 분석). 분석 결과는 텍스트(함수 목록, 구조체, 포맷 문서)로 `re/`와 `docs/formats/`에 남긴다. 원본 코드를 포함하는 Ghidra 프로젝트 파일이나 디컴파일한 코드를 그대로 커밋하지 않는다.
 - **고프레임:** 게임 로직은 60Hz 고정 스텝으로 추정된다 (아케이드 → 드림캐스트 → PC 이식작). 프레임 제한만 풀면 게임 속도가 빨라질 가능성이 높다. 그래서 메인 루프를 재구현해서 로직은 60Hz로 두고 렌더링만 보간한다.
 
-## 7. 계획 중인 저장소 구조
+## 7. 저장소 구조
 
-아직 만들지 않았다. 실제로 만들면서 이 절을 갱신한다.
+`(있음)` 표시가 있는 것은 이미 만들어졌다. 나머지는 계획이다. 새로 만들면 이 절을 갱신한다.
 
 ```
 thod2-native/
-├─ AGENTS.md          ← 이 문서
-├─ docs/              ← 로드맵, 설계 문서, 사용 설명
-│  ├─ work/           ← 도메인별 작업 문서 (목표, 결정 사항, 작업 기록)
+├─ AGENTS.md          ← 이 문서 (있음)
+├─ CMakeLists.txt     ← 최상위 빌드 (있음). CMakePresets.json의 x86 프리셋 사용
+├─ config/            ← 배포용 예제 설정 thod2-native.ini (있음)
+├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 설계 문서 (있음)
+│  ├─ work/           ← 도메인별 작업 문서 (있음)
 │  └─ formats/        ← 게임 데이터 파일 포맷 문서
 ├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
 ├─ src/
+│  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API (있음)
 │  ├─ launcher/       ← thod2.exe: 데이터 경로 탐색, 원본 실행 + DLL 주입
 │  ├─ interop/        ← 원본 함수/전역 변수 주소 정의, 후킹·패치 도우미
 │  ├─ platform/       ← 창, 타이밍·메인 루프, 입력, 오디오, 파일 입출력
@@ -187,8 +192,9 @@ thod2-native/
 │  ├─ assets/         ← pol/tex/mot/cam/coli/evt 로더, 데이터 덮어쓰기
 │  ├─ game/           ← 재구현한 게임 로직
 │  └─ modapi/         ← 플러그인 로딩, 이벤트, 공개 헤더
+├─ tests/             ← 스모크 테스트 core_tests (있음)
 ├─ mods/              ← 예제 모드
-├─ tools/             ← 리소스 추출/변환, 배포 스크립트
+├─ tools/             ← deploy.ps1, compat/ 조사 스크립트 (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
