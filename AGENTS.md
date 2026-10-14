@@ -19,6 +19,8 @@ OpenRCT2, RVGL처럼 원본 게임 데이터만 있으면 현대 PC에서 잘 �
 ```
 E:\Repos\hod2-native\
 ├─ thod2-native\    ← 이 저장소 (git). 모든 작업 결과물은 여기에 둔다.
+├─ test-game\       ← 실행·패치 테스트용 사본 (git 아님, 자유롭게 수정 가능)
+├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. 현재 dgVoodoo2 v2.87.5)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
 │  ├─ THOTD2\       ← 게임 본체 (Hod2.exe, 리소스)
 │  ├─ DxWnd\        ← 재배포자가 동봉한 DxWnd v2.04.65
@@ -27,11 +29,12 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C)가 설치되어 있다. 원본 그대로 시험하려면 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
 
-1. **`original-game`과 `packed-game`은 읽기 전용으로 취급한다.** 실행·패치 테스트는 별도 사본(예: `E:\Repos\hod2-native\test-game\`)을 만들어서 한다.
+1. **`original-game`과 `packed-game`은 읽기 전용으로 취급한다.** 실행·패치 테스트는 테스트 사본 `E:\Repos\hod2-native\test-game\THOTD2\`에서 한다. 실행 조사용 스크립트는 `tools/compat/`에 있다.
 2. **게임 원본 파일(exe, 리소스, 압축본)은 절대 커밋하지 않는다.** 저장소에는 소스 코드, 분석 문서, 스크립트, 패치 데이터만 둔다.
 3. **모드 DLL은 반드시 32비트(x86 / Win32)로 빌드한다.** 게임이 32비트 프로세스라 64비트 DLL은 로드되지 않는다.
 4. 주소는 **VA(가상 주소) 기준 16진수**로 적는다. 예: `0x4AC7D5`. 이미지 베이스가 고정이라 VA가 실행할 때마다 같다.
@@ -63,7 +66,9 @@ E:\Repos\hod2-native\
 |---|---|
 | 형식 | PE32, Intel i386, GUI, Subsystem 4.00 |
 | 링크 타임스탬프 | 2001-03-22 10:52:43 UTC |
-| 파일 수정일 | 2010-07-04 (링크 날짜와 다름 → 재배포 과정에서 수정됐을 가능성 있음, 미확인) |
+| 파일 수정일 | 2010-07-04 (링크 날짜와 다름) |
+| SHA-256 | `1D71265096661CF034568FF71184FCBBED0CD9AEA0E5E2F041801C39A0FFCE69` |
+| **수정 여부** | **CD 확인을 지운 수정본으로 판단.** CD 확인 함수 `0x4A5C50`을 호출하는 곳이 없고, 초기화 코드 `0x4A5899`에 5바이트 `NOP`이 있다 ([reverse-engineering.md](docs/work/reverse-engineering.md)) |
 | 컴파일러 | MSVC (Rich 헤더, "Microsoft Visual C" 문자열. VC6로 추정) |
 | 이미지 베이스 | `0x400000` 고정 |
 | 재배치 정보 | **없음** → 항상 같은 주소에 로드됨. 고정 주소 패치와 후킹에 유리 |
@@ -95,14 +100,12 @@ E:\Repos\hod2-native\
 
 ### 게임이 읽는 설정 파일
 
-실행 파일 안의 문자열로 확인했다. 각 키의 정확한 의미와 파일 위치는 **아직 검증하지 않았다**.
-
 | 파일 | 섹션 / 키 | 비고 |
 |---|---|---|
-| `Hod2.ini` (게임 폴더에 있음) | `[Controller]` `PLAYER1_INDEX`, `PLAYER1_DEVID`, `PLAYER2_INDEX`, `PLAYER2_DEVID` | `Config.exe`가 편집 |
-| | `[Flush Setting]` `FLUSH_FRAME`, `FLUSH_POWER`, `SCREEN_LIGHT`, `G_ENABLE` | 사격 시 화면 번쩍임 관련으로 추정 |
-| `hglCore.ini` (현재 없음) | `[HGLCORE]` `FullScreen`, `DispFps`, `DispVersion`, `UseHEL`, `UseZBuffer`, `SmallTexure`, `CDCheckPass`, `AllDevicePass` | 내부 엔진 "HGL"의 숨은 설정. FPS 표시 등 개발용 옵션 |
-| `Toddebug.ini` (현재 없음) | `TOD`, `LIFE`, `RELOAD` 근처 문자열 | 디버그용으로 추정 |
+| `Hod2.ini` (게임 폴더에 있음) | `[Controller]` `PLAYER1_INDEX`, `PLAYER1_DEVID`, `PLAYER2_INDEX`, `PLAYER2_DEVID` | `Config.exe`가 편집. 키 의미는 미검증 |
+| | `[Flush Setting]` `FLUSH_FRAME`, `FLUSH_POWER`, `SCREEN_LIGHT`, `G_ENABLE` | 사격 시 화면 번쩍임, 밝기 (`Config.exe` UI 기준) |
+| `hglCore.ini` (현재 없음, **작업 폴더**에서 읽음) | `[HGLCORE]` `AllDevicePass`, `UseZBuffer`, `UseHEL`, `CDCheckPass` (값이 `t`/`T`로 시작하면 켜짐), `SmallTexure` (숫자 1/2) | **코드 분석과 실행으로 확인.** `DispFps`, `FullScreen`, `DispVersion`도 읽지만 쓰이지 않는다 (창 모드·FPS 표시 불가). 비트 표는 [reverse-engineering.md](docs/work/reverse-engineering.md) |
+| `Toddebug.ini` (현재 없음) | `TOD`, `LIFE`, `RELOAD` 근처 문자열 | 디버그용으로 추정. 미검증 |
 
 그 밖의 문자열:
 - CD 확인 메시지: `"Please insert the 'The House of The Dead 2' CD."`
@@ -110,7 +113,16 @@ E:\Repos\hod2-native\
 
 ### Config.exe
 
-PE32 i386, 135,168 bytes, 링크 2001-03-21. 패킹 없음. `Hod2.ini`를 편집하는 설정 프로그램이다.
+PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E012F313753F72D8DF7D0B063DCDE409A543F07`. 패킹 없음. MFC 앱(`Hod2_Tool`)이다.
+**컨트롤러 전용 설정 도구**다: Player1/Player2 컨트롤러 선택, "MC PC Light Gun" 속성, 화면 밝기, 번쩍임 시간·색상을 `Hod2.ini`에 저장한다. **해상도 설정은 없다.**
+인터넷 다운로드 표시(Zone.Identifier)가 남아 있어서 실행하면 Windows 보안 경고가 뜬다. 사용자 확인 없이 실행하지 않는다.
+
+### 원본 실행 동작 (2026-10-14 확인)
+
+- 시작할 때마다 Direct3D 장치 확인창("Attention", 예/아니요)이 뜬다.
+- 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다. 보조 모니터 위치가 이동한다.
+- 실행 중 CPU 코어 1개를 100% 쓴다.
+- 상세 결과는 [docs/work/compat-survey.md](docs/work/compat-survey.md)에 있다.
 
 ## 4. 게임 리소스 구조 (`original-game\THOTD2\`)
 
@@ -129,6 +141,8 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21. 패킹 없음. `Hod2.ini`를 편집
 `tex\scr_blood_green.bin`은 `00_Setup.bat`이 피 색상(초록/빨강)을 바꿀 때 덮어쓰는 파일이다.
 
 ## 5. 동봉된 실행 환경
+
+- **출처:** 인터넷 블로그(tistory)에 올라온 "무설치" 재배포본의 분할 압축. `original-game` 파일 2162개 중 1201개에 인터넷 다운로드 표시(Zone.Identifier, ZoneId=3)가 남아 있다 (`Config.exe`, `dxwnd.exe`, `cam\*.bin` 등). 표시가 있는 실행 파일은 실행할 때 Windows 보안 경고가 뜨므로 사용자 확인 없이 실행하지 않는다. `Hod2.exe`에는 표시가 없다.
 
 - **DxWnd v2.04.65** (`original-game\DxWnd\`): DirectX 게임을 후킹해서 창 모드 등으로 띄우는 도구. `dxwnd.ini`에 프로필 2개(창 화면, 전체 화면, 둘 다 640×480, `maxddinterface=7`)가 들어 있다. `proxy\` 폴더에 `ddraw.dll`, `d3d8.dll`, `d3d9.dll`, `dinput.dll`, `wing32.dll` 프록시가 있지만 게임 폴더에 복사되어 있지는 않다.
 - **`00_Setup.bat` 메뉴**
@@ -183,9 +197,10 @@ thod2-native/
 ## 8. 아직 모르는 것 (우선 확인 대상)
 
 - 메인 루프, 프레임 타이머 위치. 게임 로직이 프레임 단위인지 시간 단위인지
-- 렌더 해상도를 정하는 곳과 지원 해상도 목록 (`Config.exe`에는 해상도 옵션 문자열이 보이지 않음)
+- 640×480 디스플레이 모드를 설정하는 코드 위치 (설정으로 바꿀 방법은 없음이 확인됨)
 - 투영 행렬을 설정하는 곳 (와이드스크린용)
 - HUD/2D 스프라이트 그리기 경로
-- `hglCore.ini` 키들이 실제로 동작하는지, 파일을 어디서 읽는지
-- `Hod2.exe`가 원본에서 수정됐는지 여부 (예: CD 확인 우회 패치)
+- `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
+- Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
+- 고주사율 모니터에서 게임 속도
 - 마우스/라이트건 입력 처리 방식

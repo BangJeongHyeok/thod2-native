@@ -3,7 +3,7 @@
 - **상태:** 시작 전
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/`
-- **마지막 갱신:** 2026-10-13
+- **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
 
@@ -25,9 +25,13 @@
 ## 미해결 질문
 
 - 게임 로직이 프레임 단위인지 시간 단위인지
-- 원본이 타이밍에 쓰는 API (`GetTickCount`, `timeGetTime`, `QueryPerformanceCounter`, vsync 대기 등)
+- 원본이 타이밍에 실제로 쓰는 API. 임포트에는 `QueryPerformanceCounter`, `GetTickCount`가 있고 `timeGetTime`(winmm)은 없다. vsync 대기 여부는 미확인
 - 로직과 렌더링이 한 함수 안에 섞여 있는지
+- CPU 100% 루프가 vsync를 기다리는지, 타이머로 바쁜 대기를 하는지
 
 ## 작업 기록
 
-아직 없음.
+### 2026-10-14 — 호환성 조사에서 넘어온 내용
+
+- **결과:** 실행 중 CPU 코어 1개를 100% 사용하고, 최소화하면 1%로 떨어진다. 대기 없이 도는 루프로 추정된다. 임포트에 `QueryPerformanceCounter`, `QueryPerformanceFrequency`, `GetTickCount`, `MsgWaitForMultipleObjects`가 있다. 고주사율 모니터에서 속도는 아직 확인하지 못했다 (테스트 PC가 60Hz).
+- **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)

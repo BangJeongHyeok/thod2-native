@@ -3,7 +3,7 @@
 - **상태:** 시작 전
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/`
-- **마지막 갱신:** 2026-10-13
+- **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
 
@@ -27,7 +27,11 @@
 - 원본이 CD를 확인하는 방법 (드라이브 종류 검사, 특정 파일 확인 등)
 - 세이브 파일(`HOD2 SAVE FILE`)의 이름, 위치, 형식
 - 원본이 쓰는 파일 API (`CreateFileA`, CRT `fopen` 등)
+- 수정 안 된 원본 실행 파일을 지원할 때 CD 확인을 어떻게 처리할지 (`CDCheckPass` 비트를 켜는 방법이 가장 단순)
 
 ## 작업 기록
 
-아직 없음.
+### 2026-10-14 — 호환성 조사에서 넘어온 내용
+
+- **결과:** 현재 보유한 `Hod2.exe`는 CD 확인 호출이 NOP으로 지워진 수정본으로 판단된다 (CD 확인 함수 `0x4A5C50`은 호출하는 곳이 없음). 원래 CD 확인은 `GetLogicalDriveStringsA`로 드라이브를 돌면서 `GetDriveTypeA()==5`(CD-ROM)를 찾는다. `hglCore.ini`의 `CDCheckPass=true`로도 통과시킬 수 있다. `hglCore.ini`는 작업 폴더에서 읽는다.
+- **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)

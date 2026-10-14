@@ -3,7 +3,7 @@
 - **상태:** 시작 전
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/`
-- **마지막 갱신:** 2026-10-13
+- **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
 
@@ -26,7 +26,17 @@
 
 - 원본이 화면 모드를 바꾸는 시점과 방법 (DirectDraw `SetDisplayMode`, `SetCooperativeLevel`)
 - 렌더러 도메인과의 경계 (백버퍼 크기는 어느 쪽이 정하는지)
+- 원본 해상도는 640×480 고정이고, 이를 바꾸는 설정이 없다 (`hglCore.ini`의 `FullScreen` 키는 쓰이지 않음)
+- Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없음)
 
 ## 작업 기록
 
-아직 없음.
+### 2026-10-14 — dgVoodoo2 테두리 없는 창 모드 결과
+
+- **결과:** dgVoodoo2 시험 C 설정으로 테두리 없는 전체 화면 크기 창이 되고, 모니터 해상도와 배치가 바뀌지 않는다. Alt+Tab은 주입 방식과 사용자 실제 키보드 모두 정상이다. 사용자 플레이에서 화면과 게임 속도도 정상이었다.
+- **상세:** [compat-survey.md](compat-survey.md) "dgVoodoo2 시험 결과"
+
+### 2026-10-14 — 호환성 조사에서 넘어온 내용
+
+- **결과:** 원본은 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다 (창: `WS_POPUP` + `WS_EX_TOPMOST`). 해상도가 바뀌는 동안 보조 모니터 위치가 이동한다. 시작할 때마다 Direct3D 장치 확인창("Attention")이 뜬다. Alt+Tab은 정상이다. **Alt+Enter(창/전체 화면 전환)는 원본에서 아무 동작도 하지 않는다** (원본에 창 모드 없음).
+- **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)
