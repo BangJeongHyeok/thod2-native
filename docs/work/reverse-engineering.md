@@ -31,11 +31,15 @@
 | 주소 (VA) | 종류 | 이름 (임시) | 설명 | 근거 | 상태 |
 |---|---|---|---|---|---|
 | `0x4A5850`~ | 함수 내부 | (WinMain 계열 초기화) | `CreateWindowExA` 호출 후 `0x4A60A0` 호출 | 바이트 확인 | 추정 |
+| `0x7DC8AC` | 전역 변수 | `g_hWnd` | 게임 메인 창 핸들. `0x4A588D`에서 `CreateWindowExA` 결과를 저장. 창 클래스와 제목은 모두 `"The House of the Dead 2"` | 바이트 확인, 실행 중 창 확인 | 확인 |
+| `0x41EBA3` | 호출 | — | DirectInput 장치 `SetCooperativeLevel(g_hWnd, 9)` (vtable `+0x34`). 9 = `DISCL_EXCLUSIVE \| DISCL_BACKGROUND`. 장치 포인터는 배열 `0x7DAE18[i]`에서 꺼냄 → 컨트롤러·라이트건 장치로 추정 (키보드는 이 조합 불가) | 바이트 패턴 검색 | 확인 (장치 종류는 추정) |
+| `0x7DAE18` | 전역 변수 | `g_diDevices[]` | DirectInput 장치 포인터 배열로 추정 | `0x41EBA3` 참조 | 추정 |
 | `0x4A5899` | 패치 흔적 | — | 5바이트 `NOP`. 원래 CD 확인 함수 호출(`call`)이 있던 자리로 추정 | `0x4A5C50`을 호출하는 곳이 전혀 없음 | 추정 (강함) |
 | `0x4A5C50` | 함수 | `CheckCdRom` | `[0x7DC890]==0`이면 통과, `CDCheckPass` 비트(0x40)면 통과, 아니면 `GetLogicalDriveStringsA` + `GetDriveTypeA()==5`(CD-ROM)로 드라이브 검사 | 바이트 확인, 호출자 없음 | 확인 |
 | `0x4A6070` | 함수 | `GetHglCoreIniPath` | 인자가 NULL이면 기본값 `"hglCore.ini"`(`[0x5976C4]`)를 `GetFullPathNameA`로 절대 경로로 바꿔 `0x7DD660`에 저장. **현재 작업 폴더 기준** | 바이트 확인 | 확인 |
 | `0x4A60A0` | 함수 | `LoadHglCoreIni` | `[HGLCORE]` 키를 `GetPrivateProfileStringA`로 읽고 첫 글자가 `t`/`T`면 `0x7DCE00`에 비트 OR. `SmallTexure`는 `GetPrivateProfileIntA` (1 → 0x08, 2 → 0x10) | 바이트 확인 | 확인 |
 | `0x7DCE00` | 전역 변수 | `g_hglCoreFlags` | 아래 비트 표 | 쓰기/읽기 위치 확인 | 확인 |
+| `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
 | `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
 
 ### `g_hglCoreFlags` (`0x7DCE00`) 비트
@@ -67,8 +71,14 @@
 - `0x4A5899`의 NOP 자리에 원래 무엇이 있었는지 (수정 안 된 원본 `Hod2.exe`가 있으면 비교 가능)
 - 원래 CD 확인 실패 시 동작 (메시지 `"Please insert the 'The House of The Dead 2' CD."` 출력 위치)
 - 실행 파일에서 수정된 곳이 `0x4A5899` 말고도 있는지
+- 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-14 — DirectInput 협력 수준과 창 핸들 (관련: G1)
+
+- **한 일:** `call [reg+0x34]` 앞에 작은 상수 push가 있는 패턴을 찾아 DirectInput `SetCooperativeLevel` 호출을 찾았다.
+- **결과:** `0x41EBA3` 한 곳. 위 "확인된 주소" 표에 `g_hWnd`(`0x7DC8AC`), `g_diDevices[]`(`0x7DAE18`)와 함께 정리했다. 원래 Alt+Tab 문제 원인으로 의심했으나 사용자가 Alt+Enter와 혼동한 것으로 확인되어 그 가설은 폐기했다.
 
 ### 2026-10-14 — `hglCore.ini`와 CD 확인 코드 분석 (관련: G1-2, G1-3)
 

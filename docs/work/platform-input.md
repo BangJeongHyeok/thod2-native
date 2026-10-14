@@ -35,3 +35,4 @@
 
 - **결과:** `Config.exe`(MFC 앱 `Hod2_Tool`)는 Player1/Player2 컨트롤러 선택, "MC PC Light Gun" 속성, 화면 밝기, 번쩍임 시간·색상을 설정해서 `Hod2.ini`에 저장한다. `Hod2.exe`와 `Config.exe` 둘 다 `DeviceIoControl`을 임포트한다 (당시 전용 라이트건 드라이버와 통신한 것으로 추정). 사용자 플레이 결과 마우스 조준은 정상이다.
 - **상세:** [compat-survey.md](compat-survey.md), [reverse-engineering.md](reverse-engineering.md)
+- **추가:** DirectInput 장치 `SetCooperativeLevel(g_hWnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND)` 호출이 `0x41EBA3`에 있다. 장치 배열 `0x7DAE18`에서 꺼내므로 컨트롤러·라이트건 장치로 추정된다.

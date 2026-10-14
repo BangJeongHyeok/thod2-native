@@ -20,6 +20,7 @@ OpenRCT2, RVGL처럼 원본 게임 데이터만 있으면 현대 PC에서 잘 �
 E:\Repos\hod2-native\
 ├─ thod2-native\    ← 이 저장소 (git). 모든 작업 결과물은 여기에 둔다.
 ├─ test-game\       ← 실행·패치 테스트용 사본 (git 아님, 자유롭게 수정 가능)
+├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. 현재 dgVoodoo2 v2.87.5)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
 │  ├─ THOTD2\       ← 게임 본체 (Hod2.exe, 리소스)
 │  ├─ DxWnd\        ← 재배포자가 동봉한 DxWnd v2.04.65
@@ -28,6 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C)가 설치되어 있다. 원본 그대로 시험하려면 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -111,7 +113,7 @@ E:\Repos\hod2-native\
 
 ### Config.exe
 
-PE32 i386, 135,168 bytes, 링크 2001-03-21. 패킹 없음. MFC 앱(`Hod2_Tool`)이다.
+PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E012F313753F72D8DF7D0B063DCDE409A543F07`. 패킹 없음. MFC 앱(`Hod2_Tool`)이다.
 **컨트롤러 전용 설정 도구**다: Player1/Player2 컨트롤러 선택, "MC PC Light Gun" 속성, 화면 밝기, 번쩍임 시간·색상을 `Hod2.ini`에 저장한다. **해상도 설정은 없다.**
 인터넷 다운로드 표시(Zone.Identifier)가 남아 있어서 실행하면 Windows 보안 경고가 뜬다. 사용자 확인 없이 실행하지 않는다.
 
@@ -139,6 +141,8 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21. 패킹 없음. MFC 앱(`Hod2_Tool`)
 `tex\scr_blood_green.bin`은 `00_Setup.bat`이 피 색상(초록/빨강)을 바꿀 때 덮어쓰는 파일이다.
 
 ## 5. 동봉된 실행 환경
+
+- **출처:** 인터넷 블로그(tistory)에 올라온 "무설치" 재배포본의 분할 압축. `original-game` 파일 2162개 중 1201개에 인터넷 다운로드 표시(Zone.Identifier, ZoneId=3)가 남아 있다 (`Config.exe`, `dxwnd.exe`, `cam\*.bin` 등). 표시가 있는 실행 파일은 실행할 때 Windows 보안 경고가 뜨므로 사용자 확인 없이 실행하지 않는다. `Hod2.exe`에는 표시가 없다.
 
 - **DxWnd v2.04.65** (`original-game\DxWnd\`): DirectX 게임을 후킹해서 창 모드 등으로 띄우는 도구. `dxwnd.ini`에 프로필 2개(창 화면, 전체 화면, 둘 다 640×480, `maxddinterface=7`)가 들어 있다. `proxy\` 폴더에 `ddraw.dll`, `d3d8.dll`, `d3d9.dll`, `dinput.dll`, `wing32.dll` 프록시가 있지만 게임 폴더에 복사되어 있지는 않다.
 - **`00_Setup.bat` 메뉴**
