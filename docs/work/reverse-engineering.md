@@ -39,6 +39,11 @@
 | `0x4A6070` | 함수 | `GetHglCoreIniPath` | 인자가 NULL이면 기본값 `"hglCore.ini"`(`[0x5976C4]`)를 `GetFullPathNameA`로 절대 경로로 바꿔 `0x7DD660`에 저장. **현재 작업 폴더 기준** | 바이트 확인 | 확인 |
 | `0x4A60A0` | 함수 | `LoadHglCoreIni` | `[HGLCORE]` 키를 `GetPrivateProfileStringA`로 읽고 첫 글자가 `t`/`T`면 `0x7DCE00`에 비트 OR. `SmallTexure`는 `GetPrivateProfileIntA` (1 → 0x08, 2 → 0x10) | 바이트 확인 | 확인 |
 | `0x7DCE00` | 전역 변수 | `g_hglCoreFlags` | 아래 비트 표 | 쓰기/읽기 위치 확인 | 확인 |
+| `0x4AC861` | 호출 위치 | — | CRT 시작 코드의 첫 `GetCommandLineA` 호출 직후 주소 (엔트리 `0x4AC7D5` 안). 프로세스에서 가장 이른 로더 락 밖 시점 | dinput_probe 실행 기록 | 확인 |
+| `0x4A588B` | 호출 위치 | — | 메인 창 `CreateWindowExA` 호출 직후 주소. 바로 뒤 `0x4A588D`에서 `g_hWnd`에 저장 | dinput_probe 실행 기록 | 확인 |
+| `0x4BD209` | 호출 위치 | — | `DirectDrawCreateEx` 호출 직후 주소. 시작할 때 3번 호출됨 (장치 열거) | dinput_probe 실행 기록 | 확인 |
+| `0x4A4758` | 호출 위치 | — | 시작 확인창 `MessageBoxA("...will be used.", "Attention", MB_YESNO \| MB_ICONEXCLAMATION)` 호출 직후 주소 | dinput_probe 실행 기록 | 확인 |
+| `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |
 | `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
 | `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
 
@@ -74,6 +79,11 @@
 - 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-14 — 시작 순서와 호출 위치 (관련: G1)
+
+- **한 일:** 측정용 `dinput.dll` 프록시로 시작 과정의 API 호출 순서와 복귀 주소를 기록했다 (loader.md "측정 결과: 초기화 시점").
+- **결과:** "확인된 주소" 표에 호출 위치 5개를 추가했다. 복귀 주소는 `call` 명령 바로 다음 주소다. 시작 확인창은 `MessageBoxA`로 띄운다 (`type 0x34`).
 
 ### 2026-10-14 — DirectInput 협력 수준과 창 핸들 (관련: G1)
 

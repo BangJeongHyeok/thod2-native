@@ -43,6 +43,7 @@ ctest --preset x86-release          # 테스트
 |---|---|---|
 | `thod2_core.dll` | `build/x86/bin/<Config>/` | 게임에 들어갈 코어 DLL. 의존 DLL은 `bcrypt.dll`, `KERNEL32.dll`뿐 (정적 CRT) |
 | `core_tests.exe` | 같은 폴더 | 스모크 테스트 |
+| `dinput.dll` | 같은 폴더 | 측정용 프록시 `experiments/dinput_probe` (로더 결정용, 배포 대상 아님) |
 | `thod2_core_lib.lib` | `build/x86/lib/<Config>/` | 코어 내부 구현 (DLL과 테스트가 링크) |
 
 `deploy.ps1`은 `thod2_core.dll`을 복사하고, 게임 폴더에 `thod2-native.ini`가 없을 때만 `config/thod2-native.ini`를 복사한다. `-Remove`는 DLL과 로그를 지우고 ini는 남긴다 (로컬 설정 보존).

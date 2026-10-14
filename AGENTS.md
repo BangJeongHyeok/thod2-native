@@ -194,7 +194,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 
 자세한 내용은 [docs/ROADMAP.md](docs/ROADMAP.md)에 있다.
 
-- **진행 방식 (OpenRCT2 방식):** 런처 또는 프록시 DLL로 원본 `Hod2.exe`에 우리 DLL을 주입한다. MinHook으로 원본 함수를 가로채서 우리가 재구현한 함수로 하나씩 교체한다. 어느 시점에서든 게임은 처음부터 끝까지 플레이 가능해야 한다.
+- **진행 방식 (OpenRCT2 방식):** 게임 폴더의 **`dinput.dll` 프록시**로 원본 `Hod2.exe`에 우리 DLL을 올린다 (2026-10-14 결정, [loader.md](docs/work/loader.md)). 초기화는 첫 `GetCommandLineA` 호출에서 한다. MinHook으로 원본 함수를 가로채서 우리가 재구현한 함수로 하나씩 교체한다. 어느 시점에서든 게임은 처음부터 끝까지 플레이 가능해야 한다.
 - **교체 순서:** 플랫폼 계층(창, 타이밍, 입력, 오디오, 파일) → 렌더러 → 자산 로더 → 게임 로직. 최종 목표는 원본 코드 없이 우리 실행 파일 + 원본 데이터만으로 독립 실행하는 것이다.
 - **렌더링:** DX7 API가 아니라 게임의 그리기 함수 수준에서 가로채서 자체 렌더 인터페이스(1차 백엔드 D3D11)로 넘긴다. 초기 호환성 확보용으로 기존 래퍼(dgVoodoo2, DDrawCompat)를 임시로 쓸 수 있다.
 - **확장성:** 플러그인 DLL, 이벤트 훅, 데이터 덮어쓰기 폴더(RVGL 방식)를 모드 API로 제공한다.
@@ -216,7 +216,8 @@ thod2-native/
 ├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API (있음)
-│  ├─ launcher/       ← thod2.exe: 데이터 경로 탐색, 원본 실행 + DLL 주입
+│  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (로더 방식으로 결정됨)
+│  ├─ launcher/       ← (보류) 필요해지면 만드는 런처 thod2.exe
 │  ├─ interop/        ← 원본 함수/전역 변수 주소 정의, 후킹·패치 도우미
 │  ├─ platform/       ← 창, 타이밍·메인 루프, 입력, 오디오, 파일 입출력
 │  ├─ renderer/       ← 렌더 인터페이스와 백엔드 (D3D11 등)
@@ -224,6 +225,7 @@ thod2-native/
 │  ├─ game/           ← 재구현한 게임 로직
 │  └─ modapi/         ← 플러그인 로딩, 이벤트, 공개 헤더
 ├─ tests/             ← 스모크 테스트 core_tests (있음)
+├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
 ├─ tools/             ← deploy.ps1, compat/ 조사 스크립트 (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
