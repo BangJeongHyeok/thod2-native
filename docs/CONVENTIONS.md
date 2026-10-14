@@ -43,7 +43,8 @@
 
 ## 후킹
 
-- 후킹·패치 도우미는 `src/interop/`(`thod2::interop`)에 둔다. 지금 있는 것: `HookImport` (IAT 후킹), `HookVtable` (COM 함수 표 후킹).
+- 후킹·패치 도우미는 `src/interop/`(`thod2::interop`)에 둔다. 지금 있는 것: `HookImport` (IAT 후킹), `HookVtable` (COM 함수 표 후킹), `PatchBytes`/`PatchUint32` (코드·데이터 바이트 패치).
+- 원본 코드·데이터 바이트를 바꿀 때는 반드시 `PatchBytes`/`PatchUint32`로 **원래 값이 예상과 같은지 확인한 뒤** 바꾼다. 다르면 패치하지 않고 경고 로그를 남긴다.
 - 기능 단위 패치는 `src/core/patches/`에 파일 하나씩 두고, 설정으로 켜고 끌 수 있게 한다. 설치는 `core.cpp`의 `ApplyPatches`에서 한다.
 - IAT 후킹은 대상 함수가 처음 불리기 전에 설치한다. 최적화된 코드는 IAT 값을 레지스터에 담아 재사용할 수 있어서, 실행 중에 바꾸면 다음 함수 호출부터 반영된다.
 - **DirectDraw 함수 표는 Windows 호환 모드(`apphelp.dll`)도 덮어쓴다.** 객체가 만들어질 때마다 다시 덮어쓰므로, 우리 후킹은 객체·버퍼가 만들어질 때마다 다시 설치하고 그 칸에 있던 함수(apphelp 또는 ddraw)를 원본으로 삼는다 (`ddraw_trace.cpp`의 `Hook()` 참고).

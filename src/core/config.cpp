@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include <cwchar>
+
 namespace thod2::core {
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
@@ -17,6 +19,17 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.allow_unknown_exe = GetPrivateProfileIntW(L"core", L"allow_unknown_exe", 0, file) != 0;
   config.skip_device_dialog =
       GetPrivateProfileIntW(L"display", L"skip_device_dialog", 1, file) != 0;
+  config.frame_wait_sleep = GetPrivateProfileIntW(L"timing", L"frame_wait_sleep", 1, file) != 0;
+  wchar_t margin[32] = {};
+  GetPrivateProfileStringW(L"timing", L"frame_wait_margin_ms", L"", margin, ARRAYSIZE(margin), file);
+  if (margin[0] != L'\0') {
+    wchar_t* end = nullptr;
+    const float value = std::wcstof(margin, &end);
+    // Keep the default for unparsable or unreasonable values.
+    if (end != margin && value >= 0.0f && value <= 16.0f) {
+      config.frame_wait_margin_ms = value;
+    }
+  }
   config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   config.profile = GetPrivateProfileIntW(L"debug", L"profile", 0, file) != 0;
   return config;

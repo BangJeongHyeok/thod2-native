@@ -59,7 +59,7 @@
 | `0x7DCE30` | 전역 변수 (float) | — | 프레임 시간 보정 누적값 (±10ms로 제한) | 바이트 해석 | 추정 |
 | `0x7DCE38` | 전역 변수 | — | 직전 프레임의 QPC 값 (하위 32비트) | 바이트 해석 | 확인 |
 | `0x7DCE3C` | 전역 변수 (float) | — | QPC 주파수 | 바이트 해석 | 확인 |
-| `0x7DCDFC` | 전역 변수 (함수 포인터) | `g_frameWaitCallback` | 대기 루프에서 남은 ms를 인자로 부르는 콜백. `0x49DF0B`에서 `0x49E0C0` 저장 (즉시값 위치 `0x49DF11`) | 바이트 해석 | 확인 |
+| `0x7DCDFC` | 전역 변수 (함수 포인터) | `g_frameWaitCallback` | 대기 루프에서 남은 ms를 인자로 부르는 콜백. `0x49DF0B`에서 `0x49E0C0` 저장 (즉시값 위치 `0x49DF11`). 코드: `hod2::kFrameWaitCallbackSlot`, `kFrameWaitCallbackImmediate` (frame_wait_sleep이 즉시값을 바꿈) | 바이트 해석 | 확인 |
 | `0x49E0C0` | 함수 | (대기 콜백) | `cdecl(float 남은 ms)`. 1.0ms보다 크면 `0x41D5D0`으로 점프 | 바이트 해석 | 확인 |
 | `0x41D620` | 함수 | (작업 대기열 처리) | 64칸 순환 대기열(`0x7D8EB0`, 항목 16바이트)에서 하나를 꺼내 `0x41D670`으로 처리. 읽기 위치 `[0x7D8AA8]`, 쓰기 위치 `[0x7D8AAC]`. 처리 함수 표 `0x587C30` | 바이트 해석 | 확인 (작업 종류는 미확인) |
 | `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |

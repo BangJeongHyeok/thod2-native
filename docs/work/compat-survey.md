@@ -46,7 +46,7 @@
 | 3 | 다중 모니터 | 게임이 해상도를 바꾸는 동안 **보조 모니터의 위치가 이동한다** (`(1920,511)` → `(640,480)`). 종료하거나 Alt+Tab으로 나가면 원래대로 돌아온다 | 모니터 2개 환경에서 실행 | platform-display |
 | 4 | Alt+Tab | 나가기: 창 최소화, 해상도 복구, CPU 사용 1%로 정지. 돌아오기(Alt+Tab, 작업 표시줄 복원 둘 다): 640×480으로 다시 바뀌고 화면 갱신 계속됨 → **정상**. 사용자 실제 키보드로도 정상 (dgVoodoo2 시험 C) | `keybd_event`로 Alt+Tab 전송, 사용자 확인 | platform-display |
 | 5 | **Alt+Enter** | **아무 반응이 없다** (깜빡임, 해상도 변경 없음). 원본에는 창 모드가 없다 (`hglCore.ini`의 `FullScreen` 키도 쓰이지 않음). 처음에 "Alt+Tab이 안 된다"로 보고됐으나 사용자가 Alt+Enter와 혼동한 것으로 확인 | 실제 키보드로 Alt+Enter | platform-display |
-| 6 | CPU 사용 | 실행 중 **CPU 코어 1개를 100% 사용** (대기 없이 도는 루프로 추정). 최소화하면 1% | 5초간 프로세스 CPU 시간 측정 | platform-timing |
+| 6 | CPU 사용 | 실행 중 **CPU 코어 1개를 100% 사용** (대기 없이 도는 루프로 추정). 최소화하면 1% | 5초간 프로세스 CPU 시간 측정 | platform-timing. **해결:** thod2-native `frame_wait_sleep`으로 약 25% (platform-timing G2) |
 | 7 | 고주사율 모니터 속도 | **미확인** (테스트 PC 모니터가 60Hz) | — | platform-timing |
 | 8 | CD 확인 | CD 없이 실행됨. 실행 파일의 CD 확인 호출이 NOP으로 지워진 것으로 보임 (reverse-engineering 참고) | — | platform-filesystem, loader |
 | 9 | 숨은 설정 | `hglCore.ini`의 `DispFps`, `FullScreen`, `DispVersion`은 읽기만 하고 쓰이지 않음. 창 모드나 FPS 표시를 설정으로 켤 수 없음 | `hglCore.ini` 작성 후 실행 | reverse-engineering |
