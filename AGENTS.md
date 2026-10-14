@@ -243,5 +243,5 @@ thod2-native/
 - HUD/2D 스프라이트 그리기 경로
 - `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
 - Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
-- 고주사율 모니터에서 게임 속도
+- 게임 로직이 프레임 수에 묶여 있는지 (고주사율에서 빨라지지 않는 것은 시뮬레이션으로 확인됨, [platform-timing.md](docs/work/platform-timing.md) G3)
 - 마우스/라이트건 입력 처리 방식

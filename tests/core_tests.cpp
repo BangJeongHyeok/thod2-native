@@ -67,7 +67,8 @@ void TestConfig() {
   Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe &&
             missing.skip_device_dialog && !missing.trace_ddraw && !missing.profile &&
             missing.frame_wait_sleep && missing.frame_wait_margin_ms == 1.0f &&
-            !missing.trace_files && missing.redirect_user_files,
+            !missing.trace_files && missing.redirect_user_files &&
+            missing.flip_override == 0,
         "LoadConfig defaults");
 
   const auto file = TestDir() / L"core_tests_config.ini";
@@ -76,7 +77,7 @@ void TestConfig() {
             "[display]\r\nskip_device_dialog = 0\r\n"
             "[files]\r\nredirect_user_files = 0\r\n"
             "[timing]\r\nframe_wait_sleep = 0\r\nframe_wait_margin_ms = 2.5\r\n"
-            "[debug]\r\ntrace_ddraw = 1\r\nprofile = 1\r\ntrace_files = 1\r\n");
+            "[debug]\r\ntrace_ddraw = 1\r\nprofile = 1\r\ntrace_files = 1\r\nflip_override = 2\r\n");
   const auto parsed = thod2::core::LoadConfig(file);
   Check(parsed.log_level == LogLevel::Debug, "LoadConfig log_level = debug");
   Check(parsed.allow_unknown_exe, "LoadConfig allow_unknown_exe = 1");
@@ -85,6 +86,7 @@ void TestConfig() {
   Check(parsed.profile, "LoadConfig profile = 1");
   Check(parsed.trace_files, "LoadConfig trace_files = 1");
   Check(!parsed.redirect_user_files, "LoadConfig redirect_user_files = 0");
+  Check(parsed.flip_override == 2, "LoadConfig flip_override = 2");
   Check(!parsed.frame_wait_sleep, "LoadConfig frame_wait_sleep = 0");
   Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
 

@@ -87,7 +87,8 @@ std::string CapsFlags(DWORD f) {
 
 std::string FlipFlags(DWORD f) {
   return Flags(f, {{DDFLIP_WAIT, "WAIT"}, {DDFLIP_EVEN, "EVEN"}, {DDFLIP_ODD, "ODD"},
-                   {DDFLIP_NOVSYNC, "NOVSYNC"}, {DDFLIP_DONOTWAIT, "DONOTWAIT"}});
+                   {DDFLIP_NOVSYNC, "NOVSYNC"}, {DDFLIP_INTERVAL2, "INTERVAL2"},
+                   {DDFLIP_DONOTWAIT, "DONOTWAIT"}});
 }
 
 std::string DescribeSurface(const DDSURFACEDESC2* d) {
@@ -274,10 +275,20 @@ struct FrameIntervals {
 };
 FrameIntervals g_frame_intervals;
 
+// Experiment ([debug] flip_override): changes the flags of the primary Flip to
+// simulate other refresh rates. 1 = DDFLIP_NOVSYNC (like an unlimited refresh
+// rate), 2 = DDFLIP_INTERVAL2 (every second vertical blank, 30 Hz on 60 Hz).
+int g_flip_override = 0;
+
 HRESULT STDMETHODCALLTYPE H_S_Flip(IDirectDrawSurface7* self, IDirectDrawSurface7* target,
                                    DWORD flags) {
   if (self == g_primary) {
     g_frame_intervals.Add();
+    if (g_flip_override == 1) {
+      flags |= DDFLIP_NOVSYNC;
+    } else if (g_flip_override == 2) {
+      flags |= DDFLIP_INTERVAL2;
+    }
   }
   const bool detail = g_flip.Hit();
   const HRESULT hr = o_S_Flip(self, target, flags);
@@ -541,7 +552,8 @@ FARPROC WINAPI H_GetProcAddress(HMODULE module, LPCSTR name) {
 
 }  // namespace
 
-bool InstallDDrawTrace() {
+bool InstallDDrawTrace(int flip_override) {
+  g_flip_override = flip_override;
   HMODULE exe = GetModuleHandleW(nullptr);
   o_LoadLibraryA = static_cast<LoadLibraryAFn>(interop::HookImport(
       exe, "KERNEL32.dll", "LoadLibraryA", reinterpret_cast<void*>(H_LoadLibraryA)));
@@ -554,7 +566,7 @@ bool InstallDDrawTrace() {
     Log(LogLevel::Warn, "trace_ddraw: could not hook DDRAW!DirectDrawCreateEx");
     return false;
   }
-  Log(LogLevel::Info, "trace_ddraw: installed");
+  Log(LogLevel::Info, "trace_ddraw: installed (flip_override {})", flip_override);
   return true;
 }
 

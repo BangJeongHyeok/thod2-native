@@ -69,6 +69,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
 | `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
 | `[debug] profile` | `0` | 개발용. 메인 스레드가 CPU를 어디에 쓰는지 5초마다 로그에 기록 |
+| `[debug] flip_override` | `0` | 개발용 실험. `trace_ddraw`와 함께 `1`이면 수직 동기화 없이, `2`이면 2번에 한 번 화면 전환 |
 | `[debug] trace_files` | `0` | 개발용. 게임의 파일 접근(경로, 읽기·쓰기, 호출 위치)을 로그에 기록 |
 
 ## 되돌리기
