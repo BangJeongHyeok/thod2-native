@@ -17,6 +17,7 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.allow_unknown_exe = GetPrivateProfileIntW(L"core", L"allow_unknown_exe", 0, file) != 0;
   config.skip_device_dialog =
       GetPrivateProfileIntW(L"display", L"skip_device_dialog", 1, file) != 0;
+  config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   return config;
 }
 

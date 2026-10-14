@@ -29,7 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`)가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`)가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -189,6 +189,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - `Hod2.exe`를 DxWnd 없이 직접 실행한 기록이 있다 (PCA 로그).
 - 레지스트리에 `Hod2.exe = DWM8And16BitMitigation` 호환성 플래그가 붙어 있다 (Windows가 자동으로 붙인 것으로 보임). 이 플래그는 **압축을 처음 풀었던 경로(`...\unpack\THOTD2\Hod2.exe`) 기준**이라 지금 경로에는 적용되지 않을 수 있다.
 - `~ WINXPSP3` 플래그는 등록되어 있지 않다.
+- **Windows PCA가 `DWM8And16BitMitigation` 호환 모드를 `Hod2.exe`가 있는 경로마다 자동으로 등록한다** (HKCU, HKLM). 테스트 사본(`test-game`)과 `original-game`에도 등록되어 있다. 이 호환 모드는 `apphelp.dll`이 DirectDraw 함수 표를 덮어쓰는 방식으로 동작한다 ([platform-display.md](docs/work/platform-display.md) "화면 모드 분석 결과").
 
 ## 6. 기술 방향 요약
 
@@ -196,7 +197,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 
 - **진행 방식 (OpenRCT2 방식):** 게임 폴더의 **`dinput.dll` 프록시**로 원본 `Hod2.exe`에 우리 DLL을 올린다 (2026-10-14 결정, [loader.md](docs/work/loader.md)). 초기화는 첫 `GetCommandLineA` 호출에서 한다. MinHook으로 원본 함수를 가로채서 우리가 재구현한 함수로 하나씩 교체한다. 어느 시점에서든 게임은 처음부터 끝까지 플레이 가능해야 한다.
 - **교체 순서:** 플랫폼 계층(창, 타이밍, 입력, 오디오, 파일) → 렌더러 → 자산 로더 → 게임 로직. 최종 목표는 원본 코드 없이 우리 실행 파일 + 원본 데이터만으로 독립 실행하는 것이다.
-- **렌더링:** DX7 API가 아니라 게임의 그리기 함수 수준에서 가로채서 자체 렌더 인터페이스(1차 백엔드 D3D11)로 넘긴다. 초기 호환성 확보용으로 기존 래퍼(dgVoodoo2, DDrawCompat)를 임시로 쓸 수 있다.
+- **렌더링:** DX7 API가 아니라 게임의 그리기 함수 수준에서 가로채서 자체 렌더 인터페이스(1차 백엔드 D3D11)로 넘긴다. **그 전까지 창 모드·Alt+Enter·고해상도는 dgVoodoo2(DX7 → D3D11 래퍼)로 처리한다** (2026-10-14 결정, [platform-display.md](docs/work/platform-display.md)).
 - **확장성:** 플러그인 DLL, 이벤트 훅, 데이터 덮어쓰기 폴더(RVGL 방식)를 모드 API로 제공한다.
 - **리버싱:** Ghidra(정적 분석)와 x32dbg(동적 분석). 분석 결과는 텍스트(함수 목록, 구조체, 포맷 문서)로 `re/`와 `docs/formats/`에 남긴다. 원본 코드를 포함하는 Ghidra 프로젝트 파일이나 디컴파일한 코드를 그대로 커밋하지 않는다.
 - **고프레임:** 게임 로직은 60Hz 고정 스텝으로 추정된다 (아케이드 → 드림캐스트 → PC 이식작). 프레임 제한만 풀면 게임 속도가 빨라질 가능성이 높다. 그래서 메인 루프를 재구현해서 로직은 60Hz로 두고 렌더링만 보간한다.
@@ -218,7 +219,7 @@ thod2-native/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
 │  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
 │  ├─ launcher/       ← (보류) 필요해지면 만드는 런처 thod2.exe
-│  ├─ interop/        ← 후킹·패치 도우미 (있음: IAT 후킹). 이후 원본 함수/전역 변수 주소 정의
+│  ├─ interop/        ← 후킹·패치 도우미 (있음: IAT·함수 표 후킹, 원본 주소 상수 hod2_addresses.h)
 │  ├─ platform/       ← 창, 타이밍·메인 루프, 입력, 오디오, 파일 입출력
 │  ├─ renderer/       ← 렌더 인터페이스와 백엔드 (D3D11 등)
 │  ├─ assets/         ← pol/tex/mot/cam/coli/evt 로더, 데이터 덮어쓰기
@@ -227,7 +228,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, compat/ 조사 스크립트 (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, compat/ 조사 스크립트(runtest, alttab-run, altenter-run 등) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

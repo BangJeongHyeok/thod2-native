@@ -31,6 +31,12 @@
 
 ## 작업 기록
 
+### 2026-10-14 — 화면 모드 분석에서 넘어온 내용
+
+- **결과:** 게임은 매 프레임 primary 버퍼에 `Flip(NULL, DDFLIP_WAIT)`를 부른다 (호출 위치 `0x4B9896`). 60Hz 모니터에서 **초당 59.7~59.8회**로, 프레임 속도가 수직 동기화(vsync)에 묶여 있다. 이 상태에서도 CPU 코어 1개를 100% 쓴다.
+  - **가설:** 게임 속도가 프레임 수에 묶여 있다면, 120Hz 이상 모니터에서 `Flip`이 더 자주 끝나서 게임이 빨라질 수 있다. 고주사율 환경에서 확인 필요 (G1-5, compat-survey).
+- **상세:** [platform-display.md](platform-display.md) "화면 모드 분석 결과"
+
 ### 2026-10-14 — 호환성 조사에서 넘어온 내용
 
 - **결과:** 실행 중 CPU 코어 1개를 100% 사용하고, 최소화하면 1%로 떨어진다. 대기 없이 도는 루프로 추정된다. 임포트에 `QueryPerformanceCounter`, `QueryPerformanceFrequency`, `GetTickCount`, `MsgWaitForMultipleObjects`가 있다. 고주사율 모니터에서 속도는 아직 확인하지 못했다 (테스트 PC가 60Hz).

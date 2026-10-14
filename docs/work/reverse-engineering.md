@@ -43,6 +43,13 @@
 | `0x4A588B` | 호출 위치 | — | 메인 창 `CreateWindowExA` 호출 직후 주소. 바로 뒤 `0x4A588D`에서 `g_hWnd`에 저장 | dinput_probe 실행 기록 | 확인 |
 | `0x4BD209` | 호출 위치 | — | `DirectDrawCreateEx` 호출 직후 주소. 시작할 때 3번 호출됨 (장치 열거) | dinput_probe 실행 기록 | 확인 |
 | `0x4A4758` | 호출 위치 | — | 시작 확인창 `MessageBoxA("...will be used.", "Attention", MB_YESNO \| MB_ICONEXCLAMATION)` 호출 직후 주소 | dinput_probe 실행 기록. 코드: `hod2::kDeviceDialogMessageBoxReturn` (skip_device_dialog에서 사용) | 확인 |
+| `0x4BD209` 등 | 호출 위치 | — | 장치 열거: `DirectDrawCreateEx`(`0x4BD209`), `SetCooperativeLevel(NULL, NORMAL)`(`0x4BD219`, `0x4BD2DE`), `QueryInterface(IID_IDirect3D7)`(`0x4BD2F3`) | ddraw_trace 기록 | 확인 |
+| `0x4BC704` | 호출 위치 | — | `SetCooperativeLevel(hwnd, FULLSCREEN \| ALLOWREBOOT \| EXCLUSIVE)` 직후 주소 | ddraw_trace 기록 | 확인 |
+| `0x4BC7EC` | 호출 위치 | — | `SetDisplayMode(640, 480, 16, 0, 0)` 직후 주소 | ddraw_trace 기록 | 확인 |
+| `0x4BC94F` | 호출 위치 | — | primary 플립 체인 `CreateSurface(PRIMARY \| FLIP \| COMPLEX \| 3DDEVICE, 백버퍼 1)` 직후 주소 | ddraw_trace 기록 | 확인 |
+| `0x4BACE7` | 호출 위치 | — | Z 버퍼 `CreateSurface(ZBUFFER, 640×480, 16bit)` 직후 주소 | ddraw_trace 기록 | 확인 |
+| `0x4B9896` | 호출 위치 | — | 매 프레임 `Flip(NULL, DDFLIP_WAIT)` 직후 주소. 메인 루프 안으로 추정 | ddraw_trace 기록 | 확인 |
+| `0x4A4B69` | 호출 위치 | — | `TestCooperativeLevel` 직후 주소. 화면을 잃었을 때(Alt+Tab) 반복 호출 | ddraw_trace 기록 | 확인 |
 | `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |
 | `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
 | `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
@@ -79,6 +86,11 @@
 - 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-14 — DirectDraw 호출 위치 (관련: G1)
+
+- **한 일:** `ddraw_trace`로 DirectDraw 호출과 복귀 주소를 기록했다 ([platform-display.md](platform-display.md) "화면 모드 분석 결과").
+- **결과:** "확인된 주소" 표에 호출 위치 7종을 추가했다. 매 프레임 `Flip` 호출 위치 `0x4B9896`은 메인 루프를 찾는 출발점이 된다.
 
 ### 2026-10-14 — 시작 순서와 호출 위치 (관련: G1)
 

@@ -92,7 +92,7 @@
 | GPU | NVIDIA GeForce RTX 3080 (드라이버 32.0.16.1714) |
 | 기타 디스플레이 어댑터 | Parsec Virtual Display Adapter |
 | 모니터 | 2대. DISPLAY2(주) 1920×1080 60Hz `(0,0)`, DISPLAY1 1920×1080 60Hz `(1920,511)` |
-| 호환성 플래그 | 테스트 사본 경로에는 없음 |
+| 호환성 플래그 | 첫 실행 때는 없었음. **이후 Windows PCA가 `DWM8And16BitMitigation`을 자동 등록** (HKCU, HKLM) |
 | 실행 파일 | `Hod2.exe` SHA-256 `1D71265096661CF034568FF71184FCBBED0CD9AEA0E5E2F041801C39A0FFCE69` |
 
 ## 결정 사항
@@ -113,6 +113,15 @@
 - 게임이 실제로 몇 fps로 그리는지, vsync를 기다리는지
 
 ## 작업 기록
+
+### 2026-10-14 — Windows 자동 호환 모드 발견 (화면 모드 분석에서 넘어온 내용)
+
+- **결과:**
+  - Windows PCA가 테스트 사본 `Hod2.exe`에 `DWM8And16BitMitigation` 호환 모드를 자동으로 등록했다 (HKCU, HKLM). 첫 조사 때(2026-10-14 00시)는 없었다. **그 이후의 측정(dgVoodoo2 시험 포함)은 이 호환 모드가 켜진 상태였다.**
+  - 이 호환 모드는 `apphelp.dll`이 DirectDraw 함수 표를 덮어쓰는 방식으로 동작한다.
+  - Windows 기본 호환성 데이터베이스(`sysmain.sdb`)에는 HOTD 1편(`THOTD.exe`)만 있고 2편은 없다.
+  - Alt+Enter: dgVoodoo2 시험 C에 `DisableAltEnterToToggleScreenMode = false`를 더하면 테두리 없는 창 ↔ 전체 화면 전환이 된다.
+- **상세:** [platform-display.md](platform-display.md) "화면 모드 분석 결과"
 
 ### 2026-10-14 — Alt+Tab 보고 정정, dgVoodoo2 사용자 확인 (관련: G1-4, G3-5)
 

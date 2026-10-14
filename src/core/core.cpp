@@ -3,6 +3,7 @@
 #include "config.h"
 #include "exe_id.h"
 #include "log.h"
+#include "patches/ddraw_trace.h"
 #include "patches/device_dialog.h"
 #include "sha256.h"
 #include "util.h"
@@ -26,6 +27,9 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallSkipDeviceDialog();
   } else {
     Log(LogLevel::Info, "skip_device_dialog: disabled in config");
+  }
+  if (config.trace_ddraw) {
+    patches::InstallDDrawTrace();
   }
 }
 
