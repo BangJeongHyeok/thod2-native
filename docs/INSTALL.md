@@ -10,6 +10,7 @@ PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)
 | 시작 확인창("Attention") | 매번 뜸 | 뜨지 않음 (자동으로 "예") |
 | 화면 | 모니터를 640×480으로 바꾸는 전체 화면 | 테두리 없는 전체 화면 크기 창. 모니터 해상도는 그대로 |
 | 3D 해상도 | 640×480 | 화면에 맞는 최대 4:3 해상도 (1080p 모니터에서 1440×1080) |
+| 테두리 계단 현상 | 있음 | 안티에일리어싱(MSAA 4x)으로 매끄럽게 |
 | Alt+Enter | 반응 없음 | 창 ↔ 전체 화면 전환 |
 | CPU 사용 | 코어 1개 100% | 약 25% (프레임 끝 바쁜 대기를 잠자기로 바꿈) |
 | 세이브 위치 | 게임 폴더의 데이터 파일 4개. 폴더에 쓸 수 없으면 조용히 저장 실패 | `%APPDATA%\thod2-native\save\`. 게임 폴더가 읽기 전용이어도 저장됨. 처음 실행할 때 기존 세이브를 옮겨 옴 |
@@ -51,7 +52,19 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 
 `install`은 `MS\x86\DDraw.dll`, `MS\x86\D3DImm.dll`, `dgVoodoo.conf`를 게임 폴더에 복사한다. `preset`은 [config/dgvoodoo-recommended.ini](../config/dgvoodoo-recommended.ini)의 값을 `dgVoodoo.conf`에 적용한다.
 
-**Python 없이 하려면:** 위 세 파일을 직접 복사하고, 메모장으로 `dgVoodoo.conf`를 열어 `dgvoodoo-recommended.ini`에 적힌 값을 같은 섹션의 같은 키에 써 넣는다. `Resolution`은 `[Glide]`와 `[DirectX]` 두 곳에 있으니 `[DirectX]` 쪽을 고친다.
+**Python 없이 하려면:** 위 세 파일을 직접 복사하고, 메모장으로 `dgVoodoo.conf`를 열어 `dgvoodoo-recommended.ini`에 적힌 값을 같은 섹션의 같은 키에 써 넣는다. `Resolution`과 `Antialiasing`은 `[Glide]`와 `[DirectX]` 두 곳에 있으니 `[DirectX]` 쪽을 고친다.
+
+### 화질을 더 바꾸고 싶을 때 (선택)
+
+권장 설정은 원본의 분위기를 유지하면서 테두리만 매끄럽게 한다. 취향에 따라 아래처럼 바꿀 수 있다 (`preset` 다음에 실행).
+
+| 원하는 것 | 명령 | 비고 |
+|---|---|---|
+| 테두리를 더 매끄럽게 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Antialiasing=8x` | 4x와 차이는 작고 그래픽 카드 부담이 조금 늘어난다 |
+| 텍스처를 부드럽게 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Filtering=16` | 원본은 텍스처를 각진 픽셀로 그린다. 부드러워지지만 분위기가 달라진다 |
+| 안티에일리어싱 끄기 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Antialiasing=appdriven` | 원본과 같은 테두리 |
+
+비교 결과는 [work/renderer.md](work/renderer.md)의 "dgVoodoo2 화질 옵션 비교"에 있다.
 
 ## 3. 실행
 

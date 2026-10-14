@@ -105,6 +105,11 @@
 
 ## 작업 기록
 
+### 2026-10-15 — 권장 프리셋에 MSAA 4x 추가 (렌더러에서 넘어온 내용)
+
+- **결과:** dgVoodoo2 권장 프리셋(`config/dgvoodoo-recommended.ini`)에 `Antialiasing = 4x`가 들어갔다. 텍스처 필터링은 원본 그대로.
+- **상세:** [renderer.md](renderer.md) "dgVoodoo2 화질 옵션 비교"
+
 ### 2026-10-14 — dgVoodoo2 권장 구성 제공 (관련: G3)
 
 - **한 일:**
