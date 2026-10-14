@@ -224,6 +224,7 @@ thod2-native/
 │  ├─ game/           ← 재구현한 게임 로직
 │  └─ modapi/         ← 플러그인 로딩, 이벤트, 공개 헤더
 ├─ tests/             ← 스모크 테스트 core_tests (있음)
+├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
 ├─ tools/             ← deploy.ps1, compat/ 조사 스크립트 (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
