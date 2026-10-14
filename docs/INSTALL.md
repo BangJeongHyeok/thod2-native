@@ -67,9 +67,8 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
 | `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
 | `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
-| `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
-| `[debug] profile` | `0` | 개발용. 메인 스레드가 CPU를 어디에 쓰는지 5초마다 로그에 기록 |
-| `[debug] trace_files` | `0` | 개발용. 게임의 파일 접근(경로, 읽기·쓰기, 호출 위치)을 로그에 기록 |
+
+개발할 때 쓰는 `[debug]` 설정(호출 기록, 프로파일러 등)은 [work/build.md](work/build.md)의 "개발용 설정"에 있다.
 
 ## 되돌리기
 

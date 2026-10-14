@@ -19,7 +19,7 @@
 - [x] G1-2 실행 흐름, 화면 모드, 창 상태 기록
 - [x] G1-3 Alt+Tab 나가기/돌아오기 시험
 - [x] G1-4 Alt+Tab 문제 재현 → 사용자가 Alt+Enter와 혼동한 것으로 확인. Alt+Tab은 정상
-- [ ] G1-5 고주사율(120Hz 이상) 환경에서 게임 속도 확인 (현재 모니터 60Hz뿐)
+- [x] G1-5 고주사율(120Hz 이상) 환경에서 게임 속도 확인 → **실제 240Hz 모니터에서 변화 없음** (60fps, 게임 속도 그대로, [platform-timing.md](platform-timing.md) G3)
 - [ ] G1-6 DPI 배율 100%가 아닌 환경에서 확인
 - [x] G1-7 세이브 파일 생성 위치 확인 → 게임 폴더의 데이터 파일 4개 ([platform-filesystem.md](platform-filesystem.md))
 - [ ] G1-8 사운드, 마우스 조준 정확도 상세 확인 (사용자 플레이: "정상")
@@ -47,7 +47,7 @@
 | 4 | Alt+Tab | 나가기: 창 최소화, 해상도 복구, CPU 사용 1%로 정지. 돌아오기(Alt+Tab, 작업 표시줄 복원 둘 다): 640×480으로 다시 바뀌고 화면 갱신 계속됨 → **정상**. 사용자 실제 키보드로도 정상 (dgVoodoo2 시험 C) | `keybd_event`로 Alt+Tab 전송, 사용자 확인 | platform-display |
 | 5 | **Alt+Enter** | **아무 반응이 없다** (깜빡임, 해상도 변경 없음). 원본에는 창 모드가 없다 (`hglCore.ini`의 `FullScreen` 키도 쓰이지 않음). 처음에 "Alt+Tab이 안 된다"로 보고됐으나 사용자가 Alt+Enter와 혼동한 것으로 확인 | 실제 키보드로 Alt+Enter | platform-display |
 | 6 | CPU 사용 | 실행 중 **CPU 코어 1개를 100% 사용** (대기 없이 도는 루프로 추정). 최소화하면 1% | 5초간 프로세스 CPU 시간 측정 | platform-timing. **해결:** thod2-native `frame_wait_sleep`으로 약 25% (platform-timing G2) |
-| 7 | 고주사율 모니터 속도 | **미확인** (테스트 PC 모니터가 60Hz) | — | platform-timing |
+| 7 | 고주사율 모니터 속도 | 2026-10-14에는 미확인 (당시 모니터 60Hz). **2026-10-15 실제 240Hz 모니터에서 60fps, 게임 속도 그대로 확인** | 주 모니터 240Hz에서 실행, `refresh-test.ps1` | platform-timing |
 | 8 | CD 확인 | CD 없이 실행됨. 실행 파일의 CD 확인 호출이 NOP으로 지워진 것으로 보임 (reverse-engineering 참고) | — | platform-filesystem, loader |
 | 9 | 숨은 설정 | `hglCore.ini`의 `DispFps`, `FullScreen`, `DispVersion`은 읽기만 하고 쓰이지 않음. 창 모드나 FPS 표시를 설정으로 켤 수 없음 | `hglCore.ini` 작성 후 실행 | reverse-engineering |
 | 10 | 해상도 설정 | 해상도를 바꾸는 설정이 없음. `Config.exe`는 컨트롤러·밝기·번쩍임 설정 전용 | 정적 분석 | renderer |
@@ -91,7 +91,7 @@
 | OS | Windows 11 Education 10.0.26200 |
 | GPU | NVIDIA GeForce RTX 3080 (드라이버 32.0.16.1714) |
 | 기타 디스플레이 어댑터 | Parsec Virtual Display Adapter |
-| 모니터 | 2대. DISPLAY2(주) 1920×1080 60Hz `(0,0)`, DISPLAY1 1920×1080 60Hz `(1920,511)` |
+| 모니터 | 2대. DISPLAY2(주) 1920×1080 60Hz `(0,0)`, DISPLAY1 1920×1080 60Hz `(1920,511)` (2026-10-14 기준). **2026-10-15 0시 무렵 사용자가 DISPLAY2를 239.76Hz로 변경** |
 | 호환성 플래그 | 첫 실행 때는 없었음. **이후 Windows PCA가 `DWM8And16BitMitigation`을 자동 등록** (HKCU, HKLM) |
 | 실행 파일 | `Hod2.exe` SHA-256 `1D71265096661CF034568FF71184FCBBED0CD9AEA0E5E2F041801C39A0FFCE69` |
 

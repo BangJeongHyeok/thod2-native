@@ -153,7 +153,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 ### 원본 실행 동작 (2026-10-14 확인)
 
 - 시작할 때마다 Direct3D 장치 확인창("Attention", 예/아니요)이 뜬다.
-- 주 모니터를 **640×480 32bpp 60Hz 전용 전체 화면**으로 바꾼다. 보조 모니터 위치가 이동한다.
+- 주 모니터를 **640×480 전용 전체 화면**으로 바꾼다 (게임 요청은 16bpp, 주사율은 모니터에 따라 60Hz·240Hz 등). 보조 모니터 위치가 이동한다.
 - 실행 중 CPU 코어 1개를 100% 쓴다. 원인은 프레임 끝의 바쁜 대기 (thod2-native `frame_wait_sleep`으로 약 25%, [platform-timing.md](docs/work/platform-timing.md)).
 - **세이브는 게임 폴더의 데이터 파일 4개(`pol/bg_adv19.bin`, `tex/scr_tod_itm_itamidome2.bin`, `pol/komono_0.bin`, `pol/tv2.bin`, 각 987 bytes)에 정상 종료 때 쓴다.** 이 파일들은 원본과 달라질 수 있다 (테스트 사본의 `pol/tv2.bin`은 이미 다름). `C:\WINDOWS\d3dx.dat`도 쓴다. **thod2-native(`redirect_user_files`, 기본 켬)는 이 파일들을 `%APPDATA%\thod2-native\save\`와 `%LOCALAPPDATA%\thod2-native\`로 옮긴다** ([platform-filesystem.md](docs/work/platform-filesystem.md)).
 - 상세 결과는 [docs/work/compat-survey.md](docs/work/compat-survey.md)에 있다.
@@ -243,5 +243,5 @@ thod2-native/
 - HUD/2D 스프라이트 그리기 경로
 - `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
 - Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
-- 고주사율 모니터에서 게임 속도
+- 게임 로직이 프레임 수에 묶여 있는지 (고주사율에서 빨라지지 않는 것은 실제 240Hz 모니터에서 확인됨, [platform-timing.md](docs/work/platform-timing.md) G3)
 - 마우스/라이트건 입력 처리 방식

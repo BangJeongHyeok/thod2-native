@@ -49,7 +49,7 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallFileTrace();
   }
   if (config.trace_ddraw) {
-    patches::InstallDDrawTrace();
+    patches::InstallDDrawTrace(config.flip_override);
   }
   if (config.profile) {
     // Initialize runs on Hod2.exe's main thread (first GetCommandLineA).

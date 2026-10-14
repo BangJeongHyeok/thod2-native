@@ -60,6 +60,25 @@ ctest --preset x86-release          # 테스트
   5. 결과 코드: `0` OK, `1` 알 수 없는 실행 파일, `2` 이미 초기화됨, `3` 실패.
 - `DllMain`에서는 모듈 핸들만 저장한다 (로더 락 안에서 파일·해시 작업을 하지 않기 위해).
 
+## 개발용 설정 (`[debug]`)
+
+`thod2-native.ini`에 직접 넣어 쓴다. 예제 설정(`config/thod2-native.ini`)과 사용자 안내(`docs/INSTALL.md`)에는 넣지 않는다. 시험 스크립트(`tools/compat/*.ps1`)는 필요한 값을 스스로 넣었다가 되돌린다.
+
+```ini
+[debug]
+trace_ddraw = 0
+profile = 0
+trace_files = 0
+flip_override = 0
+```
+
+| 키 | 기본값 | 설명 | 관련 문서 |
+|---|---|---|---|
+| `trace_ddraw` | `0` | DirectDraw 호출(화면 모드, 버퍼, Flip)과 프레임 간격 통계를 로그에 기록 | [platform-display.md](platform-display.md) |
+| `profile` | `0` | 메인 스레드를 약 1ms마다 샘플링해서 CPU를 어디에 쓰는지 5초마다 기록 | [platform-timing.md](platform-timing.md) |
+| `trace_files` | `0` | 게임의 파일 접근(경로, 읽기·쓰기, 결과, 호출 위치)을 기록 | [platform-filesystem.md](platform-filesystem.md) |
+| `flip_override` | `0` | 실험. `trace_ddraw = 1`과 함께 쓰면 primary `Flip`에 `1` = `DDFLIP_NOVSYNC`, `2` = `DDFLIP_INTERVAL2`를 더함 | [platform-timing.md](platform-timing.md) G3 |
+
 ## 개발 환경 (현재 PC, 2026-10-14 확인)
 
 | 도구 | 버전 / 위치 | 비고 |
@@ -89,6 +108,11 @@ ctest --preset x86-release          # 테스트
 - 지원 빌드 목록에 수정 안 된 원본 `Hod2.exe`를 추가할지 (해시를 구할 방법이 필요)
 
 ## 작업 기록
+
+### 2026-10-15 — 개발용 설정을 사용자 문서에서 분리
+
+- **한 일:** `[debug]` 설정(`trace_ddraw`, `profile`, `trace_files`, `flip_override`)을 `docs/INSTALL.md`와 예제 설정 `config/thod2-native.ini`에서 빼고, 이 문서의 "개발용 설정"으로 옮겼다.
+- **결과:** 사용자 문서와 예제 설정에는 사용자가 바꿀 설정(`[core]`, `[display]`, `[files]`, `[timing]`)만 남았다.
 
 ### 2026-10-14 — 빌드 골격 (관련: G1)
 

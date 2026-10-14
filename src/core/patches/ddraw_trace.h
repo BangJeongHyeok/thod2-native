@@ -6,6 +6,8 @@ namespace thod2::core::patches {
 // DirectDraw 7 (cooperative level, display mode, surfaces, flips) without
 // changing behavior. Per-frame calls are logged a few times and then
 // summarized every few seconds.
-bool InstallDDrawTrace();
+// `flip_override` is an experiment for simulating other refresh rates:
+// 0 = unchanged, 1 = add DDFLIP_NOVSYNC, 2 = add DDFLIP_INTERVAL2 to the primary Flip.
+bool InstallDDrawTrace(int flip_override);
 
 }  // namespace thod2::core::patches
