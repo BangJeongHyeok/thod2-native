@@ -2,6 +2,7 @@
 // Same style as core_tests: the exit code is the failure count.
 
 #include <thod2/interop/iat_hook.h>
+#include <thod2/interop/memory_patch.h>
 #include <thod2/interop/vtable_hook.h>
 
 #include <windows.h>
@@ -120,6 +121,30 @@ void TestHookVtable() {
         "HookVtable on null object returns null");
 }
 
+// ---- PatchBytes ----
+
+// Lives in read-only data, like code bytes of Hod2.exe.
+const std::uint8_t kPatchTarget[4] = {0xC0, 0xE0, 0x49, 0x00};
+
+std::uint32_t ReadTarget() {
+  return *reinterpret_cast<const volatile std::uint32_t*>(kPatchTarget);
+}
+
+void TestPatchBytes() {
+  const auto address = reinterpret_cast<std::uintptr_t>(kPatchTarget);
+  Check(!thod2::interop::PatchUint32(address, 0x12345678, 0xDEADBEEF) &&
+            ReadTarget() == 0x0049E0C0,
+        "PatchUint32 with wrong expected value changes nothing");
+  Check(thod2::interop::PatchUint32(address, 0x0049E0C0, 0xDEADBEEF) && ReadTarget() == 0xDEADBEEF,
+        "PatchUint32 replaces read-only bytes when they match");
+  Check(thod2::interop::PatchUint32(address, 0xDEADBEEF, 0x0049E0C0) && ReadTarget() == 0x0049E0C0,
+        "PatchUint32 can restore the original bytes");
+  const std::uint8_t two[2] = {1, 2};
+  const std::uint8_t three[3] = {1, 2, 3};
+  Check(!thod2::interop::PatchBytes(address, two, three), "PatchBytes rejects length mismatch");
+  Check(!thod2::interop::PatchUint32(0, 0, 1), "PatchUint32 rejects address 0");
+}
+
 // ---- dinput.dll loader ----
 
 void TestLoader() {
@@ -169,6 +194,7 @@ void TestLoader() {
 int main() {
   TestHookImport();
   TestHookVtable();
+  TestPatchBytes();
   TestLoader();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;

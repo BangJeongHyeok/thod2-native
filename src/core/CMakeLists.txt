@@ -6,6 +6,7 @@ add_library(thod2_core_lib STATIC
   log.cpp
   patches/ddraw_trace.cpp
   patches/device_dialog.cpp
+  patches/frame_wait.cpp
   patches/profiler.cpp
   sha256.cpp
   util.cpp

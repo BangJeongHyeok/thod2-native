@@ -5,6 +5,7 @@
 #include "log.h"
 #include "patches/ddraw_trace.h"
 #include "patches/device_dialog.h"
+#include "patches/frame_wait.h"
 #include "patches/profiler.h"
 #include "sha256.h"
 #include "util.h"
@@ -28,6 +29,11 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallSkipDeviceDialog();
   } else {
     Log(LogLevel::Info, "skip_device_dialog: disabled in config");
+  }
+  if (config.frame_wait_sleep) {
+    patches::InstallFrameWaitSleep(config.frame_wait_margin_ms);
+  } else {
+    Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
   }
   if (config.trace_ddraw) {
     patches::InstallDDrawTrace();

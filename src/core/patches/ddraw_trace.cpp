@@ -14,6 +14,7 @@
 #include <intrin.h>
 
 #include <atomic>
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <string>
@@ -233,8 +234,51 @@ HRESULT STDMETHODCALLTYPE H_S_BltFast(IDirectDrawSurface7* self, DWORD x, DWORD 
   return o_S_BltFast(self, x, y, src, src_rect, flags);
 }
 
+// Frame interval statistics from consecutive Flip calls on the primary surface.
+struct FrameIntervals {
+  LARGE_INTEGER freq{};
+  LARGE_INTEGER last{};
+  ULONGLONG report_start = 0;
+  std::uint64_t count = 0;
+  double sum = 0, sum_sq = 0, min = 1e9, max = 0;
+
+  void Add() {
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    if (freq.QuadPart == 0) QueryPerformanceFrequency(&freq);
+    if (last.QuadPart != 0) {
+      const double ms = static_cast<double>(now.QuadPart - last.QuadPart) * 1000.0 /
+                        static_cast<double>(freq.QuadPart);
+      ++count;
+      sum += ms;
+      sum_sq += ms * ms;
+      min = ms < min ? ms : min;
+      max = ms > max ? ms : max;
+    }
+    last = now;
+    const ULONGLONG tick = GetTickCount64();
+    if (report_start == 0) report_start = tick;
+    if (tick - report_start >= kSummaryIntervalMs && count > 0) {
+      const double avg = sum / count;
+      const double var = sum_sq / count - avg * avg;
+      Log(LogLevel::Info,
+          "[ddraw] frame interval over {} frames: avg {:.3f} ms, min {:.3f}, max {:.3f}, stddev {:.3f}",
+          count, avg, min, max, var > 0 ? std::sqrt(var) : 0.0);
+      count = 0;
+      sum = sum_sq = 0;
+      min = 1e9;
+      max = 0;
+      report_start = tick;
+    }
+  }
+};
+FrameIntervals g_frame_intervals;
+
 HRESULT STDMETHODCALLTYPE H_S_Flip(IDirectDrawSurface7* self, IDirectDrawSurface7* target,
                                    DWORD flags) {
+  if (self == g_primary) {
+    g_frame_intervals.Add();
+  }
   const bool detail = g_flip.Hit();
   const HRESULT hr = o_S_Flip(self, target, flags);
   if (detail || FAILED(hr)) {

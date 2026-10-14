@@ -64,13 +64,15 @@ void TestConfig() {
   using thod2::core::LogLevel;
   const auto missing = thod2::core::LoadConfig(TestDir() / L"no_such_config.ini");
   Check(missing.log_level == LogLevel::Info && !missing.allow_unknown_exe &&
-            missing.skip_device_dialog && !missing.trace_ddraw && !missing.profile,
+            missing.skip_device_dialog && !missing.trace_ddraw && !missing.profile &&
+            missing.frame_wait_sleep && missing.frame_wait_margin_ms == 1.0f,
         "LoadConfig defaults");
 
   const auto file = TestDir() / L"core_tests_config.ini";
   WriteText(file,
             "[core]\r\nlog_level = debug\r\nallow_unknown_exe = 1\r\n"
             "[display]\r\nskip_device_dialog = 0\r\n"
+            "[timing]\r\nframe_wait_sleep = 0\r\nframe_wait_margin_ms = 2.5\r\n"
             "[debug]\r\ntrace_ddraw = 1\r\nprofile = 1\r\n");
   const auto parsed = thod2::core::LoadConfig(file);
   Check(parsed.log_level == LogLevel::Debug, "LoadConfig log_level = debug");
@@ -78,6 +80,15 @@ void TestConfig() {
   Check(!parsed.skip_device_dialog, "LoadConfig skip_device_dialog = 0");
   Check(parsed.trace_ddraw, "LoadConfig trace_ddraw = 1");
   Check(parsed.profile, "LoadConfig profile = 1");
+  Check(!parsed.frame_wait_sleep, "LoadConfig frame_wait_sleep = 0");
+  Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
+
+  WriteText(file, "[timing]\r\nframe_wait_margin_ms = abc\r\n");
+  Check(thod2::core::LoadConfig(file).frame_wait_margin_ms == 1.0f,
+        "LoadConfig keeps default margin for unparsable value");
+  WriteText(file, "[timing]\r\nframe_wait_margin_ms = 50\r\n");
+  Check(thod2::core::LoadConfig(file).frame_wait_margin_ms == 1.0f,
+        "LoadConfig keeps default margin for out-of-range value");
   std::filesystem::remove(file);
 }
 

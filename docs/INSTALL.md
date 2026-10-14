@@ -11,6 +11,7 @@ PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)
 | 화면 | 모니터를 640×480으로 바꾸는 전체 화면 | 테두리 없는 전체 화면 크기 창. 모니터 해상도는 그대로 |
 | 3D 해상도 | 640×480 | 화면에 맞는 최대 4:3 해상도 (1080p 모니터에서 1440×1080) |
 | Alt+Enter | 반응 없음 | 창 ↔ 전체 화면 전환 |
+| CPU 사용 | 코어 1개 100% | 약 25% (프레임 끝 바쁜 대기를 잠자기로 바꿈) |
 
 ## 준비물
 
@@ -62,6 +63,8 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[core] log_level` | `info` | `debug`, `info`, `warn`, `error` |
 | `[core] allow_unknown_exe` | `0` | `1`이면 지원하지 않는 `Hod2.exe`에서도 패치를 적용 (충돌 가능) |
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
+| `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
+| `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
 | `[debug] trace_ddraw` | `0` | 개발용. DirectDraw 호출을 로그에 기록 |
 | `[debug] profile` | `0` | 개발용. 메인 스레드가 CPU를 어디에 쓰는지 5초마다 로그에 기록 |
 
