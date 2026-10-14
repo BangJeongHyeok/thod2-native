@@ -1,11 +1,11 @@
-# 테스트 사본의 Hod2.exe를 실행하고, 시작 확인창("Attention")에서 "예"를 누른 뒤
-# 창/디스플레이 상태와 화면 캡처, CPU 사용률을 기록하고 종료한다.
+# Starts Hod2.exe in the test copy, answers "Yes" on the startup device dialog ("Attention"),
+# then records window/display state, a screen capture and CPU usage, and kills the game.
 #
-# 사용 예:
+# Usage:
 #   .\runtest.ps1 -Tag baseline
 #   .\runtest.ps1 -Tag fps -Ini "[HGLCORE]`r`nDispFps=true`r`n"
 #
-# -Ini 를 주면 게임 폴더에 hglCore.ini를 그 내용으로 만들고, 주지 않으면 지운다.
+# With -Ini, hglCore.ini in the game folder is written with that content; without it, it is deleted.
 param(
   [string]$Tag = "run",
   [int]$Seconds = 12,
@@ -36,7 +36,7 @@ for ($i = 0; $i -lt 20 -and -not $p.HasExited; $i++) {
 }
 Start-Sleep -Seconds $Seconds
 "=== state"; Probe
-# 게임 창 영역을 캡처한다 (창이 없으면 주 모니터 왼쪽 위 640x480)
+# Capture the game window (fallback: 640x480 at the primary monitor's top-left)
 $r = New-Object WP+RECT; $r.L = 0; $r.T = 0; $r.R = 640; $r.B = 480
 foreach ($h in [WP]::Wins($p.Id)) { if (([WP]::Desc($h)) -match "class='The House" -and [WP]::IsWindowVisible($h)) { [WP]::GetWindowRect($h, [ref]$r) | Out-Null } }
 $w = [Math]::Max(1, $r.R - $r.L); $hgt = [Math]::Max(1, $r.B - $r.T)

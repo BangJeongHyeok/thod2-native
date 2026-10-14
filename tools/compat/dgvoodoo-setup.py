@@ -1,12 +1,12 @@
-"""dgVoodoo2를 테스트 게임 폴더에 설치하고 dgVoodoo.conf 값을 바꾼다.
+"""Install dgVoodoo2 into a game folder and edit dgVoodoo.conf values.
 
-사용 예:
-  python dgvoodoo-setup.py install  <dgVoodoo 압축 해제 폴더> <게임 폴더>
-  python dgvoodoo-setup.py set      <게임 폴더> General.FullScreenMode=false DirectX.Resolution=2x
-  python dgvoodoo-setup.py uninstall <게임 폴더>
+Usage:
+  python dgvoodoo-setup.py install   <extracted dgVoodoo folder> <game folder>
+  python dgvoodoo-setup.py set       <game folder> General.FullScreenMode=false DirectX.Resolution=2x
+  python dgvoodoo-setup.py uninstall <game folder>
 
-install은 MS/x86의 DDraw.dll, D3DImm.dll과 기본 dgVoodoo.conf를 복사한다.
-set은 "섹션.키=값" 형식으로 dgVoodoo.conf의 기존 키 값을 바꾼다.
+install copies DDraw.dll and D3DImm.dll from MS/x86 plus the default dgVoodoo.conf.
+set changes existing keys in dgVoodoo.conf, given as "Section.Key=Value".
 """
 import io
 import os

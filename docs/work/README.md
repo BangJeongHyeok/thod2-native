@@ -4,7 +4,7 @@
 
 | 도메인 | 문서 | 로드맵 | 상태 | 마지막 갱신 |
 |---|---|---|---|---|
-| 빌드·배포 | [build.md](build.md) | 0 | 시작 전 | 2026-10-14 |
+| 빌드·배포 | [build.md](build.md) | 0 | 진행 중 | 2026-10-14 |
 | 로더·후킹 (launcher, interop) | [loader.md](loader.md) | 0, 1-2 | 시작 전 | 2026-10-14 |
 | 리버스 엔지니어링 | [reverse-engineering.md](reverse-engineering.md) | 2-1 | 진행 중 | 2026-10-14 |
 | 호환성 조사 | [compat-survey.md](compat-survey.md) | 1-1 | 진행 중 | 2026-10-14 |
