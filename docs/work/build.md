@@ -41,21 +41,20 @@ ctest --preset x86-release          # 테스트
 
 | 파일 | 위치 | 설명 |
 |---|---|---|
-| `thod2_core.dll` | `build/x86/bin/<Config>/` | 게임에 들어갈 코어 DLL. 의존 DLL은 `bcrypt.dll`, `KERNEL32.dll`뿐 (정적 CRT) |
-| `core_tests.exe` | 같은 폴더 | 스모크 테스트 |
-| `dinput.dll` | 같은 폴더 | 측정용 프록시 `experiments/dinput_probe` (로더 결정용, 배포 대상 아님) |
-| `thod2_core_lib.lib` | `build/x86/lib/<Config>/` | 코어 내부 구현 (DLL과 테스트가 링크) |
+| `dinput.dll` | `build/x86/bin/<Config>/` | **로더** (`src/loader`). 게임 폴더에 넣으면 `thod2_core.dll`을 불러옴 |
+| `thod2_core.dll` | 같은 폴더 | 게임에 들어갈 코어 DLL. 의존 DLL은 `bcrypt.dll`, `KERNEL32.dll`뿐 (정적 CRT) |
+| `core_tests.exe`, `loader_tests.exe` | 같은 폴더 | 테스트 |
+| `dinput.dll` | `build/x86/bin/experiments/<Config>/` | 측정용 프록시 `experiments/dinput_probe` (배포 대상 아님) |
+| `thod2_core_lib.lib`, `thod2_interop_lib.lib` | `build/x86/lib/<Config>/` | 코어·후킹 도우미 내부 구현 (DLL과 테스트가 링크) |
 
-`deploy.ps1`은 `thod2_core.dll`을 복사하고, 게임 폴더에 `thod2-native.ini`가 없을 때만 `config/thod2-native.ini`를 복사한다. `-Remove`는 DLL과 로그를 지우고 ini는 남긴다 (로컬 설정 보존).
+`deploy.ps1`은 `dinput.dll`(로더)과 `thod2_core.dll`을 복사하고, 게임 폴더에 `thod2-native.ini`가 없을 때만 `config/thod2-native.ini`를 복사한다. `-Remove`는 DLL과 로그를 지우고 ini는 남긴다 (로컬 설정 보존). 로더 동작은 [loader.md](loader.md) "로더 동작"을 본다.
 
-**주의:** 아직 로더가 없어서 배포해도 게임이 `thod2_core.dll`을 로드하지 않는다. 로더는 ROADMAP 1-2 ([loader.md](loader.md)).
+## 코어 DLL 동작 (0.1.0, 로더 추가 후)
 
-## 코어 DLL 동작 (0.1.0)
-
-- 공개 API (`src/core/include/thod2/core.h`): `Thod2Core_Version()`, `Thod2Core_Initialize()` (둘 다 `__cdecl`, 꾸밈 없는 이름으로 내보냄)
+- 공개 API (`src/core/include/thod2/core.h`): `Thod2Core_Version()`, `Thod2Core_Initialize(const char* loader_info)` (둘 다 `__cdecl`, 꾸밈 없는 이름으로 내보냄). `loader_info`는 누가 언제 불렀는지 설명하는 문자열로 로그에 남는다
 - `Thod2Core_Initialize()`가 하는 일:
   1. DLL 옆의 `thod2-native.ini`를 읽는다 (`[core] log_level`, `allow_unknown_exe`).
-  2. DLL 옆에 `thod2-native.log`를 새로 만든다.
+  2. DLL 옆에 `thod2-native.log`를 새로 만든다. 초기화 주체(`loader_info`)와 그 시점에 게임 메인 창이 있는지 기록한다.
   3. 호스트 실행 파일의 SHA-256을 계산해서 지원 빌드 목록(`src/core/exe_id.cpp`)과 비교한다.
   4. 결과 코드: `0` OK, `1` 알 수 없는 실행 파일, `2` 이미 초기화됨, `3` 실패.
 - `DllMain`에서는 모듈 핸들만 저장한다 (로더 락 안에서 파일·해시 작업을 하지 않기 위해).

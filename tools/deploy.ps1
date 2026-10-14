@@ -18,7 +18,8 @@ if (-not (Test-Path (Join-Path $GameDir 'Hod2.exe'))) {
   throw "Hod2.exe not found in $GameDir"
 }
 
-$binaries = @('thod2_core.dll')
+# dinput.dll is the loader (a proxy of the system dinput.dll) that loads thod2_core.dll.
+$binaries = @('dinput.dll', 'thod2_core.dll')
 
 if ($Remove) {
   foreach ($name in $binaries + @('thod2-native.log')) {

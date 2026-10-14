@@ -2,7 +2,7 @@
 
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 0, 1-2
-- **관련 코드:** `src/launcher/`, `src/interop/`, `experiments/dinput_probe/` (측정용)
+- **관련 코드:** `src/loader/`, `src/interop/`, `tests/loader_tests.cpp`, `experiments/dinput_probe/` (측정용)
 - **마지막 갱신:** 2026-10-14
 
 ## 주요 목표
@@ -19,14 +19,27 @@
 - [x] G1-2 측정용 `dinput.dll` 프록시로 초기화 시점 측정
 - [x] G1-3 방식 결정: `dinput.dll` 프록시 (사용자 승인)
 
-### G2. 정식 로더 구현 — 대기
+### G2. 정식 로더 구현 — 진행 중
 
-- [ ] G2-1 `src/loader/`: `dinput.dll` 프록시 (내보내기 7개 전달, 시스템 DLL 지연 로드)
-- [ ] G2-2 `DllMain`에서 `GetCommandLineA` IAT 후킹 → 첫 호출에서 `thod2_core.dll` 로드와 `Thod2Core_Initialize()`
-- [ ] G2-3 안전장치: `DirectInputCreateEx`에서 초기화 재시도
-- [ ] G2-4 IAT·코드 후킹 도우미 (`src/interop/`). 코드 후킹 라이브러리(MinHook 등)는 사용자 확인 후
-- [ ] G2-5 첫 예제: 시작 확인창(`MessageBoxA` "Attention", `0x4A4758`) 자동으로 "예" 처리
-- [ ] G2-6 `deploy.ps1`에 로더 추가, 문서화
+- [x] G2-1 `src/loader/`: `dinput.dll` 프록시 (내보내기 7개 전달, 시스템 DLL 지연 로드)
+- [x] G2-2 `DllMain`에서 `GetCommandLineA` IAT 후킹 → 첫 호출에서 `thod2_core.dll` 로드와 `Thod2Core_Initialize()`
+- [x] G2-3 안전장치: `DirectInputCreateEx`에서 초기화 재시도
+- [ ] G2-4 IAT·코드 후킹 도우미 (`src/interop/`). **IAT 후킹(`HookImport`) 완료.** 코드 후킹(함수 중간·내부 함수)은 필요해질 때 MinHook 등을 사용자 확인 후 추가
+- [ ] G2-5 첫 예제: 시작 확인창(`MessageBoxA` "Attention", `0x4A4758`) 자동으로 "예" 처리 → 목적이 달라서 별도 브랜치(`시작 확인창 자동 처리`)
+- [x] G2-6 `deploy.ps1`에 로더 추가, 문서화
+
+## 로더 동작 (구현됨)
+
+- 파일: 게임 폴더의 `dinput.dll`(로더) + `thod2_core.dll`(코어) + `thod2-native.ini`(선택). `tools/deploy.ps1`이 셋 다 복사한다.
+- `DllMain`: `Hod2.exe` IAT의 `KERNEL32!GetCommandLineA`만 `thod2::interop::HookImport`로 가로챈다.
+- 첫 `GetCommandLineA`: 같은 폴더의 `thod2_core.dll`을 로드하고 `Thod2Core_Initialize("dinput.dll loader, first GetCommandLineA")`를 부른다. `INIT_ONCE`로 한 번만 실행된다.
+- `DirectInputCreateEx`: 아직 초기화 전이면 `Thod2Core_Initialize("dinput.dll loader, DirectInputCreateEx fallback")`.
+- 시스템 `dinput.dll`은 처음 필요할 때 `GetSystemDirectoryW` + `\dinput.dll` 전체 경로로 로드한다 (32비트 프로세스라 `SysWOW64`로 연결됨). 같은 이름의 모듈이 이미 있어도 전체 경로라서 따로 로드된다.
+- `thod2_core.dll`이 없으면 디버그 출력만 남기고 게임은 그대로 실행된다.
+
+### 후킹 시 주의
+
+- 최적화된 코드는 IAT에서 읽은 함수 주소를 레지스터에 담아 두고 같은 함수 안에서 재사용할 수 있다. 그래서 **IAT 후킹은 해당 함수가 처음 불리기 전에 설치**하고, 실행 중에 바꾸거나 되돌리는 것은 다음 함수 호출부터 반영된다고 보고 작업한다. (`loader_tests`의 Release 빌드에서 실제로 겪음)
 
 ## 측정 결과: 프록시 후보
 
@@ -83,6 +96,20 @@
 - 수정본만 지원할지, 수정 안 된 원본도 지원할지. 둘 다 지원하려면 해시별로 패치 위치가 같은지 확인 필요
 
 ## 작업 기록
+
+### 2026-10-14 — 정식 로더 구현 (관련: G2-1, G2-2, G2-3, G2-4, G2-6)
+
+- **한 일:**
+  - `src/interop/`: IAT 후킹 도우미 `HookImport` (이름으로 찾고, 이름 표가 없으면 주소로 찾음).
+  - `src/loader/`: `dinput.dll` 프록시 (내보내기 7개 전달, 첫 `GetCommandLineA` 초기화, `DirectInputCreateEx` 안전장치).
+  - 코어 API를 `Thod2Core_Initialize(const char* loader_info)`로 바꾸고, 초기화 주체와 그 시점의 게임 창 존재 여부를 로그에 남기게 했다.
+  - `tests/loader_tests.cpp`: `HookImport` 검사 5개, 로더 검사 7개.
+  - 측정용 `dinput_probe` 출력 폴더를 `bin/experiments/<Config>/`로 옮겼다 (같은 이름 `dinput.dll` 충돌 방지).
+- **결과:**
+  - Debug, Release 빌드 경고 0개. `ctest` 2개(core_tests 17개 검사, loader_tests 12개 검사) 모두 통과.
+  - Release에서 처음에 "후킹 복원" 검사가 실패했다. 테스트 함수 안에서 컴파일러가 IAT 값을 재사용했기 때문이라 테스트를 고쳤다 (위 "후킹 시 주의").
+  - 테스트 사본(dgVoodoo2 설정)에 배포해서 실행: 로그에 `initialized by: dinput.dll loader, first GetCommandLineA`, `game main window exists: no`, `supported build` 기록. 게임은 타이틀 화면까지 정상.
+- **다음:** 별도 브랜치에서 시작 확인창 자동 처리 (G2-5).
 
 ### 2026-10-14 — 로더 방식 결정 (관련: G1-3)
 

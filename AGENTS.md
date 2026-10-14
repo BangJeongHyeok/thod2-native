@@ -29,7 +29,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C)가 설치되어 있다. 원본 그대로 시험하려면 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-14):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 설정 C) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드)가 설치되어 있다. 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/compat/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -216,15 +216,15 @@ thod2-native/
 ├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API (있음)
-│  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (로더 방식으로 결정됨)
+│  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
 │  ├─ launcher/       ← (보류) 필요해지면 만드는 런처 thod2.exe
-│  ├─ interop/        ← 원본 함수/전역 변수 주소 정의, 후킹·패치 도우미
+│  ├─ interop/        ← 후킹·패치 도우미 (있음: IAT 후킹). 이후 원본 함수/전역 변수 주소 정의
 │  ├─ platform/       ← 창, 타이밍·메인 루프, 입력, 오디오, 파일 입출력
 │  ├─ renderer/       ← 렌더 인터페이스와 백엔드 (D3D11 등)
 │  ├─ assets/         ← pol/tex/mot/cam/coli/evt 로더, 데이터 덮어쓰기
 │  ├─ game/           ← 재구현한 게임 로직
 │  └─ modapi/         ← 플러그인 로딩, 이벤트, 공개 헤더
-├─ tests/             ← 스모크 테스트 core_tests (있음)
+├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
 ├─ tools/             ← deploy.ps1, compat/ 조사 스크립트 (있음). 이후 리소스 추출/변환

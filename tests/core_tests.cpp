@@ -93,19 +93,22 @@ void TestDll() {
     return;
   }
   using VersionFn = const char*(__cdecl*)();
-  using InitFn = int(__cdecl*)();
+  using InitFn = int(__cdecl*)(const char*);
   auto version = reinterpret_cast<VersionFn>(GetProcAddress(dll, "Thod2Core_Version"));
   auto init = reinterpret_cast<InitFn>(GetProcAddress(dll, "Thod2Core_Initialize"));
   Check(version != nullptr && init != nullptr, "exports Thod2Core_Version / Thod2Core_Initialize");
   if (version && init) {
     Check(std::string_view(version()) == THOD2_VERSION, "Thod2Core_Version matches build");
     // The host here is core_tests.exe, which is not a supported Hod2.exe.
-    Check(init() == THOD2_CORE_UNKNOWN_EXE, "Initialize on unknown host returns UNKNOWN_EXE");
-    Check(init() == THOD2_CORE_ALREADY_INITIALIZED, "second Initialize returns ALREADY_INITIALIZED");
+    Check(init("core_tests") == THOD2_CORE_UNKNOWN_EXE,
+          "Initialize on unknown host returns UNKNOWN_EXE");
+    Check(init("core_tests") == THOD2_CORE_ALREADY_INITIALIZED,
+          "second Initialize returns ALREADY_INITIALIZED");
   }
   FreeLibrary(dll);
 
   const std::string log = ReadText(dir / L"thod2-native.log");
+  Check(log.find("initialized by: core_tests") != std::string::npos, "log records loader info");
   Check(log.find("host SHA-256:") != std::string::npos, "log records host hash");
   Check(log.find("unknown host executable") != std::string::npos, "log records unknown host");
 }

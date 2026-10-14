@@ -15,9 +15,12 @@ namespace {
 
 std::atomic<bool> g_initialized{false};
 
+// Window class of Hod2.exe's main window (created at 0x4A588B).
+constexpr char kGameWindowClass[] = "The House of the Dead 2";
+
 }  // namespace
 
-int Initialize(HMODULE self) {
+int Initialize(HMODULE self, const char* loader_info) {
   if (g_initialized.exchange(true)) {
     return THOD2_CORE_ALREADY_INITIALIZED;
   }
@@ -26,6 +29,11 @@ int Initialize(HMODULE self) {
   const CoreConfig config = LoadConfig(dir / L"thod2-native.ini");
   OpenLog(dir / L"thod2-native.log", config.log_level);
   Log(LogLevel::Info, "thod2-native core {} loaded from {}", THOD2_VERSION, ToUtf8(dir.native()));
+  Log(LogLevel::Info, "initialized by: {} (thread {})", loader_info ? loader_info : "(unknown)",
+      GetCurrentThreadId());
+  // Tells whether initialization ran before Hod2.exe created its main window.
+  Log(LogLevel::Info, "game main window exists: {}",
+      FindWindowA(kGameWindowClass, nullptr) ? "yes" : "no");
 
   const std::filesystem::path host = ModulePath(nullptr);
   const auto hash = Sha256File(host);
