@@ -40,7 +40,9 @@ E:\Repos\hod2-native\
 4. 주소는 **VA(가상 주소) 기준 16진수**로 적는다. 예: `0x4AC7D5`. 이미지 베이스가 고정이라 VA가 실행할 때마다 같다.
 5. 리버싱으로 알아낸 함수·전역 변수·구조체는 `re/` 아래 문서에 기록한다. 이름, 주소, 근거(문자열 참조, 호출 관계 등), 확인 상태를 함께 적는다.
 6. 외부 도구나 라이브러리(dgVoodoo2, DDrawCompat, MinHook 등)를 받기 전에 사용자에게 파일명과 출처를 알리고 확인을 받는다.
-7. 문서, PR 제목·본문, **커밋 메시지, 머지 커밋 메시지는 한국어**로 쓴다. 코드, 주석, 식별자, 로그 메시지는 영어로 쓴다 ([docs/CONVENTIONS.md](docs/CONVENTIONS.md) "언어").
+7. 문서, PR 제목·본문, **커밋 메시지, 머지 커밋 메시지는 한국어**로 쓴다. 고유명사(도구·라이브러리 이름, 파일명, 함수명, API 이름 등)는 영어 그대로 써도 되지만, **문장 구성은 한국어**로 한다. 코드, 주석, 식별자, 로그 메시지는 영어로 쓴다 ([docs/CONVENTIONS.md](docs/CONVENTIONS.md) "언어").
+   - 좋은 예: `dgVoodoo2 설치 스크립트 추가`, `Thod2Core_Initialize에서 해시 계산 실패 처리`
+   - 나쁜 예: `Add dgVoodoo2 setup script`
 8. **모든 작업은 해당 도메인의 작업 문서에 기록한다.** 아래 "작업 문서" 규칙을 따른다.
 9. 코드를 작성하기 전에 [docs/CONVENTIONS.md](docs/CONVENTIONS.md)(코딩 규칙)를 읽는다. 빌드·테스트·배포 명령은 [docs/work/build.md](docs/work/build.md)의 "빌드 방법"에 있다.
 10. 작업은 브랜치에서 하고 PR로 `main`에 머지한다. PR은 GitHub CLI(`gh`)로 만든다. 아래 "브랜치와 PR" 규칙을 따른다.
