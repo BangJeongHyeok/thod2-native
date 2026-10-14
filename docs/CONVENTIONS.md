@@ -31,7 +31,7 @@
 ## 원본 주소 표기
 
 - 원본 `Hod2.exe`의 주소는 **VA, 16진수 대문자**로 쓴다: `0x4A5C50`. 이미지 베이스가 `0x400000`으로 고정이고 재배치 정보가 없어서 VA가 항상 같다.
-- 코드에서 원본 주소를 쓸 때는 (로더 단계에서 만들 `src/interop/`에) 이름 붙인 상수로 한 곳에 모으고, 근거를 주석으로 남긴다. 같은 주소를 `docs/work/reverse-engineering.md`의 "확인된 주소" 표에도 적는다.
+- 코드에서 원본 주소를 쓸 때는 `src/interop/include/thod2/interop/hod2_addresses.h`(`thod2::interop::hod2`)에 이름 붙인 상수로 모으고, 근거를 주석으로 남긴다. 같은 주소를 `docs/work/reverse-engineering.md`의 "확인된 주소" 표에도 적는다.
 
   ```cpp
   // CheckCdRom: no callers in the supported build (call removed at 0x4A5899).
@@ -44,6 +44,7 @@
 ## 후킹
 
 - 후킹·패치 도우미는 `src/interop/`(`thod2::interop`)에 둔다. 지금 있는 것: `HookImport` (IAT 후킹).
+- 기능 단위 패치는 `src/core/patches/`에 파일 하나씩 두고, 설정으로 켜고 끌 수 있게 한다. 설치는 `core.cpp`의 `ApplyPatches`에서 한다.
 - IAT 후킹은 대상 함수가 처음 불리기 전에 설치한다. 최적화된 코드는 IAT 값을 레지스터에 담아 재사용할 수 있어서, 실행 중에 바꾸면 다음 함수 호출부터 반영된다.
 - `DllMain`에서는 IAT 쓰기 같은 메모리 작업만 한다. 라이브러리 로드와 파일 작업은 로더의 초기화 시점(첫 `GetCommandLineA`) 이후에 한다.
 

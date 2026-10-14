@@ -42,7 +42,7 @@
 | `0x4AC861` | 호출 위치 | — | CRT 시작 코드의 첫 `GetCommandLineA` 호출 직후 주소 (엔트리 `0x4AC7D5` 안). 프로세스에서 가장 이른 로더 락 밖 시점 | dinput_probe 실행 기록 | 확인 |
 | `0x4A588B` | 호출 위치 | — | 메인 창 `CreateWindowExA` 호출 직후 주소. 바로 뒤 `0x4A588D`에서 `g_hWnd`에 저장 | dinput_probe 실행 기록 | 확인 |
 | `0x4BD209` | 호출 위치 | — | `DirectDrawCreateEx` 호출 직후 주소. 시작할 때 3번 호출됨 (장치 열거) | dinput_probe 실행 기록 | 확인 |
-| `0x4A4758` | 호출 위치 | — | 시작 확인창 `MessageBoxA("...will be used.", "Attention", MB_YESNO \| MB_ICONEXCLAMATION)` 호출 직후 주소 | dinput_probe 실행 기록 | 확인 |
+| `0x4A4758` | 호출 위치 | — | 시작 확인창 `MessageBoxA("...will be used.", "Attention", MB_YESNO \| MB_ICONEXCLAMATION)` 호출 직후 주소 | dinput_probe 실행 기록. 코드: `hod2::kDeviceDialogMessageBoxReturn` (skip_device_dialog에서 사용) | 확인 |
 | `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |
 | `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
 | `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
