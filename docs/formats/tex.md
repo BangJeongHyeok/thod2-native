@@ -92,6 +92,12 @@
 - 슬롯은 `EnumTextureFormat` (`0x4A4FE0`)이 장치에서 찾은 형식(`g_textureFormats`, `0x7DCE50`, 32바이트씩)이다: 0 팔레트 4비트, 1 팔레트 8비트, 2 RGB565, 3 X1R5G5B5, 4 24비트, 5 A1R5G5B5, 6 A4R4G4B4, 7 32비트(마스크 `ff0000`/`ff00`/`ff`). 원본 텍스처는 모두 16비트 슬롯을 쓴다.
 - `UploadTextureSurface`는 `ClampTextureSize` (`0x4A5170`)로 비디오 텍스처 크기를 정한다: `hglCore.ini` `SmallTexure`에 따라 256 또는 128로 제한하고, 장치가 요구하면 2의 거듭제곱·정사각형으로 맞추고, 장치 최소·최대 크기로 자른다. 그 다음 시스템 표면을 Blt로 복사한다 (크기가 다르면 늘이거나 줄인다).
 
+실행 중에 읽은 값 (dgVoodoo2 2.87.5, 2026-10-15): 슬롯 0·4는 비어 있고, 7번은 A8R8G8B8 (마스크 `00FF0000 0000FF00 000000FF FF000000`). 최대 텍스처 크기(`0x7DC94C`, `0x7DC950`)는 2048×2048.
+
+## 교체
+
+thod2-native의 `[assets] replace_textures`는 `CreateTextureFromPvr` 호출을 가로채서, 항목의 텍스처 번호에 맞는 PNG가 있으면 그 크기로 7번 슬롯 표면을 만들고 줄을 뒤집어 채운 뒤 `UploadTextureSurface`에 넘긴다. `g_textureSizes`는 원본 크기로 남으므로 화면 위치·크기는 그대로다 ([assets.md](../work/assets.md) G1-4).
+
 ## 호출 위치
 
 | 위치 | 호출 |

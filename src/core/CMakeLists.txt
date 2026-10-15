@@ -12,6 +12,7 @@ add_library(thod2_core_lib STATIC
   patches/frame_wait.cpp
   patches/input_update.cpp
   patches/profiler.cpp
+  patches/texture_replace.cpp
   patches/widescreen.cpp
   sha256.cpp
   util.cpp
@@ -21,7 +22,7 @@ target_include_directories(thod2_core_lib PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_compile_definitions(thod2_core_lib PUBLIC THOD2_VERSION="${PROJECT_VERSION}")
-target_link_libraries(thod2_core_lib PUBLIC bcrypt dxguid ole32 shell32 thod2_interop_lib
+target_link_libraries(thod2_core_lib PUBLIC bcrypt dxguid ole32 shell32 windowscodecs thod2_interop_lib
   thod2_platform_lib)
 
 # The DLL that gets loaded into Hod2.exe. Only the C API in include/thod2/core.h is exported.

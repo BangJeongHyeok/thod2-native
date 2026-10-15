@@ -11,6 +11,7 @@
 #include "patches/frame_wait.h"
 #include "patches/input_update.h"
 #include "patches/profiler.h"
+#include "patches/texture_replace.h"
 #include "patches/widescreen.h"
 #include "sha256.h"
 #include "util.h"
@@ -66,6 +67,11 @@ void ApplyPatches(const CoreConfig& config) {
     options.squeeze_2d = config.widescreen_2d;
     options.trace = config.trace_screen_quads;
     patches::InstallWidescreen(options);
+  }
+  if (config.replace_textures) {
+    patches::InstallTextureReplace(game_dir / L"data" / L"tex");
+  } else {
+    Log(LogLevel::Info, "replace_textures: disabled in config");
   }
   if (config.input_compare) {
     patches::InstallInputUpdate(patches::InputUpdateMode::Compare);

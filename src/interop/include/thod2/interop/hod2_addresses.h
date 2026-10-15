@@ -138,6 +138,23 @@ constexpr std::uintptr_t kInputPlayer1Mode = 0x587D14;     // uint32 (initialize
 constexpr std::uintptr_t kInputJoystickButtonMap = 0x587CDC;  // uint32[14] (initialized data)
 constexpr std::uintptr_t kMainWindow = 0x7DC8AC;           // HWND g_hWnd
 
+// Texture creation (docs/formats/tex.md). CreateTextureFromPvr(entry, pixels)
+// builds one texture from a 16-byte bank entry (int16 w, int16 h, uint32 PVR
+// format, uint32 offset, int32 texture id) and returns its handle; the three
+// calls below are all its callers. All functions are __cdecl.
+// Evidence: byte decoding of 0x4ABFC6..0x4ABFE2, 0x4AB690..0x4AB6E7, 0x4ABC76..0x4ABCA5.
+constexpr std::uintptr_t kCreateTextureFromPvr = 0x4AB690;
+constexpr std::uintptr_t kCreateTextureFromPvrCall1 = 0x4ABFD1;  // in LoadBankTexture 0x4ABF70
+constexpr std::uintptr_t kCreateTextureFromPvrCall2 = 0x4ABE1D;  // in LoadModelTextures 0x4ABDA0
+constexpr std::uintptr_t kCreateTextureFromPvrCall3 = 0x4ABE42;  // in LoadModelTextures 0x4ABDA0
+// IDirectDrawSurface7* (int w, int h, int format_slot): system memory surface.
+constexpr std::uintptr_t kCreateTextureSurface = 0x4A53B0;
+// handle (IDirectDrawSurface7* surface, uint8 flags): video texture made from it.
+constexpr std::uintptr_t kUploadTextureSurface = 0x4A5430;
+constexpr std::uintptr_t kTextureFormats = 0x7DCE50;   // DDPIXELFORMAT[8], slot 7 = 32-bit
+constexpr std::uintptr_t kTextureMaxWidth = 0x7DC94C;  // uint32, device limit
+constexpr std::uintptr_t kTextureMaxHeight = 0x7DC950;  // uint32, device limit
+
 // Memory the input update may write: kInputSlotStates up to the end of the
 // SEGAJOY gun state (0x7DB368), and the gun state at 0x587D14..0x587D1F.
 constexpr std::uintptr_t kInputStateBegin = 0x7D98F8;

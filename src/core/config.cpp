@@ -40,6 +40,7 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   wchar_t aspect[32] = {};
   GetPrivateProfileStringW(L"display", L"widescreen_aspect", L"auto", aspect, ARRAYSIZE(aspect), file);
   config.widescreen_aspect = aspect;
+  config.replace_textures = GetPrivateProfileIntW(L"assets", L"replace_textures", 1, file) != 0;
   config.widescreen_2d = GetPrivateProfileIntW(L"debug", L"widescreen_2d", 1, file) != 0;
   config.trace_screen_quads = GetPrivateProfileIntW(L"debug", L"trace_screen_quads", 0, file) != 0;
   config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;

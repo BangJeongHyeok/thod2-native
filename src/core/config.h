@@ -18,6 +18,9 @@ namespace thod2::core {
 //   widescreen = 0            ; 1 = Hor+ widescreen (sets dgVoodoo2 ScalingMode = stretched)
 //   widescreen_aspect = auto  ; auto = primary monitor, or W:H such as 16:9 / 21:9
 //
+//   [assets]
+//   replace_textures = 1      ; 1 = load data\tex\<texture id>.png instead of the game's texture
+//
 //   [files]
 //   redirect_user_files = 1   ; 1 = keep saves, d3dx.dat and exception.log in the user's AppData
 //
@@ -49,6 +52,7 @@ struct CoreConfig {
   bool map_cursor = true;
   bool widescreen = false;
   std::wstring widescreen_aspect = L"auto";
+  bool replace_textures = true;
   bool widescreen_2d = true;
   bool trace_screen_quads = false;
   bool trace_ddraw = false;
