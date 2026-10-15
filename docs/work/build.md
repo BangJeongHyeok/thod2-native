@@ -33,7 +33,7 @@
 ```powershell
 cmake --preset x86                  # 구성 (build/x86, Visual Studio 2022 Win32)
 cmake --build --preset x86-release  # 빌드 (x86-debug도 있음)
-ctest --preset x86-release          # 테스트 (core_tests, loader_tests, re_tables)
+ctest --preset x86-release          # 테스트 (core_tests, loader_tests, platform_tests, re_tables)
 .\tools\deploy.ps1                  # ..\test-game\THOTD2 에 배포 (-Config Debug, -Remove 가능)
 ```
 
@@ -43,9 +43,9 @@ ctest --preset x86-release          # 테스트 (core_tests, loader_tests, re_ta
 |---|---|---|
 | `dinput.dll` | `build/x86/bin/<Config>/` | **로더** (`src/loader`). 게임 폴더에 넣으면 `thod2_core.dll`을 불러옴 |
 | `thod2_core.dll` | 같은 폴더 | 게임에 들어갈 코어 DLL. 의존 DLL은 `bcrypt.dll`, `KERNEL32.dll`뿐 (정적 CRT) |
-| `core_tests.exe`, `loader_tests.exe` | 같은 폴더 | 테스트 |
+| `core_tests.exe`, `loader_tests.exe`, `platform_tests.exe` | 같은 폴더 | 테스트 |
 | `dinput.dll` | `build/x86/bin/experiments/<Config>/` | 측정용 프록시 `experiments/dinput_probe` (배포 대상 아님) |
-| `thod2_core_lib.lib`, `thod2_interop_lib.lib` | `build/x86/lib/<Config>/` | 코어·후킹 도우미 내부 구현 (DLL과 테스트가 링크) |
+| `thod2_core_lib.lib`, `thod2_interop_lib.lib`, `thod2_platform_lib.lib` | `build/x86/lib/<Config>/` | 코어·후킹 도우미·재구현 플랫폼 계층 내부 구현 (DLL과 테스트가 링크) |
 
 `deploy.ps1`은 `dinput.dll`(로더)과 `thod2_core.dll`을 복사하고, 게임 폴더에 `thod2-native.ini`가 없을 때만 `config/thod2-native.ini`를 복사한다. `-Remove`는 DLL과 로그를 지우고 ini는 남긴다 (로컬 설정 보존). 로더 동작은 [loader.md](loader.md) "로더 동작"을 본다.
 

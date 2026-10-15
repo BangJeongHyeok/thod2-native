@@ -31,4 +31,50 @@ constexpr std::uintptr_t kFrameWaitCallback = 0x49E0C0;
 constexpr std::uintptr_t kJobQueueReadIndex = 0x7D8AA8;
 constexpr std::uintptr_t kJobQueueWriteIndex = 0x7D8AAC;
 
+// Input update (docs/work/platform-input.md "입력 갱신 분석 결과").
+// UpdateInput 0x41E120 runs once per frame; its only caller is the
+// `call 0x41E120` (E8 2B FB 00 00) at kUpdateInputCall, the first instruction of 0x40E5F0.
+// Evidence: Ghidra decompile and byte decoding of 0x41E120..0x41E63B.
+constexpr std::uintptr_t kUpdateInput = 0x41E120;
+constexpr std::uintptr_t kUpdateInputCall = 0x40E5F0;
+// Original readers still used by the reimplementation (gun joystick, SEGAJOY.VXD gun).
+// int __cdecl(ButtonRecord* record, int device_or_gun, int slot).
+constexpr std::uintptr_t kReadGunJoystick = 0x41F000;
+constexpr std::uintptr_t kReadSegaGun = 0x41F210;
+
+// Input globals. Layouts: thod2/platform/input.h.
+constexpr std::uintptr_t kInputSlotStates = 0x7D98F8;      // [24][0x78]
+constexpr std::uintptr_t kInputPlayer2Index = 0x7D98EC;    // int, Hod2.ini PLAYER2_INDEX
+constexpr std::uintptr_t kInputJoystickPrevious = 0x7DA9B0;  // uint32[8]
+constexpr std::uintptr_t kInputCursor = 0x7DA9D8;          // int32[24][2]
+constexpr std::uintptr_t kInputReloadFlags = 0x7DA450;     // uint32[24]
+constexpr std::uintptr_t kInputKeyChars = 0x7DA4B0;        // uint32[256]
+constexpr std::uintptr_t kInputKeyState = 0x7DA8B0;        // uint8[256]
+constexpr std::uintptr_t kInputPlayer1Index = 0x7DAABC;    // int, Hod2.ini PLAYER1_INDEX
+constexpr std::uintptr_t kInputMouseRecord = 0x7DAAC0;     // ButtonRecord
+constexpr std::uintptr_t kInputKeyboardRecords = 0x7DAAF4;  // ButtonRecord[2]
+constexpr std::uintptr_t kInputJoystickRecords = 0x7DAB5C;  // ButtonRecord[8]
+constexpr std::uintptr_t kInputKeyEvents = 0x7DAC98;       // DIDEVICEOBJECTDATA[16]
+constexpr std::uintptr_t kInputTriggerFlags = 0x7DADA8;    // uint32[24]
+constexpr std::uintptr_t kInputNameEntry = 0x7DAE08;       // uint8[8]
+constexpr std::uintptr_t kInputJoysticks = 0x7DAE18;       // IDirectInputDevice7A*[8] (g_diDevices)
+constexpr std::uintptr_t kInputPlayerRecords = 0x7DAE40;   // ButtonRecord[24]
+constexpr std::uintptr_t kInputPlayer2Mode = 0x7DB320;     // uint32
+constexpr std::uintptr_t kInputKeyboard = 0x7DB324;        // IDirectInputDevice7A*
+constexpr std::uintptr_t kInputMouse = 0x7DB328;           // IDirectInputDevice7A*
+constexpr std::uintptr_t kInputJoystickCount = 0x7DB334;   // uint32
+constexpr std::uintptr_t kInputCursorCallback = 0x7DB338;  // int (__cdecl*)(void), one-shot
+constexpr std::uintptr_t kInputKeyboardPrevious = 0x7DB33C;  // uint32
+constexpr std::uintptr_t kInputMousePrevious = 0x7DB340;   // uint32
+constexpr std::uintptr_t kInputPlayer1Mode = 0x587D14;     // uint32 (initialized data)
+constexpr std::uintptr_t kInputJoystickButtonMap = 0x587CDC;  // uint32[14] (initialized data)
+constexpr std::uintptr_t kMainWindow = 0x7DC8AC;           // HWND g_hWnd
+
+// Memory the input update may write: kInputSlotStates up to the end of the
+// SEGAJOY gun state (0x7DB368), and the gun state at 0x587D14..0x587D1F.
+constexpr std::uintptr_t kInputStateBegin = 0x7D98F8;
+constexpr std::uintptr_t kInputStateEnd = kInputStateBegin + 0x1A78;  // 0x7DB370
+constexpr std::uintptr_t kInputStateExtraBegin = 0x587D14;
+constexpr std::uintptr_t kInputStateExtraEnd = kInputStateExtraBegin + 0xC;  // 0x587D20
+
 }  // namespace thod2::interop::hod2

@@ -32,6 +32,9 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
       config.frame_wait_margin_ms = value;
     }
   }
+  config.reimplement_input_update =
+      GetPrivateProfileIntW(L"input", L"reimplement_update", 0, file) != 0;
+  config.input_compare = GetPrivateProfileIntW(L"debug", L"input_compare", 0, file) != 0;
   config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   config.profile = GetPrivateProfileIntW(L"debug", L"profile", 0, file) != 0;
   config.trace_files = GetPrivateProfileIntW(L"debug", L"trace_files", 0, file) != 0;

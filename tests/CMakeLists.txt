@@ -21,3 +21,7 @@ if(Python3_Interpreter_FOUND)
 else()
   message(STATUS "Python 3 not found: re_tables test skipped")
 endif()
+
+add_executable(platform_tests platform_tests.cpp)
+target_link_libraries(platform_tests PRIVATE thod2_platform_lib)
+add_test(NAME platform_tests COMMAND platform_tests)

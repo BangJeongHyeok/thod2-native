@@ -22,7 +22,11 @@ namespace thod2::core {
 //   frame_wait_sleep = 1      ; 1 = sleep instead of busy-waiting at the end of a frame
 //   frame_wait_margin_ms = 1.0 ; time left to the game's own busy wait before the deadline
 //
+//   [input]
+//   reimplement_update = 0    ; 1 = our input update replaces the original (0x41E120)
+//
 //   [debug]
+//   input_compare = 0         ; 1 = run our input update next to the original and log differences
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
 //   trace_files = 0           ; 1 = log the game's file system calls
@@ -34,6 +38,8 @@ struct CoreConfig {
   bool redirect_user_files = true;
   bool frame_wait_sleep = true;
   float frame_wait_margin_ms = 1.0f;
+  bool reimplement_input_update = false;
+  bool input_compare = false;
   bool trace_ddraw = false;
   bool profile = false;
   bool trace_files = false;

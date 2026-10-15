@@ -1,5 +1,8 @@
 address,name,type,confidence,evidence,doc,notes
 0x587C30,g_jobHandlers,,guess,bytes,platform-timing.md,Handler table used by DispatchJob (0x41D670).
+0x587CDC,g_inputJoystickButtonMap,uint32_t[14],confirmed,bytes,platform-input.md,"Button bits for joystick buttons 0..13 (initialized data), read by ReadJoystick."
+0x587D14,g_inputPlayer1Mode,uint32_t,confirmed,ghidra;bytes,platform-input.md,Device mode of player 1 (see ResolveControllerModes). High bit: the joystick is a gun. Followed by SEGAJOY gun state at 0x587D18.
+0x587D88,g_inputGunProductName,char[16],confirmed,bytes;ghidra,platform-input.md,"""MC PC LIGHT GUN"". EnumJoystickCallback marks a player mode as gun when the joystick product name equals this."
 0x59743C,g_frameCorrectionStepMs,float,guess,bytes,platform-timing.md,0.2 in the file. Step for the frame time correction.
 0x597440,g_frameCorrectionLimitMs,float,guess,bytes,platform-timing.md,10.0 in the file. The correction g_frameCorrectionMs is clamped to +/- this value.
 0x597444,g_frameTimeMs,float,confirmed,bytes,platform-timing.md,"Target frame time, 16.6667 (= 1000/60) in the file. Read at 0x4A4B8F. Only the initial value is confirmed."
@@ -10,7 +13,29 @@ address,name,type,confidence,evidence,doc,notes
 0x7D8AA8,g_jobQueueRead,uint,confirmed,bytes,platform-timing.md,Read index of g_jobQueue. The queue is empty when it equals g_jobQueueWrite. Code: hod2::kJobQueueReadIndex.
 0x7D8AAC,g_jobQueueWrite,uint,confirmed,bytes,platform-timing.md,Write index of g_jobQueue. Code: hod2::kJobQueueWriteIndex.
 0x7D8EB0,g_jobQueue,,confirmed,bytes,platform-timing.md,"Ring buffer of 64 entries, 16 bytes each, processed by ProcessJobQueueEntry. Entry layout unknown."
-0x7DAE18,g_diDevices,,guess,pattern,platform-input.md,Array of DirectInput device pointers (controllers / light guns). SetCooperativeLevel at 0x41EBA3 takes the device from here.
+0x7D98EC,g_inputPlayer2Index,int,confirmed,ghidra,platform-input.md,Hod2.ini PLAYER2_INDEX. 0x7D98E8 and 0x7D98F0 hold PLAYER1_DEVID and PLAYER2_DEVID.
+0x7D98F8,g_inputSlotStates,uint8_t[24][0x78],guess,ghidra;bytes,platform-input.md,Per-slot state linked from the player records. UpdateInput writes the record type at +0 and 2 at +0x11. Start of the memory the input update writes (to 0x7DB370).
+0x7DA450,g_inputReloadFlags,uint32_t[24],confirmed,ghidra;bytes,platform-input.md,Set from the mouse reload press (and by the gun readers); consumed by TakeShotFlags.
+0x7DA4B0,g_inputKeyChars,uint32_t[256],guess,ghidra,platform-input.md,DIK code -> character for text entry (mode 2). Filled elsewhere.
+0x7DA8B0,g_inputKeyState,uint8_t[256],confirmed,ghidra;bytes,platform-input.md,Keyboard GetDeviceState buffer.
+0x7DA9B0,g_inputJoystickPrevious,uint32_t[8],confirmed,bytes,platform-input.md,Previous held bits per joystick for the pressed/released edges.
+0x7DA9D8,g_inputCursor,int32_t[24][2],confirmed,ghidra;bytes,platform-input.md,"Aim position per slot in client pixels; (0xFFFF, 0xFFFF) = off screen."
+0x7DAABC,g_inputPlayer1Index,int,confirmed,ghidra,platform-input.md,Hod2.ini PLAYER1_INDEX.
+0x7DAAC0,g_inputMouseRecord,ButtonRecord,confirmed,ghidra;bytes,platform-input.md,Raw mouse record (0x34 bytes).
+0x7DAAF4,g_inputKeyboardRecords,ButtonRecord[2],confirmed,ghidra;bytes,platform-input.md,Raw keyboard records for layout 0 and 1.
+0x7DAB5C,g_inputJoystickRecords,ButtonRecord[8],confirmed,ghidra;bytes,platform-input.md,Raw joystick records.
+0x7DAC98,g_inputKeyEvents,DIDEVICEOBJECTDATA[16],confirmed,ghidra;bytes,platform-input.md,Buffered keyboard data. Cleared and read again by each ReadKeyboard call.
+0x7DADA8,g_inputTriggerFlags,uint32_t[24],confirmed,ghidra;bytes,platform-input.md,Set from the mouse trigger press (and by the gun readers); consumed by TakeShotFlags.
+0x7DAE08,g_inputNameEntry,uint8_t[8],guess,bytes,platform-input.md,"Text entry: modifier bits at +0, up to 7 characters at +2 (+2 = 1 on overflow)."
+0x7DAE18,g_diDevices,IDirectInputDevice7A *[8],confirmed,pattern;ghidra,platform-input.md,"Joystick devices created by EnumJoystickCallback (0x41E9A0), count in g_inputJoystickCount. SetCooperativeLevel(g_hWnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND) at 0x41EBA3."
+0x7DAE40,g_inputPlayerRecords,ButtonRecord[24],confirmed,ghidra;bytes,platform-input.md,"Player input records; P1 uses slot 0, P2 slot 6. +0x30 points to the slot state."
+0x7DB320,g_inputPlayer2Mode,uint32_t,confirmed,ghidra;bytes,platform-input.md,Device mode of player 2.
+0x7DB324,g_inputKeyboard,IDirectInputDevice7A *,confirmed,ghidra,platform-input.md,Keyboard device.
+0x7DB328,g_inputMouse,IDirectInputDevice7A *,confirmed,ghidra,platform-input.md,Mouse device.
+0x7DB334,g_inputJoystickCount,uint32_t,confirmed,ghidra,platform-input.md,Number of joysticks in g_diDevices.
+0x7DB338,g_inputCursorCallback,void *,confirmed,ghidra;bytes,platform-input.md,One-shot int (__cdecl*)(void) set by SetCursorCallback and called by ConsumeCursorCallback.
+0x7DB33C,g_inputKeyboardPrevious,uint32_t,confirmed,bytes,platform-input.md,"Previous held bits, shared by both keyboard layouts."
+0x7DB340,g_inputMousePrevious,uint32_t,confirmed,bytes,platform-input.md,Previous held bits of the mouse.
 0x7DC890,g_cdCheckMode,,guess,bytes,reverse-engineering.md,CheckCdRom passes immediately when this is 0. Meaning unknown.
 0x7DC8AC,g_hWnd,HWND,confirmed,bytes;runtime,platform-display.md,"Main window handle, stored at 0x4A588D from CreateWindowExA. Window class and title are both ""The House of the Dead 2""."
 0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.

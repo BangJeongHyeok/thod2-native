@@ -8,6 +8,7 @@
 #include "patches/file_redirect.h"
 #include "patches/file_trace.h"
 #include "patches/frame_wait.h"
+#include "patches/input_update.h"
 #include "patches/profiler.h"
 #include "sha256.h"
 #include "util.h"
@@ -36,6 +37,13 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallFrameWaitSleep(config.frame_wait_margin_ms);
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
+  }
+  if (config.input_compare) {
+    patches::InstallInputUpdate(patches::InputUpdateMode::Compare);
+  } else if (config.reimplement_input_update) {
+    patches::InstallInputUpdate(patches::InputUpdateMode::Reimplemented);
+  } else {
+    Log(LogLevel::Info, "input_update: original (reimplement_update = 0)");
   }
   // Both hook CreateFileA. The trace is installed last so that it sees the
   // game's calls first (with the game's call site and the original path) and

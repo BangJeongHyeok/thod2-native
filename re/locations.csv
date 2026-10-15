@@ -1,6 +1,7 @@
 address,kind,confidence,evidence,doc,notes
 0x40E4D9,insn,confirmed,bytes,reverse-engineering.md,"References the ""Toddebug.ini"" string."
 0x40E4EB,ret,confirmed,trace:file_trace,platform-filesystem.md,"GetFullPathNameA for Toddebug.ini ([TOD] LIFE, RELOAD; default ""FAILED"")."
+0x40E5F0,insn,confirmed,bytes,platform-input.md,"call UpdateInput (E8 2B FB 00 00), first instruction of 0x40E5F0 and the only call of 0x41E120. input_update patches its target."
 0x41DF23,ret,confirmed,trace:file_trace,platform-input.md,CreateFileA of \\.\SEGAJOY.VXD (Sega light gun VxD driver). Fails with error 2 on modern Windows.
 0x41DF88,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for Hod2.ini ([Controller]).
 0x41E812,ret,confirmed,trace:dinput_probe,loader.md,DirectInputCreateEx(version 0x700). Called after the startup device dialog.
