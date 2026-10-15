@@ -1,0 +1,42 @@
+address,kind,confidence,evidence,doc,notes
+0x40E4D9,insn,confirmed,bytes,reverse-engineering.md,"References the ""Toddebug.ini"" string."
+0x40E4EB,ret,confirmed,trace:file_trace,platform-filesystem.md,"GetFullPathNameA for Toddebug.ini ([TOD] LIFE, RELOAD; default ""FAILED"")."
+0x41DF23,ret,confirmed,trace:file_trace,platform-input.md,CreateFileA of \\.\SEGAJOY.VXD (Sega light gun VxD driver). Fails with error 2 on modern Windows.
+0x41DF88,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for Hod2.ini ([Controller]).
+0x41E812,ret,confirmed,trace:dinput_probe,loader.md,DirectInputCreateEx(version 0x700). Called after the startup device dialog.
+0x41EBA3,insn,confirmed,pattern,platform-input.md,"DirectInput device SetCooperativeLevel(g_hWnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND) through vtable +0x34; the device comes from g_diDevices[i]. Only match of the constant push pattern."
+0x49DA02,ret,confirmed,trace:file_trace,platform-filesystem.md,Opens Hod2.exe itself.
+0x49DF0B,insn,confirmed,bytes,platform-timing.md,"mov dword [g_frameWaitCallback], FrameWaitCallback."
+0x49DF11,insn,confirmed,bytes,platform-timing.md,32-bit immediate (0x49DF11..0x49DF14) of the instruction at 0x49DF0B. frame_wait_sleep patches it. Code: hod2::kFrameWaitCallbackImmediate.
+0x49DF2F,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for Hod2.ini ([Flush Setting]).
+0x49F990,ret,confirmed,trace:file_trace,platform-filesystem.md,CreateFileA reading one of the 4 save files at startup.
+0x49FA17,ret,confirmed,trace:file_trace,platform-filesystem.md,CreateFileA(CREATE_ALWAYS) writing one of the 4 save files on normal exit.
+0x49FA8C,ret,confirmed,trace:file_trace,platform-filesystem.md,"CreateFileA(OPEN_EXISTING) writing one of the 4 save files on normal exit, after 0x49FA17."
+0x4A0899,insn,confirmed,exception.log,platform-filesystem.md,"Access violation recorded in the original folder's exception.log (Eax = 0, Esi = 0; 0x4604D5 on the stack). Cause unknown."
+0x4A41E4,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x01 (AllDevicePass).
+0x4A448D,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x80 (UseZBuffer).
+0x4A4672,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x100 (UseHEL).
+0x4A4758,ret,confirmed,trace:dinput_probe,loader.md,"MessageBoxA of the startup device dialog (""... will be used."", ""Attention"", MB_YESNO | MB_ICONEXCLAMATION). skip_device_dialog uses it. Code: hod2::kDeviceDialogMessageBoxReturn."
+0x4A4B69,ret,confirmed,trace:ddraw_trace,platform-display.md,TestCooperativeLevel. Called repeatedly while the display is lost (Alt+Tab).
+0x4A4D0F,insn,confirmed,bytes,platform-timing.md,"Start of the WaitFrameEnd spin loop (0x4A4D0F..0x4A4D63): callback, QueryPerformanceCounter, elapsed ms, compare."
+0x4A4D30,ret,confirmed,bytes;profiler,platform-timing.md,QueryPerformanceCounter (call edi) inside the WaitFrameEnd spin loop. Real hot call site of the CPU 100% problem.
+0x4A5171,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x08 (SmallTexure=1).
+0x4A5850,insn,guess,bytes,reverse-engineering.md,"Inside the WinMain-like initialization function 0x4A5790: CreateWindowExA, then LoadHglCoreIni (0x4A60A0)."
+0x4A588B,ret,confirmed,trace:dinput_probe,loader.md,CreateWindowExA of the main window. The result is stored in g_hWnd at 0x4A588D.
+0x4A5899,insn,guess,bytes,reverse-engineering.md,"5-byte NOP. Most likely the removed call to CheckCdRom (0x4A5C50), which has no callers."
+0x4A59DF,insn,confirmed,bytes,platform-timing.md,Calls WaitFrameEnd (0x4A4B30).
+0x4A5C72,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x40 (CDCheckPass) inside CheckCdRom.
+0x4A6093,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for hglCore.ini.
+0x4AB2F0,insn,confirmed,bytes,platform-timing.md,Calls WaitFrameEnd (0x4A4B30).
+0x4AC861,ret,confirmed,trace:dinput_probe,loader.md,"First GetCommandLineA in the CRT startup code (inside entry 0x4AC7D5). thod2-native initializes here, the earliest point outside the loader lock."
+0x4B9896,ret,confirmed,trace:ddraw_trace,platform-display.md,"Flip(NULL, DDFLIP_WAIT) once per frame. Probably inside the main loop."
+0x4BACE7,ret,confirmed,trace:ddraw_trace,platform-display.md,"CreateSurface(ZBUFFER, 640x480, 16 bit)."
+0x4BBF28,ret,confirmed,trace:file_trace,platform-filesystem.md,CreateFileA(OPEN_ALWAYS) of <Windows>\d3dx.dat (D3DX device cache).
+0x4BC704,ret,confirmed,trace:ddraw_trace,platform-display.md,"SetCooperativeLevel(hwnd, FULLSCREEN | ALLOWREBOOT | EXCLUSIVE)."
+0x4BC7EC,ret,confirmed,trace:ddraw_trace,platform-display.md,"SetDisplayMode(640, 480, 16, 0, 0)."
+0x4BC94F,ret,confirmed,trace:ddraw_trace,platform-display.md,"CreateSurface(PRIMARY | FLIP | COMPLEX | 3DDEVICE, 1 back buffer) of the primary flip chain."
+0x4BD209,ret,confirmed,trace:dinput_probe;trace:ddraw_trace,platform-display.md,DirectDrawCreateEx during device enumeration. Called 3 times at startup.
+0x4BD219,ret,confirmed,trace:ddraw_trace,platform-display.md,"SetCooperativeLevel(NULL, NORMAL) during device enumeration."
+0x4BD2DE,ret,confirmed,trace:ddraw_trace,platform-display.md,"SetCooperativeLevel(NULL, NORMAL) during device enumeration."
+0x4BD2F3,ret,confirmed,trace:ddraw_trace,platform-display.md,QueryInterface(IID_IDirect3D7) during device enumeration.
+0x4C0E13,ret,confirmed,trace:file_trace,platform-filesystem.md,GetWindowsDirectoryA used to build the d3dx.dat path.

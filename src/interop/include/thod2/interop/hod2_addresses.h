@@ -1,8 +1,8 @@
 // Fixed addresses (VA) in the supported Hod2.exe build.
 //
 // Only valid when thod2::core::FindKnownExe() accepted the host executable.
-// Every entry must also be listed in docs/work/reverse-engineering.md
-// ("확인된 주소") with the evidence it is based on.
+// Every entry must also be listed in re/*.csv with the evidence it is based
+// on; tools/re/check_re.py (ctest re_tables) fails otherwise.
 #pragma once
 
 #include <cstdint>

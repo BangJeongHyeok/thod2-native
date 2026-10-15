@@ -12,3 +12,12 @@ add_test(NAME loader_tests COMMAND loader_tests)
 
 # Both tests write thod2-native.log in the output folder.
 set_tests_properties(core_tests loader_tests PROPERTIES RUN_SERIAL TRUE)
+
+# re/*.csv format and their links to the code (hod2_addresses.h, "Reimplements:").
+# Needs no game files. Skipped when no Python 3 is installed.
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME re_tables COMMAND Python3::Interpreter -I ${PROJECT_SOURCE_DIR}/tools/re/check_re.py)
+else()
+  message(STATUS "Python 3 not found: re_tables test skipped")
+endif()
