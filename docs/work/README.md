@@ -10,7 +10,7 @@
 | 호환성 조사 | [compat-survey.md](compat-survey.md) | 1-1 | 진행 중 | 2026-10-14 |
 | 플랫폼: 창·디스플레이 | [platform-display.md](platform-display.md) | 1-3, 2-2 | 진행 중 | 2026-10-14 |
 | 플랫폼: 메인 루프·타이밍 | [platform-timing.md](platform-timing.md) | 1-3, 2-2 | 진행 중 | 2026-10-15 |
-| 플랫폼: 입력 | [platform-input.md](platform-input.md) | 1-3, 2-2 | 시작 전 | 2026-10-15 |
+| 플랫폼: 입력 | [platform-input.md](platform-input.md) | 1-3, 2-2 | 진행 중 | 2026-10-15 |
 | 플랫폼: 오디오 | [platform-audio.md](platform-audio.md) | 2-2 | 시작 전 | 2026-10-13 |
 | 플랫폼: 파일·경로·세이브 | [platform-filesystem.md](platform-filesystem.md) | 1-3, 2-2 | 진행 중 | 2026-10-15 |
 | 렌더러 | [renderer.md](renderer.md) | 1-3, 2-3 | 진행 중 | 2026-10-15 |

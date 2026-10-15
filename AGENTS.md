@@ -224,15 +224,15 @@ thod2-native/
 │  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
 │  ├─ launcher/       ← (보류) 필요해지면 만드는 런처 thod2.exe
 │  ├─ interop/        ← 후킹·패치 도우미 (있음: IAT·함수 표 후킹, 바이트 패치, 원본 주소 상수 hod2_addresses.h)
-│  ├─ platform/       ← 창, 타이밍·메인 루프, 입력, 오디오, 파일 입출력
+│  ├─ platform/       ← 재구현한 플랫폼 계층 thod2_platform_lib (있음: input/ 입력 갱신). 이후 창, 타이밍·메인 루프, 오디오, 파일 입출력
 │  ├─ renderer/       ← 렌더 인터페이스와 백엔드 (D3D11 등)
 │  ├─ assets/         ← pol/tex/mot/cam/coli/evt 로더, 데이터 덮어쓰기
 │  ├─ game/           ← 재구현한 게임 로직
 │  └─ modapi/         ← 플러그인 로딩, 이벤트, 공개 헤더
-├─ tests/             ← core_tests, loader_tests (있음)
+├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
@@ -247,4 +247,4 @@ thod2-native/
 - `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
 - Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
 - 게임 로직이 프레임 수에 묶여 있는지 (고주사율에서 빨라지지 않는 것은 실제 240Hz 모니터에서 확인됨, [platform-timing.md](docs/work/platform-timing.md) G3)
-- 마우스/라이트건 입력 처리 방식
+- 마우스 좌표가 3D 사격 판정으로 바뀌는 곳 (입력 갱신 자체는 분석·재구현됨, [platform-input.md](docs/work/platform-input.md))
