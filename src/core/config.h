@@ -24,6 +24,7 @@ namespace thod2::core {
 //
 //   [input]
 //   reimplement_update = 0    ; 1 = our input update replaces the original (0x41E120)
+//   map_cursor = 1            ; 1 = map window pixels to the game's 640x480 screen (dgVoodoo2 window)
 //
 //   [debug]
 //   input_compare = 0         ; 1 = run our input update next to the original and log differences
@@ -42,6 +43,7 @@ struct CoreConfig {
   float frame_wait_margin_ms = 1.0f;
   bool reimplement_input_update = false;
   bool input_compare = false;
+  bool map_cursor = true;
   int aspect_experiment = 0;
   bool trace_screen_quads = false;
   bool trace_ddraw = false;

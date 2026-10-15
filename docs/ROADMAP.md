@@ -68,7 +68,7 @@
 - [ ] **렌더링:** DX7이 현대 드라이버에서 안정적으로 동작하게 한다. 초기에는 검증된 래퍼를 써도 되지만, 최종적으로는 2단계의 자체 렌더러로 대체한다. → **1단계는 dgVoodoo2로 처리하기로 결정** ([work/platform-display.md](work/platform-display.md))
 - [ ] **화면:** 테두리 없는 창 모드, 데스크톱 해상도와 무관한 렌더링, DPI 인식 → 테두리 없는 창·Alt+Enter는 dgVoodoo2로 처리, 설치 안내 [INSTALL.md](INSTALL.md) (DPI 인식은 미확인)
 - [ ] **타이밍:** 모니터 주사율과 관계없이 게임 로직이 원본 속도(60Hz로 추정)로 돈다. → CPU 100%(바쁜 대기)는 `frame_wait_sleep`으로 해결. 게임 속도는 고정 60fps 타이머로 정해지는 것으로 보임, 240Hz 모니터에서 빨라지지 않음을 확인 ([work/platform-timing.md](work/platform-timing.md))
-- [ ] **입력:** 현대 마우스(Raw Input), 게임패드 대응
+- [ ] **입력:** 현대 마우스(Raw Input), 게임패드 대응 → dgVoodoo2 창에서 조준이 왼쪽 위 640×480에 묶이던 문제를 `[input] map_cursor`로 고침 ([work/renderer.md](work/renderer.md) "조준")
 - [ ] **CD 확인:** 원본 실행 파일 수정 없이 우리 코드에서 처리 → **나중으로 미룸** (2026-10-15 사용자 결정. 보유한 실행 파일은 CD 확인이 이미 지워져 있어 지금 막히는 것이 없음. 1단계 완료 기준에 넣지 않음, [work/platform-filesystem.md](work/platform-filesystem.md))
 - [x] **파일 경로:** 세이브와 설정을 게임 폴더 대신 사용자 폴더(`%APPDATA%` 등)에 저장해서 관리자 권한이 필요 없게 한다. → `redirect_user_files`로 세이브·캐시·크래시 로그를 사용자 폴더로 ([work/platform-filesystem.md](work/platform-filesystem.md))
 

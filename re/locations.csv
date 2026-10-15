@@ -1,13 +1,37 @@
 address,kind,confidence,evidence,doc,notes
+0x406335,insn,confirmed,bytes,renderer.md,Operand of fld [320.0f] in 0x406330.
+0x409C38,insn,confirmed,bytes,renderer.md,Operand of fmul [0.5f] in IsInScreenRect (focal * 0.5 = 320).
+0x40CCC8,insn,confirmed,bytes,renderer.md,"xor eax,eax; mov ax,[esi+0x9C7240]: zero-extended raw aim x (calibrated path)."
+0x40CCD3,insn,confirmed,bytes,renderer.md,"Immediate 319 (push 0x13F): max aim x, calibrated path."
+0x40CCD8,insn,confirmed,bytes,renderer.md,"Immediate -320 (push 0xFFFFFEC0): min aim x, calibrated path."
+0x40CD67,insn,confirmed,bytes,renderer.md,"Immediate 319: max aim x, mouse path."
+0x40CD6B,insn,confirmed,bytes,renderer.md,Same zero-extended raw aim x load on the mouse path.
+0x40CD75,insn,confirmed,bytes,renderer.md,"Immediate -320: min aim x, mouse path."
+0x40D16A,insn,confirmed,bytes,renderer.md,Operand of fcomp [320.0f] in MoveAimDigital.
+0x40D178,insn,confirmed,bytes,renderer.md,Immediate 320.0f of mov [esi+8] in MoveAimDigital (clamp).
+0x40D181,insn,confirmed,bytes,renderer.md,Operand of fcomp [-320.0f] in MoveAimDigital.
+0x40D18F,insn,confirmed,bytes,renderer.md,Immediate -320.0f of mov [esi+8] in MoveAimDigital (clamp).
 0x40E4D9,insn,confirmed,bytes,reverse-engineering.md,"References the ""Toddebug.ini"" string."
 0x40E4EB,ret,confirmed,trace:file_trace,platform-filesystem.md,"GetFullPathNameA for Toddebug.ini ([TOD] LIFE, RELOAD; default ""FAILED"")."
 0x40E5F0,insn,confirmed,bytes,platform-input.md,"call UpdateInput (E8 2B FB 00 00), first instruction of 0x40E5F0 and the only call of 0x41E120. input_update patches its target."
 0x4185D4,insn,confirmed,bytes;runtime,renderer.md,Immediate 0x3FAAAAAB (4/3) of `push` in SetupSceneProjection: the aspect argument of SetPerspective.
 0x4195C2,insn,confirmed,bytes,renderer.md,Immediate 0x3FAAAAAB (4/3) of `push` in SetupProjectionNear.
+0x41C818,insn,confirmed,bytes,renderer.md,call DrawSprite2D inside DrawSpriteAt (not hooked by the HUD anchoring).
 0x41DF23,ret,confirmed,trace:file_trace,platform-input.md,CreateFileA of \\.\SEGAJOY.VXD (Sega light gun VxD driver). Fails with error 2 on modern Windows.
 0x41DF88,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for Hod2.ini ([Controller]).
+0x41E4DA,insn,confirmed,bytes,renderer.md,call GetCursorClientPos in UpdateInput. map_cursor patches it.
 0x41E812,ret,confirmed,trace:dinput_probe,loader.md,DirectInputCreateEx(version 0x700). Called after the startup device dialog.
+0x41E928,insn,confirmed,bytes,renderer.md,call GetCursorClientPos in CreateInputDevices. map_cursor patches it.
 0x41EBA3,insn,confirmed,pattern,platform-input.md,"DirectInput device SetCooperativeLevel(g_hWnd, DISCL_EXCLUSIVE | DISCL_BACKGROUND) through vtable +0x34; the device comes from g_diDevices[i]. Only match of the constant push pattern."
+0x4455DE,insn,confirmed,bytes,renderer.md,Operand of fcomp [320.0f] in 0x445530.
+0x4455EB,insn,confirmed,bytes,renderer.md,Operand of fcom [320.0f] in 0x445530.
+0x4455FC,insn,confirmed,bytes,renderer.md,Operand of fcomp [-320.0f] in 0x445530.
+0x445609,insn,confirmed,bytes,renderer.md,Operand of fcomp [-320.0f] in 0x445530.
+0x44C794,insn,confirmed,bytes,renderer.md,Operand of fld [320.0f] in 0x44C760.
+0x45C6F2,insn,confirmed,bytes,renderer.md,Operand of fcomp [320.0f] in 0x45C620.
+0x45C6FF,insn,confirmed,bytes,renderer.md,Operand of fcom [320.0f] in 0x45C620.
+0x45C710,insn,confirmed,bytes,renderer.md,Operand of fcomp [-320.0f] in 0x45C620.
+0x45C71D,insn,confirmed,bytes,renderer.md,Operand of fcomp [-320.0f] in 0x45C620.
 0x49DA02,ret,confirmed,trace:file_trace,platform-filesystem.md,Opens Hod2.exe itself.
 0x49DF0B,insn,confirmed,bytes,platform-timing.md,"mov dword [g_frameWaitCallback], FrameWaitCallback."
 0x49DF11,insn,confirmed,bytes,platform-timing.md,32-bit immediate (0x49DF11..0x49DF14) of the instruction at 0x49DF0B. frame_wait_sleep patches it. Code: hod2::kFrameWaitCallbackImmediate.

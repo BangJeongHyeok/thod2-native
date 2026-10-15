@@ -5,6 +5,7 @@ add_library(thod2_core_lib STATIC
   exe_id.cpp
   log.cpp
   patches/aspect_experiment.cpp
+  patches/cursor_map.cpp
   patches/ddraw_trace.cpp
   patches/device_dialog.cpp
   patches/file_redirect.cpp

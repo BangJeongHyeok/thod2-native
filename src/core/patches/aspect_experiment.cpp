@@ -1,6 +1,7 @@
 #include "patches/aspect_experiment.h"
 
 #include "log.h"
+#include "patches/hud_call_sites.h"
 
 #include <thod2/interop/hod2_addresses.h>
 #include <thod2/interop/memory_patch.h>
@@ -11,6 +12,8 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <intrin.h>
+#include <map>
 #include <set>
 #include <string>
 
@@ -181,6 +184,105 @@ void __cdecl SqueezedDrawScreenQuad(std::uint32_t* sprite) {
   reinterpret_cast<DrawScreenQuadFn>(hod2::kDrawScreenQuad)(copy.data());
 }
 
+// --- Wider 4:3 limits ---------------------------------------------------------
+// Values the patched x87 operands point to instead of 320.0f, -320.0f and 0.5f.
+float g_half_width = 320.0f;
+float g_neg_half_width = -320.0f;
+float g_half_ratio = 0.5f;
+
+// --- HUD anchoring -----------------------------------------------------------
+// Player: the same call draws the 1P element left of the centre and the 2P one
+// right of it; each goes to its own screen edge.
+enum class Anchor { None, Left, Right, Player };
+
+// Shift that keeps a left (right) anchored element at the same distance from
+// the left (right) screen edge: the virtual 4:3 view is this much wider per side.
+float g_anchor_shift = 0.0f;
+
+struct AnchoredCall {
+  std::uint32_t call;
+  Anchor anchor;
+};
+// From the trace of sprite call sites during the chapter 1 cut scene and
+// gameplay (renderer.md "HUD 배치"). Everything else stays centred.
+constexpr AnchoredCall kAnchoredCalls[] = {
+    {0x40686C, Anchor::Player},  // 0x4067F0: sprite 0x900 at (160, 334)
+    {0x40690C, Anchor::Player},  // 0x4068C0: sprite 0x8FF at x 42 / 384, y 412
+    {0x4069FF, Anchor::Player},  // 0x406940: sprite 0x22E at x 82 / 424, y 427
+    {0x406A86, Anchor::Player},  // 0x406940: sprite 0x62 at x 176 / 518, y 427
+    {0x4175E7, Anchor::Player},  // 0x417570: life, sprite 0x5B8 at (32, 422)
+    {0x417631, Anchor::Player},  // 0x417570: life, sprite 0x5B9 at (28, 412)
+    {0x417741, Anchor::Player},  // 0x417570: life icons 0x6C4.. at x 60..156, y 412
+    {0x417AFC, Anchor::Player},  // 0x4178A0: bullets 0xA74 at x 24..96, y 364
+    {0x417ECD, Anchor::Player},  // 0x4178A0: bullets 0xA74 at x 24..132, y 364
+};
+
+Anchor AnchorOf(std::uintptr_t call) {
+  for (const AnchoredCall& c : kAnchoredCalls) {
+    if (c.call == call) {
+      return c.anchor;
+    }
+  }
+  return Anchor::None;
+}
+
+// Logs up to 4 distinct (sprite, x, y) per call site.
+std::map<std::uint32_t, std::set<std::uint64_t>> g_sprite_trace;
+
+void TraceSpriteCall(std::uintptr_t call, std::uint32_t sprite, float x, float y) {
+  auto& seen = g_sprite_trace[static_cast<std::uint32_t>(call)];
+  const std::uint64_t key = (static_cast<std::uint64_t>(sprite) << 32) ^
+                            (static_cast<std::uint64_t>(static_cast<std::int32_t>(x)) << 16) ^
+                            static_cast<std::uint64_t>(static_cast<std::int32_t>(y));
+  if (seen.size() >= 4 || !seen.insert(key).second) {
+    return;
+  }
+  Log(LogLevel::Info, "sprite_call: call 0x{:X} sprite 0x{:X} x {:.1f} y {:.1f}", call, sprite, x, y);
+}
+
+float AnchoredX(std::uintptr_t call, float x) {
+  switch (AnchorOf(call)) {
+    case Anchor::Left:
+      return x - g_anchor_shift;
+    case Anchor::Right:
+      return x + g_anchor_shift;
+    case Anchor::Player:
+      return x < 320.0f ? x - g_anchor_shift : x + g_anchor_shift;
+    case Anchor::None:
+      break;
+  }
+  return x;
+}
+
+using DrawSprite2DFn = void(__cdecl*)(std::uint32_t* def);
+using DrawSpriteAtFn = void(__cdecl*)(std::uint32_t sprite, float x, float y, float depth, float scale_x,
+                                      float scale_y, std::uint32_t p7, std::uint32_t p8);
+
+// Sprite definition passed to DrawSprite2D: +0 sprite, +4 x, +8 y (14 dwords read).
+constexpr std::size_t kSpriteDefDwords = 14;
+
+void __cdecl HookedDrawSprite2D(std::uint32_t* def) {
+  const auto call = reinterpret_cast<std::uintptr_t>(_ReturnAddress()) - 5;
+  std::array<std::uint32_t, kSpriteDefDwords> copy;
+  std::memcpy(copy.data(), def, sizeof(copy));
+  const float x = std::bit_cast<float>(copy[1]);
+  if (g_trace) {
+    TraceSpriteCall(call, copy[0], x, std::bit_cast<float>(copy[2]));
+  }
+  copy[1] = std::bit_cast<std::uint32_t>(AnchoredX(call, x));
+  reinterpret_cast<DrawSprite2DFn>(hod2::kDrawSprite2D)(copy.data());
+}
+
+void __cdecl HookedDrawSpriteAt(std::uint32_t sprite, float x, float y, float depth, float scale_x,
+                                float scale_y, std::uint32_t p7, std::uint32_t p8) {
+  const auto call = reinterpret_cast<std::uintptr_t>(_ReturnAddress()) - 5;
+  if (g_trace) {
+    TraceSpriteCall(call, sprite, x, y);
+  }
+  reinterpret_cast<DrawSpriteAtFn>(hod2::kDrawSpriteAt)(sprite, AnchoredX(call, x), y, depth, scale_x,
+                                                         scale_y, p7, p8);
+}
+
 std::array<std::uint8_t, 5> CallBytes(std::uintptr_t from, std::uintptr_t to) {
   const auto rel = static_cast<std::uint32_t>(to - (from + 5));
   return {0xE8, static_cast<std::uint8_t>(rel), static_cast<std::uint8_t>(rel >> 8),
@@ -232,6 +334,63 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
         ok = false;
       }
     }
+  }
+  const float widen = kWideAspect / kOriginalAspect;
+  if (stage >= 1) {
+    g_half_width = 320.0f * widen;
+    g_neg_half_width = -320.0f * widen;
+    g_half_ratio = 0.5f * widen;
+    const auto ptr = [](const float* f) {
+      return static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(f));
+    };
+    for (std::uintptr_t operand : hod2::kHalfWidthOperands) {
+      ok &= interop::PatchUint32(operand, hod2::k320FloatConstant, ptr(&g_half_width));
+    }
+    for (std::uintptr_t operand : hod2::kNegHalfWidthOperands) {
+      ok &= interop::PatchUint32(operand, hod2::kMinus320FloatConstant, ptr(&g_neg_half_width));
+    }
+    ok &= interop::PatchUint32(hod2::kIsInScreenRectHalfOperand, hod2::kHalfFloatConstant, ptr(&g_half_ratio));
+    const auto max_x = static_cast<std::uint32_t>(std::lround(319.0f + 320.0f * (widen - 1.0f)));
+    const auto min_x = static_cast<std::uint32_t>(-std::lround(320.0f * widen));
+    for (std::uintptr_t immediate : hod2::kAimMaxXImmediates) {
+      ok &= interop::PatchUint32(immediate, 0x13F, max_x);
+    }
+    for (std::uintptr_t immediate : hod2::kAimMinXImmediates) {
+      ok &= interop::PatchUint32(immediate, 0xFFFFFEC0, min_x);
+    }
+    // Left of the 4:3 area the cursor x is negative: load it sign-extended
+    // (movsx eax, word [esi+0x9C7240]; nop; nop).
+    constexpr std::uint8_t kZeroExtend[] = {0x33, 0xC0, 0x66, 0x8B, 0x86, 0x40, 0x72, 0x9C, 0x00};
+    constexpr std::uint8_t kSignExtend[] = {0x0F, 0xBF, 0x86, 0x40, 0x72, 0x9C, 0x00, 0x90, 0x90};
+    for (std::uintptr_t load : hod2::kAimRawXLoads) {
+      ok &= interop::PatchBytes(load, kZeroExtend, kSignExtend);
+    }
+    ok &= interop::PatchUint32(hod2::kMoveAimClampImmediate, std::bit_cast<std::uint32_t>(320.0f),
+                               std::bit_cast<std::uint32_t>(g_half_width));
+    ok &= interop::PatchUint32(hod2::kMoveAimClampNegImmediate, std::bit_cast<std::uint32_t>(-320.0f),
+                               std::bit_cast<std::uint32_t>(g_neg_half_width));
+  }
+  if (g_squeeze || g_trace) {
+    g_anchor_shift = g_squeeze ? 320.0f * (widen - 1.0f) : 0.0f;
+    int patched = 0;
+    const auto hook = [&](std::uintptr_t call, std::uintptr_t original, void* ours) {
+      if (call == hod2::kDrawSpriteAtInnerCall) {
+        return;
+      }
+      if (interop::PatchBytes(call, CallBytes(call, original), CallBytes(call, reinterpret_cast<std::uintptr_t>(ours)))) {
+        ++patched;
+      } else {
+        Log(LogLevel::Warn, "aspect_experiment: sprite call at 0x{:X} does not match", call);
+        ok = false;
+      }
+    };
+    for (const auto& site : hud_sites::kDrawSprite2DCalls) {
+      hook(site.call, hod2::kDrawSprite2D, reinterpret_cast<void*>(&HookedDrawSprite2D));
+    }
+    for (const auto& site : hud_sites::kDrawSpriteAtCalls) {
+      hook(site.call, hod2::kDrawSpriteAt, reinterpret_cast<void*>(&HookedDrawSpriteAt));
+    }
+    Log(LogLevel::Info, "aspect_experiment: {} sprite call sites hooked, HUD shift {:.1f}", patched, g_anchor_shift);
   }
   Log(LogLevel::Info, "aspect_experiment: stage {} installed{}{}", stage,
       trace_screen_quads ? ", tracing wide screen quads" : "", ok ? "" : " (partly)");
