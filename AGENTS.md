@@ -175,7 +175,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 | `evt\` | 11 | 309KB | `.bin` | 이벤트/스크립트 |
 | `sound\` | 802 | 368MB | `.wav` | `bgm\`, `SE\`, `voice\` |
 
-`.bin` 포맷은 모두 **미분석** 상태다. 실행 파일 안에 `DXT1`~`DXT5` 문자열이 있어서 텍스처 일부가 DXT 압축일 가능성이 있다.
+**`tex\*.bin`은 분석됨 (2026-10-15):** LZSS로 압축된 픽셀 데이터만 있고, 텍스처 목록(크기, 드림캐스트 PVR 형식, 위치, 텍스처 번호)은 `Hod2.exe` 안의 표에 있다. `tools/assets/tex_extract.py`로 PNG로 뽑을 수 있다 ([docs/formats/tex.md](docs/formats/tex.md)). UI 뱅크에는 DXT가 없다. 나머지 `.bin` 포맷은 **미분석**이다.
 
 `tex\scr_blood_green.bin`은 `00_Setup.bat`이 피 색상(초록/빨강)을 바꿀 때 덮어쓰는 파일이다.
 
@@ -219,7 +219,7 @@ thod2-native/
 ├─ config/            ← 배포용 예제 설정 thod2-native.ini, dgVoodoo2 권장 프리셋 (있음)
 ├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
 │  ├─ work/           ← 도메인별 작업 문서 (있음)
-│  └─ formats/        ← 게임 데이터 파일 포맷 문서
+│  └─ formats/        ← 게임 데이터 파일 포맷 문서 (있음: tex.md)
 ├─ re/                ← 리버싱 기록: functions.csv, globals.csv, locations.csv, ghidra_scripts/(적용·내보내기, 규모 측정) (있음). 이후 구조체
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
@@ -234,7 +234,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

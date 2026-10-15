@@ -14,7 +14,7 @@
 | 플랫폼: 오디오 | [platform-audio.md](platform-audio.md) | 2-2 | 시작 전 | 2026-10-13 |
 | 플랫폼: 파일·경로·세이브 | [platform-filesystem.md](platform-filesystem.md) | 1-3, 2-2 | 진행 중 | 2026-10-15 |
 | 렌더러 | [renderer.md](renderer.md) | 1-3, 2-3 | 진행 중 | 2026-10-15 |
-| 자산(리소스) | [assets.md](assets.md) | 2-4 | 시작 전 | 2026-10-13 |
+| 자산(리소스) | [assets.md](assets.md) | 2-4 | 진행 중 | 2026-10-15 |
 | 게임 로직 | [game-logic.md](game-logic.md) | 2-5 | 시작 전 | 2026-10-13 |
 | 모드 API | [modapi.md](modapi.md) | 2-6 | 시작 전 | 2026-10-13 |
 
