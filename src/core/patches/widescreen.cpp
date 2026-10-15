@@ -1,6 +1,8 @@
-#include "patches/aspect_experiment.h"
+#include "patches/widescreen.h"
 
 #include "log.h"
+
+#include <windows.h>
 #include "patches/hud_call_sites.h"
 
 #include <thod2/interop/hod2_addresses.h>
@@ -12,6 +14,8 @@
 #include <cstdint>
 #include <cstring>
 #include <format>
+#include <fstream>
+#include <sstream>
 #include <intrin.h>
 #include <map>
 #include <set>
@@ -23,9 +27,11 @@ namespace {
 namespace hod2 = interop::hod2;
 
 constexpr float kOriginalAspect = 4.0f / 3.0f;
-constexpr float kWideAspect = 16.0f / 9.0f;
-constexpr float kSqueeze = kOriginalAspect / kWideAspect;  // 0.75
 constexpr float kScreenCentreX = 320.0f;
+
+// Display aspect / 4:3 (1 = off). The view is this much wider than 4:3, and 2D
+// is squeezed by its inverse so that the stretched 640x480 frame looks right.
+float g_widen = 1.0f;
 
 // Sprite record passed to 0x4A6ED0 (15 dwords). Only the fields used here.
 constexpr std::size_t kSpriteDwords = 15;
@@ -38,7 +44,7 @@ constexpr std::size_t kSpriteScaleY = 10;
 
 using DrawScreenQuadFn = void(__cdecl*)(std::uint32_t* sprite);
 
-bool g_squeeze = false;
+bool g_squeeze = false;  // squeeze 2D quads (off: projection only, for comparisons)
 bool g_trace = false;
 constexpr float kTraceMinWidth = 200.0f;
 std::set<std::uint64_t> g_traced;
@@ -147,10 +153,9 @@ std::uint32_t DrawModelWith(std::uintptr_t original, const char* which, std::uin
   float* m = reinterpret_cast<float*>(record + kRecordMatrix);
   const std::array<float, 3> row{m[0], m[1], m[2]};
   if (g_widen_letterbox && letterbox) {
-    const float widen = kWideAspect / kOriginalAspect;
-    m[0] *= widen;
-    m[1] *= widen;
-    m[2] *= widen;
+    m[0] *= g_widen;
+    m[1] *= g_widen;
+    m[2] *= g_widen;
   }
   const std::uint32_t result = reinterpret_cast<DrawModelFn>(original)(record, flag);
   m[0] = row[0];
@@ -179,8 +184,8 @@ void __cdecl SqueezedDrawScreenQuad(std::uint32_t* sprite) {
   std::memcpy(copy.data(), sprite, sizeof(copy));
   const float x = std::bit_cast<float>(copy[kSpriteX]);
   const float scale_x = std::bit_cast<float>(copy[kSpriteScaleX]);
-  copy[kSpriteX] = std::bit_cast<std::uint32_t>(kScreenCentreX + (x - kScreenCentreX) * kSqueeze);
-  copy[kSpriteScaleX] = std::bit_cast<std::uint32_t>(scale_x * kSqueeze);
+  copy[kSpriteX] = std::bit_cast<std::uint32_t>(kScreenCentreX + (x - kScreenCentreX) / g_widen);
+  copy[kSpriteScaleX] = std::bit_cast<std::uint32_t>(scale_x / g_widen);
   reinterpret_cast<DrawScreenQuadFn>(hod2::kDrawScreenQuad)(copy.data());
 }
 
@@ -304,19 +309,21 @@ std::array<std::uint8_t, 5> CallBytes(std::uintptr_t from, std::uintptr_t to) {
 
 }  // namespace
 
-bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
+bool InstallWidescreen(const WidescreenOptions& options) {
   bool ok = true;
-  g_squeeze = stage >= 2;
-  g_trace = trace_screen_quads;
-  g_widen_letterbox = stage >= 1;
+  const bool widen = options.aspect > kOriginalAspect + 0.01f;
+  g_widen = widen ? options.aspect / kOriginalAspect : 1.0f;
+  g_squeeze = widen && options.squeeze_2d;
+  g_trace = options.trace;
+  g_widen_letterbox = widen;
   const auto original = std::bit_cast<std::uint32_t>(kOriginalAspect);
-  const auto wide = std::bit_cast<std::uint32_t>(kWideAspect);
+  const auto wide = std::bit_cast<std::uint32_t>(kOriginalAspect * g_widen);
   for (std::uintptr_t immediate : {hod2::kPerspectiveAspectImmediate1, hod2::kPerspectiveAspectImmediate2}) {
-    if (stage == 0) {
+    if (!widen) {
       break;
     }
     if (!interop::PatchUint32(immediate, original, wide)) {
-      Log(LogLevel::Warn, "aspect_experiment: aspect at 0x{:X} does not match", immediate);
+      Log(LogLevel::Warn, "widescreen: aspect at 0x{:X} does not match", immediate);
       ok = false;
     }
   }
@@ -324,7 +331,7 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
     const auto ours = reinterpret_cast<std::uintptr_t>(&SqueezedDrawScreenQuad);
     for (std::uintptr_t call : {hod2::kDrawScreenQuadCall1, hod2::kDrawScreenQuadCall2}) {
       if (!interop::PatchBytes(call, CallBytes(call, hod2::kDrawScreenQuad), CallBytes(call, ours))) {
-        Log(LogLevel::Warn, "aspect_experiment: call at 0x{:X} does not match", call);
+        Log(LogLevel::Warn, "widescreen: call at 0x{:X} does not match", call);
         ok = false;
       }
     }
@@ -343,16 +350,15 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
     for (const auto& c : model_calls) {
       const auto ours = reinterpret_cast<std::uintptr_t>(c.ours);
       if (!interop::PatchBytes(c.call, CallBytes(c.call, c.original), CallBytes(c.call, ours))) {
-        Log(LogLevel::Warn, "aspect_experiment: call at 0x{:X} does not match", c.call);
+        Log(LogLevel::Warn, "widescreen: call at 0x{:X} does not match", c.call);
         ok = false;
       }
     }
   }
-  const float widen = kWideAspect / kOriginalAspect;
-  if (stage >= 1) {
-    g_half_width = 320.0f * widen;
-    g_neg_half_width = -320.0f * widen;
-    g_half_ratio = 0.5f * widen;
+  if (widen) {
+    g_half_width = 320.0f * g_widen;
+    g_neg_half_width = -320.0f * g_widen;
+    g_half_ratio = 0.5f * g_widen;
     const auto ptr = [](const float* f) {
       return static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(f));
     };
@@ -363,8 +369,8 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
       ok &= interop::PatchUint32(operand, hod2::kMinus320FloatConstant, ptr(&g_neg_half_width));
     }
     ok &= interop::PatchUint32(hod2::kIsInScreenRectHalfOperand, hod2::kHalfFloatConstant, ptr(&g_half_ratio));
-    const auto max_x = static_cast<std::uint32_t>(std::lround(319.0f + 320.0f * (widen - 1.0f)));
-    const auto min_x = static_cast<std::uint32_t>(-std::lround(320.0f * widen));
+    const auto max_x = static_cast<std::uint32_t>(std::lround(319.0f + 320.0f * (g_widen - 1.0f)));
+    const auto min_x = static_cast<std::uint32_t>(-std::lround(320.0f * g_widen));
     for (std::uintptr_t immediate : hod2::kAimMaxXImmediates) {
       ok &= interop::PatchUint32(immediate, 0x13F, max_x);
     }
@@ -384,7 +390,7 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
                                std::bit_cast<std::uint32_t>(g_neg_half_width));
   }
   if (g_squeeze || g_trace) {
-    g_anchor_shift = g_squeeze ? 320.0f * (widen - 1.0f) : 0.0f;
+    g_anchor_shift = g_squeeze ? 320.0f * (g_widen - 1.0f) : 0.0f;
     int patched = 0;
     const auto hook = [&](std::uintptr_t call, std::uintptr_t original, void* ours) {
       if (call == hod2::kDrawSpriteAtInnerCall) {
@@ -393,7 +399,7 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
       if (interop::PatchBytes(call, CallBytes(call, original), CallBytes(call, reinterpret_cast<std::uintptr_t>(ours)))) {
         ++patched;
       } else {
-        Log(LogLevel::Warn, "aspect_experiment: sprite call at 0x{:X} does not match", call);
+        Log(LogLevel::Warn, "widescreen: sprite call at 0x{:X} does not match", call);
         ok = false;
       }
     };
@@ -405,11 +411,82 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
       hook(site.call, hod2::kDrawSpriteAt, reinterpret_cast<void*>(&HookedDrawSpriteAt));
       g_call_anchors[site.call] = FunctionAnchor(site.function);
     }
-    Log(LogLevel::Info, "aspect_experiment: {} sprite call sites hooked, HUD shift {:.1f}", patched, g_anchor_shift);
+    Log(LogLevel::Info, "widescreen: {} sprite call sites hooked, HUD shift {:.1f}", patched, g_anchor_shift);
   }
-  Log(LogLevel::Info, "aspect_experiment: stage {} installed{}{}", stage,
-      trace_screen_quads ? ", tracing wide screen quads" : "", ok ? "" : " (partly)");
+  if (widen) {
+    Log(LogLevel::Info, "widescreen: aspect {:.4f} ({:.3f} x 4:3){}{}{}", options.aspect, g_widen,
+        g_squeeze ? "" : ", 2D not squeezed", options.trace ? ", tracing" : "", ok ? "" : " (partly installed)");
+  } else {
+    Log(LogLevel::Info, "widescreen: off (aspect {:.4f}){}", options.aspect, options.trace ? ", tracing" : "");
+  }
   return ok;
+}
+
+
+float ParseWidescreenAspect(const std::wstring& value) {
+  if (value.empty() || value == L"auto") {
+    const int w = GetSystemMetrics(SM_CXSCREEN);
+    const int h = GetSystemMetrics(SM_CYSCREEN);
+    return h > 0 ? static_cast<float>(w) / static_cast<float>(h) : 0.0f;
+  }
+  const auto colon = value.find(L':');
+  try {
+    if (colon != std::wstring::npos) {
+      const float w = std::stof(value.substr(0, colon));
+      const float h = std::stof(value.substr(colon + 1));
+      return h > 0.0f ? w / h : 0.0f;
+    }
+    return std::stof(value);
+  } catch (...) {
+    return 0.0f;
+  }
+}
+
+bool SyncDgVoodooScaling(const std::filesystem::path& game_dir, bool widescreen) {
+  const auto conf = game_dir / "dgVoodoo.conf";
+  std::ifstream in(conf, std::ios::binary);
+  if (!in) {
+    return false;
+  }
+  std::stringstream buffer;
+  buffer << in.rdbuf();
+  in.close();
+  std::string text = buffer.str();
+  // First "ScalingMode = value" line (the [General] one).
+  std::size_t line = 0;
+  while (line < text.size()) {
+    const std::size_t end = text.find('\n', line);
+    const std::size_t stop = end == std::string::npos ? text.size() : end;
+    const std::size_t key = text.find_first_not_of(" \t", line);
+    if (key < stop && text.compare(key, 11, "ScalingMode") == 0) {
+      const std::size_t eq = text.find('=', key);
+      if (eq == std::string::npos || eq >= stop) {
+        return false;
+      }
+      const std::size_t begin = text.find_first_not_of(" \t", eq + 1);
+      std::size_t last = stop;
+      while (last > begin && (text[last - 1] == '\r' || text[last - 1] == ' ' || text[last - 1] == '\t')) {
+        --last;
+      }
+      if (begin >= last) {
+        return false;
+      }
+      const std::string old = text.substr(begin, last - begin);
+      // Widescreen needs the whole screen; without it a stretched 4:3 frame is
+      // distorted, so only "stretched" is turned back into "stretched_ar".
+      const char* wanted = widescreen ? "stretched" : (old == "stretched" ? "stretched_ar" : nullptr);
+      if (wanted == nullptr || old == wanted) {
+        return false;
+      }
+      text.replace(begin, last - begin, wanted);
+      std::ofstream out(conf, std::ios::binary | std::ios::trunc);
+      out << text;
+      Log(LogLevel::Info, "widescreen: dgVoodoo.conf ScalingMode '{}' -> '{}'", old, wanted);
+      return static_cast<bool>(out);
+    }
+    line = stop + 1;
+  }
+  return false;
 }
 
 }  // namespace thod2::core::patches

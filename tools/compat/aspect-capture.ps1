@@ -1,17 +1,18 @@
-# Widescreen experiment: runs the game with [debug] aspect_experiment and the
-# dgVoodoo2 scaling mode of each variant, and captures the primary screen at
+# Widescreen comparison: runs the game with the [display] widescreen settings of
+# each variant (the core then sets dgVoodoo2 ScalingMode itself), and captures the primary screen at
 # fixed times after the title camera is loaded (same game frames every run,
 # see quality-compare.ps1). Restores thod2-native.ini and dgVoodoo.conf after.
 #
 #   .\aspect-capture.ps1 -OutDir <folder>
 #   .\aspect-capture.ps1 -Variants base,proj_2d -CaptureAt 1.5,9.5,20 -OutDir <folder>
 #
-# Variants: base       = current setup (4:3 with side bars)
-#           stretch    = 640x480 stretched to the full screen, no patch
-#           proj       = stretch + aspect_experiment 1 (16:9 projection)
-#           proj_2d    = stretch + aspect_experiment 2 (16:9 projection, squeezed 2D)
+# Variants: base       = widescreen off (4:3 with side bars)
+#           proj       = widescreen on, [debug] widescreen_2d = 0 (projection only, 2D stretched)
+#           proj_2d    = widescreen on (the feature)
+# A "stretched without widescreen" variant is no longer possible: the core
+# turns ScalingMode back to stretched_ar when widescreen is off.
 param(
-  [string[]]$Variants = @('base', 'stretch', 'proj', 'proj_2d'),
+  [string[]]$Variants = @('base', 'proj', 'proj_2d'),
   [double[]]$CaptureAt = @(1.5, 9.5),   # seconds after the title camera is loaded
   [string]$GameDir = (Join-Path $PSScriptRoot '..\..\..\test-game\THOTD2'),
   [Parameter(Mandatory = $true)][string]$OutDir
@@ -27,10 +28,9 @@ $iniBackup = [IO.File]::ReadAllText($ini)
 $confBackup = [IO.File]::ReadAllBytes($conf)
 
 $settings = @{
-  'base'    = @{ Scaling = $null;       Stage = 0 }
-  'stretch' = @{ Scaling = 'stretched'; Stage = 0 }
-  'proj'    = @{ Scaling = 'stretched'; Stage = 1 }
-  'proj_2d' = @{ Scaling = 'stretched'; Stage = 2 }
+  'base'    = @{ Widescreen = 0; TwoD = 1 }
+  'proj'    = @{ Widescreen = 1; TwoD = 0 }
+  'proj_2d' = @{ Widescreen = 1; TwoD = 1 }
 }
 
 function Set-IniValue([string]$text, [string]$section, [string]$key, [string]$value) {
@@ -53,14 +53,10 @@ try {
     Get-Process Hod2 -ErrorAction SilentlyContinue | Stop-Process -Force
     Get-Process Hod2 -ErrorAction SilentlyContinue | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
     $text = Set-IniValue $iniBackup 'debug' 'trace_files' '1'
-    $text = Set-IniValue $text 'debug' 'aspect_experiment' "$($s.Stage)"
+    $text = Set-IniValue $text 'display' 'widescreen' "$($s.Widescreen)"
+    $text = Set-IniValue $text 'debug' 'widescreen_2d' "$($s.TwoD)"
     [IO.File]::WriteAllText($ini, $text)
     [IO.File]::WriteAllBytes($conf, $confBackup)
-    if ($s.Scaling) {
-      $c = [Text.Encoding]::ASCII.GetString($confBackup)
-      $c = [regex]::Replace($c, '(?m)^(\s*ScalingMode\s*=\s*).*$', "`${1}$($s.Scaling)")
-      [IO.File]::WriteAllText($conf, $c, [Text.Encoding]::ASCII)
-    }
 
     Remove-Item $log -ErrorAction SilentlyContinue
     $p = Start-Process -FilePath (Join-Path $GameDir 'Hod2.exe') -WorkingDirectory $GameDir -PassThru
@@ -77,8 +73,8 @@ try {
     }
     $mode = [WP]::Mode('\\.\DISPLAY2')
     Stop-Process -Id $p.Id -ErrorAction SilentlyContinue; Start-Sleep 1
-    "########## $variant (scaling $($s.Scaling), aspect_experiment $($s.Stage))  monitor: $mode"
-    Select-String -Path $log -Pattern 'aspect_experiment' | ForEach-Object { '  ' + $_.Line }
+    "########## $variant (widescreen $($s.Widescreen), widescreen_2d $($s.TwoD))  monitor: $mode"
+    Select-String -Path $log -Pattern 'widescreen' | ForEach-Object { '  ' + $_.Line }
   }
 } finally {
   Get-Process Hod2 -ErrorAction SilentlyContinue | Stop-Process -Force

@@ -3,6 +3,7 @@
 #include "log.h"
 
 #include <filesystem>
+#include <string>
 
 namespace thod2::core {
 
@@ -14,6 +15,8 @@ namespace thod2::core {
 //
 //   [display]
 //   skip_device_dialog = 1    ; 1 = answer the startup "Attention" device dialog with Yes
+//   widescreen = 0            ; 1 = Hor+ widescreen (sets dgVoodoo2 ScalingMode = stretched)
+//   widescreen_aspect = auto  ; auto = primary monitor, or W:H such as 16:9 / 21:9
 //
 //   [files]
 //   redirect_user_files = 1   ; 1 = keep saves, d3dx.dat and exception.log in the user's AppData
@@ -28,7 +31,7 @@ namespace thod2::core {
 //
 //   [debug]
 //   input_compare = 0         ; 1 = run our input update next to the original and log differences
-//   aspect_experiment = 0     ; widescreen RE experiment: 1 = 16:9 projection, 2 = 1 + squeezed 2D
+//   widescreen_2d = 1         ; 0 = widescreen projection only, 2D not squeezed (comparisons)
 //   trace_screen_quads = 0    ; 1 = log wide/edge 2D quads, models and the letterbox call chain
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
@@ -44,7 +47,9 @@ struct CoreConfig {
   bool reimplement_input_update = false;
   bool input_compare = false;
   bool map_cursor = true;
-  int aspect_experiment = 0;
+  bool widescreen = false;
+  std::wstring widescreen_aspect = L"auto";
+  bool widescreen_2d = true;
   bool trace_screen_quads = false;
   bool trace_ddraw = false;
   bool profile = false;
