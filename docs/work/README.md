@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 빌드·배포 | [build.md](build.md) | 0 | 진행 중 | 2026-10-14 |
 | 로더·후킹 (launcher, interop) | [loader.md](loader.md) | 0, 1-2 | 진행 중 | 2026-10-14 |
-| 리버스 엔지니어링 | [reverse-engineering.md](reverse-engineering.md) | 2-1 | 진행 중 | 2026-10-14 |
+| 리버스 엔지니어링 | [reverse-engineering.md](reverse-engineering.md) | 2-1 | 진행 중 | 2026-10-15 |
 | 호환성 조사 | [compat-survey.md](compat-survey.md) | 1-1 | 진행 중 | 2026-10-14 |
 | 플랫폼: 창·디스플레이 | [platform-display.md](platform-display.md) | 1-3, 2-2 | 진행 중 | 2026-10-14 |
 | 플랫폼: 메인 루프·타이밍 | [platform-timing.md](platform-timing.md) | 1-3, 2-2 | 진행 중 | 2026-10-15 |
