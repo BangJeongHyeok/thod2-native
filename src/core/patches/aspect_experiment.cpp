@@ -199,31 +199,44 @@ enum class Anchor { None, Left, Right, Player };
 // the left (right) screen edge: the virtual 4:3 view is this much wider per side.
 float g_anchor_shift = 0.0f;
 
-struct AnchoredCall {
-  std::uint32_t call;
+struct AnchoredFunction {
+  std::uint32_t function;
   Anchor anchor;
 };
-// From the trace of sprite call sites during the chapter 1 cut scene and
-// gameplay (renderer.md "HUD 배치"). Everything else stays centred.
-constexpr AnchoredCall kAnchoredCalls[] = {
-    {0x40686C, Anchor::Player},  // 0x4067F0: sprite 0x900 at (160, 334)
-    {0x40690C, Anchor::Player},  // 0x4068C0: sprite 0x8FF at x 42 / 384, y 412
-    {0x4069FF, Anchor::Player},  // 0x406940: sprite 0x22E at x 82 / 424, y 427
-    {0x406A86, Anchor::Player},  // 0x406940: sprite 0x62 at x 176 / 518, y 427
-    {0x4175E7, Anchor::Player},  // 0x417570: life, sprite 0x5B8 at (32, 422)
-    {0x417631, Anchor::Player},  // 0x417570: life, sprite 0x5B9 at (28, 412)
-    {0x417741, Anchor::Player},  // 0x417570: life icons 0x6C4.. at x 60..156, y 412
-    {0x417AFC, Anchor::Player},  // 0x4178A0: bullets 0xA74 at x 24..96, y 364
-    {0x417ECD, Anchor::Player},  // 0x4178A0: bullets 0xA74 at x 24..132, y 364
+// HUD functions found by tracing the sprite calls of the chapter 1 cut scene
+// and gameplay (renderer.md "HUD 배치"). Every sprite call inside them is
+// anchored, so the 2P branches that did not run in the trace are covered too.
+// Everything else stays centred.
+// Not anchored: 0x4067F0 draws the big centred "PRESS START BUTTON" of the
+// attract demo (sprite 0x900 at (160, 334)), 0x49A7B0 the demo's explanation
+// sprites at various places.
+constexpr AnchoredFunction kAnchoredFunctions[] = {
+    {0x4068C0, Anchor::Player},  // sprite 0x8FF at x 42 / 384, y 412
+    {0x406940, Anchor::Player},  // "PRESS START BUTTON", credits: x 82..176 / 424..518, y 427
+    {0x417570, Anchor::Player},  // DrawLifeHud: life icons, 1P at x 28..156, 2P at x 416..584
+    {0x4178A0, Anchor::Player},  // DrawAmmoHud: bullets 0xA74 at x 24.., y 364
+    // HUD of the attract demo (title screen loop):
+    {0x49A3F0, Anchor::Player},  // bullets 0xA74 at x 16..88, y 372
+    {0x49A570, Anchor::Player},  // life icons 0x6C2.. at x 52..116, y 420
+    {0x49A630, Anchor::Player},  // sprites 0xA27 (24, 260), 0xA29 (16, 325)
+    {0x49A760, Anchor::Player},  // "1P" 0x5B9 at (20, 420)
 };
 
-Anchor AnchorOf(std::uintptr_t call) {
-  for (const AnchoredCall& c : kAnchoredCalls) {
-    if (c.call == call) {
-      return c.anchor;
+Anchor FunctionAnchor(std::uint32_t function) {
+  for (const AnchoredFunction& f : kAnchoredFunctions) {
+    if (f.function == function) {
+      return f.anchor;
     }
   }
   return Anchor::None;
+}
+
+// Anchor per call site, from the call site table (filled at install).
+std::map<std::uint32_t, Anchor> g_call_anchors;
+
+Anchor AnchorOf(std::uintptr_t call) {
+  const auto it = g_call_anchors.find(static_cast<std::uint32_t>(call));
+  return it == g_call_anchors.end() ? Anchor::None : it->second;
 }
 
 // Logs up to 4 distinct (sprite, x, y) per call site.
@@ -386,9 +399,11 @@ bool InstallAspectExperiment(int stage, bool trace_screen_quads) {
     };
     for (const auto& site : hud_sites::kDrawSprite2DCalls) {
       hook(site.call, hod2::kDrawSprite2D, reinterpret_cast<void*>(&HookedDrawSprite2D));
+      g_call_anchors[site.call] = FunctionAnchor(site.function);
     }
     for (const auto& site : hud_sites::kDrawSpriteAtCalls) {
       hook(site.call, hod2::kDrawSpriteAt, reinterpret_cast<void*>(&HookedDrawSpriteAt));
+      g_call_anchors[site.call] = FunctionAnchor(site.function);
     }
     Log(LogLevel::Info, "aspect_experiment: {} sprite call sites hooked, HUD shift {:.1f}", patched, g_anchor_shift);
   }

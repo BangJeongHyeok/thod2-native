@@ -2,6 +2,7 @@ address,name,type,confidence,evidence,doc,notes
 0x4C33AC,g_constHalf,float,confirmed,bytes,renderer.md,"0.5f in .rdata, shared by many functions (IsInScreenRect uses focal * 0.5 = 320). Do not patch the constant itself."
 0x4C39CC,g_const320,float,confirmed,bytes,renderer.md,"320.0f in .rdata: 4:3 half screen width / screen centre x, shared by many functions."
 0x4D0D10,g_constMinus320,float,confirmed,bytes,renderer.md,"-320.0f in .rdata, used by screen box checks and MoveAimDigital."
+0x576600,g_playerPromptPos,float[2][2],confirmed,bytes;ghidra,renderer.md,"Per-player prompt positions: 1P (50, 412), 2P (392, 412)."
 0x57C458,g_spriteTextures,uint32_t[],confirmed,bytes;ghidra,renderer.md,Sprite index -> texture id (DrawSprite2D). For example sprite 0x6E2 -> texture 0xDA4.
 0x587C30,g_jobHandlers,,guess,bytes,platform-timing.md,Handler table used by DispatchJob (0x41D670).
 0x587CDC,g_inputJoystickButtonMap,uint32_t[14],confirmed,bytes,platform-input.md,"Button bits for joystick buttons 0..13 (initialized data), read by ReadJoystick."
@@ -56,6 +57,7 @@ address,name,type,confidence,evidence,doc,notes
 0x80EC80,g_textureSizes,uint32_t (*)[2],confirmed,bytes,renderer.md,"Pointer to {width, height} per texture id, read by DrawScreenQuad for the quad size."
 0x80ECC0,g_textureSizes2,uint32_t (*)[2],confirmed,bytes,renderer.md,Same as g_textureSizes for texture ids with the high bit set.
 0x9A0FF0,g_focalLengthPx,float,confirmed,ghidra;bytes,renderer.md,"240 / tan(half vertical fov) = about 640: focal length in 640x480 pixels, used by about 30 functions for software projection and the shot ray."
+0x9A3EE0,g_players,struct[2] (0x130 bytes),guess,ghidra,renderer.md,"Player state. +2 device kind (4 = gun), +6 life (word, read by DrawLifeHud), +0x1C ammo, +0x24 shot count."
 0x9A4914,,,guess,bytes,renderer.md,Word added by MapAimCalibration when raw - calib[3] is negative (0 after 0x40CB30). Purpose unknown.
 0x9A4920,g_modelTable,struct[] (0x10 bytes),confirmed,ghidra;runtime,renderer.md,"Model table: +4 model pointer, +0xC flags (0x8000 | 1 = drawable). Entry 0x93E is the letterbox bar (a static model at 0x894D20 in the tested run)."
 0x9C5580,g_projectionOffset,float[2],guess,ghidra,renderer.md,Projection centre offset in normalized device coordinates (SetProjectionCenter).

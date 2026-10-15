@@ -1,9 +1,15 @@
 address,name,status,confidence,signature,evidence,doc,notes
 0x406130,BuildShotRay,named,guess,"void __cdecl BuildShotRay(int player, float aim_x, float aim_y)",ghidra,renderer.md,"Shot ray of a player: camera-space direction (aim_x, aim_y, -g_focalLengthPx) rotated by the camera matrix, then converted to world space. Hit tests use this ray, not screen coordinates."
 0x406330,,unnamed,guess,,ghidra,renderer.md,Computes atan(320 / g_focalLengthPx) and atan(240 / g_focalLengthPx): the 4:3 half view angles (probably for culling). Must use the wider half width for widescreen.
-0x4067F0,,unnamed,guess,,runtime,renderer.md,"Player HUD: draws sprite 0x900 at (160, 334) (call 0x40686C)."
+0x4067F0,,unnamed,guess,,runtime,renderer.md,"Draws the big centred ""PRESS START BUTTON"" of the attract demo (sprite 0x900 at (160, 334), call 0x40686C) while blinking. Centred element, not a player HUD."
+0x406880,,unnamed,guess,,ghidra,renderer.md,Blinks the per-player prompt: calls 0x4068C0 with the position of player `index` from the table at 0x576600.
 0x4068C0,,unnamed,guess,,runtime,renderer.md,"Player HUD for both players: sprite 0x8FF at x 42 (1P) / 384 (2P), y 412 (call 0x40690C)."
-0x406940,,unnamed,guess,,runtime,renderer.md,"Player HUD for both players (""PRESS START BUTTON"" / credits): sprites 0x22E at x 82 / 424 and 0x62 at x 176 / 518, y 427."
+0x406940,,unnamed,guess,,runtime,renderer.md,"Per-player prompt (""PRESS START BUTTON"" and credits) at (x + 32, y + 15) from its caller; the positions come from the table at 0x576600 (1P (50, 412), 2P (392, 412)). Sprites 0x22E and 0x62."
+0x406AC0,,unnamed,guess,,ghidra,renderer.md,Per-player prompt cycle for player 1 (0x406B30 or 0x4068C0) with the table at 0x576600.
+0x406B30,,unnamed,guess,,ghidra,renderer.md,"Per-player prompt variant (digits from 0x9C70F8, then 0x406940)."
+0x406BE0,,unnamed,guess,,ghidra,renderer.md,Same as 0x406AC0 with 0x406C50.
+0x406C50,,unnamed,guess,,ghidra,renderer.md,"Per-player prompt variant (digits from 0x9C70FC, then 0x406940)."
+0x406D00,,unnamed,guess,,ghidra,renderer.md,Chooses the per-player prompt function from the table at 0x576620 and calls it for player `index`.
 0x409C30,IsInScreenRect,named,guess,,ghidra,renderer.md,Projects a camera-space point with g_focalLengthPx and checks |x| <= focal*0.5 (= 320) and -240 <= y <= 240. 4:3 bounds.
 0x40AB40,,unnamed,confirmed,,ghidra,platform-input.md,Calls InitInput (0x41DEC0) during startup.
 0x40CBD0,UpdateAim,named,confirmed,void __cdecl UpdateAim(void),ghidra;bytes,renderer.md,"Per player: maps the raw shot position (g_aim +0/+2) with MapAimAxis to centred aim coordinates; x outside -320..319 or y outside -240..239 gives 0 and invalid (4:3). The raw x is loaded zero-extended (0x40CCC8, 0x40CD6B), so a negative x is out of range. Stored as shorts (+4/+6) and floats (+8/+0xC). Called from 0x40E5F0 after UpdateInput."
@@ -51,6 +57,11 @@ address,name,status,confidence,signature,evidence,doc,notes
 0x4863C0,DrawCrosshair,named,guess,void __cdecl DrawCrosshair(int player),ghidra,renderer.md,"Draws the crosshair sprite at (aim_x + 320, 240 - aim_y) with DrawSprite2D."
 0x495ED0,,unnamed,guess,,ghidra;runtime,renderer.md,"Draws a full-screen 640x480 picture as 5 x 15 tiles of 128x32 (sprites 0x6E2..0x72C, textures 0xDA4..0xDEE) plus five 128x512 strips (sprites 0xAB1..). Registered as a draw callback by 0x495EA0. Not the cinematic letterbox (checked); which screen it is is unknown."
 0x4998D0,,unnamed,guess,,runtime,renderer.md,"Title text animation: sprites 0x1FB, 0x1FC with large scales (call 0x499948)."
+0x49A3F0,,unnamed,guess,,runtime,renderer.md,"Attract demo HUD: bullets 0xA74 at x 16..88, y 372 (call 0x49A42A)."
+0x49A570,,unnamed,guess,,runtime,renderer.md,"Attract demo HUD: life icons 0x6C2.. at x 52..116, y 420 (call 0x49A5CB)."
+0x49A630,,unnamed,guess,,runtime,renderer.md,"Attract demo HUD: sprites 0xA27 at (24, 260) and 0xA29 at (16, 325)."
+0x49A760,,unnamed,guess,,runtime,renderer.md,"Attract demo HUD: ""1P"" sprite 0x5B9 at (20, 420) (call 0x49A782)."
+0x49A7B0,,unnamed,guess,,runtime,renderer.md,"Attract demo explanation sprites at various places (0xA69, 0xA6B, 0xA6C, 0xA6F; call 0x49A7D2). Not anchored."
 0x49DA90,,unnamed,guess,,ghidra,platform-input.md,"Called by ReadGunJoystick (0x41F000) on a new trigger press, then the trigger is blocked for 6 frames. Purpose unknown."
 0x49DAB0,DrawScreenFlash,named,guess,void __cdecl DrawScreenFlash(void),ghidra,renderer.md,"Full-screen XYZRHW quad (0..639 x 0..479) with alpha: the shot flash ([Flush Setting]). Calls the XYZRHW draw directly, not DrawScreenQuad."
 0x49DE30,,unnamed,confirmed,,profiler,platform-timing.md,Function start that the sampling profiler reported as a hotspot (47%); the real hot call site was 0x4A4D30. Not found by Ghidra auto-analysis.
