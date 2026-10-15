@@ -8,6 +8,7 @@ How the game reads them (docs/formats/tex.md):
     (int16 width, int16 height, uint32 PVR format, uint32 data offset, int32
     texture id);
   - pixel data is Dreamcast PVR (twiddled, rectangle, 4-bit palette, VQ);
+    4-bit palette colours are always ARGB1555;
   - rows are stored bottom-up;
   - 4-bit textures take one of the 16-colour palettes copied from the table at
     0x579020 (0x418220 / 0x4AC0C0); the palette per texture comes from
@@ -198,13 +199,24 @@ def decode(entry, data, pals, pal_index):
                 i = y * w + x
                 v = data[offset + 2 * i] | data[offset + 2 * i + 1] << 8
                 px.append(colour(v, pixel))
+    elif layout == 0x03:  # VQ: 256 codebook entries of 2x2 pixels, then one twiddled byte per block
+        book = data[offset:offset + 0x800]
+        index = offset + 0x800
+        for y in range(h):
+            for x in range(w):
+                k = data[index + twiddle(x >> 1, y >> 1)]
+                i = k * 4 + ((x & 1) << 1 | (y & 1))
+                v = book[2 * i] | book[2 * i + 1] << 8
+                px.append(colour(v, pixel))
     elif layout == 0x05:  # 4-bit palette, twiddled
         pal = pals[pal_index] if 0 <= pal_index < len(pals) else [i * 0x1111 for i in range(16)]
         for y in range(h):
             for x in range(w):
                 i = twiddled_index(x, y, w, h)
                 b = data[offset + (i >> 1)]
-                px.append(colour(pal[(b >> ((i & 1) * 4)) & 15], pixel))
+                # Palette colours are always ARGB1555; the game converts them
+                # to the texture's pixel format when it creates the surface.
+                px.append(colour(pal[(b >> ((i & 1) * 4)) & 15], 0))
     else:
         return None
     return px
@@ -228,6 +240,9 @@ def main():
     pals = palettes(exe)
     names = banks(exe)
     os.makedirs(out_dir, exist_ok=True)
+    # One row per written PNG, for tools/assets/upscale_ui.py.
+    manifest = open(os.path.join(out_dir, 'manifest.csv'), 'w', newline='')
+    manifest.write('file,bank,index,texture_id,width,height,format\n')
     for name in wanted or sorted(names):
         index = names[name]
         path = os.path.join(tex_dir, name)
@@ -244,9 +259,12 @@ def main():
             if px is None:
                 print(f'  {name} #{k}: format 0x{e[2]:X} not handled')
                 continue
-            write_png(os.path.join(out_dir, f'{os.path.splitext(name)[0]}_{k:03d}_tex{e[4]:X}.png'), e[0], e[1], px)
+            file = f'{os.path.splitext(name)[0]}_{k:03d}_tex{e[4]:X}.png'
+            write_png(os.path.join(out_dir, file), e[0], e[1], px)
+            manifest.write(f'{file},{name},{k},{e[4]:X},{e[0]},{e[1]},0x{e[2]:X}\n')
             done += 1
         print(f'{name}: bank 0x{index:X}, unpacked {len(data)} of {size} bytes, {done}/{len(entries)} textures')
+    manifest.close()
 
 
 if __name__ == '__main__':

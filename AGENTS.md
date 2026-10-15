@@ -20,7 +20,7 @@ OpenRCT2, RVGL처럼 원본 게임 데이터만 있으면 현대 PC에서 잘 �
 E:\Repos\hod2-native\
 ├─ thod2-native\    ← 이 저장소 (git). 모든 작업 결과물은 여기에 둔다.
 ├─ test-game\       ← 실행·패치 테스트용 사본 (git 아님, 자유롭게 수정 가능)
-├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. dgVoodoo2 v2.87.5, Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27. 목록은 reverse-engineering.md "분석 도구")
+├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. dgVoodoo2 v2.87.5, Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27, Real-ESRGAN ncnn-vulkan 20220424. 목록은 reverse-engineering.md "분석 도구", Real-ESRGAN은 assets.md)
 ├─ ghidra-projects\ ← Ghidra 프로젝트 (git 아님, 원본 코드가 들어가므로 커밋 금지)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
 │  ├─ THOTD2\       ← 게임 본체 (Hod2.exe, 리소스)
@@ -234,7 +234,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출) (있음). 이후 다른 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale_ui.py Real-ESRGAN 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
