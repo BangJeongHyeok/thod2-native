@@ -24,7 +24,10 @@
 ### G2. 분석 도구 환경 — 진행 중
 
 - [x] G2-1 Ghidra(+ JDK 21), x64dbg, capstone 설치 (2026-10-15 사용자 확인 후. 아래 "분석 도구")
-- [ ] G2-2 분석 결과 내보내기 형식 결정, `re/functions.csv` 시작
+- [x] G2-2 분석 결과 내보내기 형식 결정, `re/functions.csv` 시작 → `re/` CSV 3종 ([re/README.md](../../re/README.md))
+- [x] G2-3 CSV를 Ghidra에 적용하는 스크립트와 Ghidra에서 붙인 이름을 CSV로 내보내는 스크립트 (`tools/re/sync.ps1`)
+- [x] G2-4 CSV 형식 검사 (`tools/re/check_re.py`, ctest `re_tables`)
+- [ ] G2-5 x32dbg를 게임에 붙여 보기 (동적 분석 확인)
 
 ## 분석 도구
 
@@ -45,49 +48,13 @@
 
 ## 확인된 주소
 
-| 주소 (VA) | 종류 | 이름 (임시) | 설명 | 근거 | 상태 |
-|---|---|---|---|---|---|
-| `0x4A5850`~ | 함수 내부 | (WinMain 계열 초기화) | `CreateWindowExA` 호출 후 `0x4A60A0` 호출 | 바이트 확인 | 추정 |
-| `0x7DC8AC` | 전역 변수 | `g_hWnd` | 게임 메인 창 핸들. `0x4A588D`에서 `CreateWindowExA` 결과를 저장. 창 클래스와 제목은 모두 `"The House of the Dead 2"` | 바이트 확인, 실행 중 창 확인 | 확인 |
-| `0x41EBA3` | 호출 | — | DirectInput 장치 `SetCooperativeLevel(g_hWnd, 9)` (vtable `+0x34`). 9 = `DISCL_EXCLUSIVE \| DISCL_BACKGROUND`. 장치 포인터는 배열 `0x7DAE18[i]`에서 꺼냄 → 컨트롤러·라이트건 장치로 추정 (키보드는 이 조합 불가) | 바이트 패턴 검색 | 확인 (장치 종류는 추정) |
-| `0x7DAE18` | 전역 변수 | `g_diDevices[]` | DirectInput 장치 포인터 배열로 추정 | `0x41EBA3` 참조 | 추정 |
-| `0x4A5899` | 패치 흔적 | — | 5바이트 `NOP`. 원래 CD 확인 함수 호출(`call`)이 있던 자리로 추정 | `0x4A5C50`을 호출하는 곳이 전혀 없음 | 추정 (강함) |
-| `0x4A5C50` | 함수 | `CheckCdRom` | `[0x7DC890]==0`이면 통과, `CDCheckPass` 비트(0x40)면 통과, 아니면 `GetLogicalDriveStringsA` + `GetDriveTypeA()==5`(CD-ROM)로 드라이브 검사 | 바이트 확인, 호출자 없음 | 확인 |
-| `0x4A6070` | 함수 | `GetHglCoreIniPath` | 인자가 NULL이면 기본값 `"hglCore.ini"`(`[0x5976C4]`)를 `GetFullPathNameA`로 절대 경로로 바꿔 `0x7DD660`에 저장. **현재 작업 폴더 기준** | 바이트 확인 | 확인 |
-| `0x4A60A0` | 함수 | `LoadHglCoreIni` | `[HGLCORE]` 키를 `GetPrivateProfileStringA`로 읽고 첫 글자가 `t`/`T`면 `0x7DCE00`에 비트 OR. `SmallTexure`는 `GetPrivateProfileIntA` (1 → 0x08, 2 → 0x10) | 바이트 확인 | 확인 |
-| `0x7DCE00` | 전역 변수 | `g_hglCoreFlags` | 아래 비트 표 | 쓰기/읽기 위치 확인 | 확인 |
-| `0x4AC861` | 호출 위치 | — | CRT 시작 코드의 첫 `GetCommandLineA` 호출 직후 주소 (엔트리 `0x4AC7D5` 안). 프로세스에서 가장 이른 로더 락 밖 시점 | dinput_probe 실행 기록 | 확인 |
-| `0x4A588B` | 호출 위치 | — | 메인 창 `CreateWindowExA` 호출 직후 주소. 바로 뒤 `0x4A588D`에서 `g_hWnd`에 저장 | dinput_probe 실행 기록 | 확인 |
-| `0x4BD209` | 호출 위치 | — | `DirectDrawCreateEx` 호출 직후 주소. 시작할 때 3번 호출됨 (장치 열거) | dinput_probe 실행 기록 | 확인 |
-| `0x4A4758` | 호출 위치 | — | 시작 확인창 `MessageBoxA("...will be used.", "Attention", MB_YESNO \| MB_ICONEXCLAMATION)` 호출 직후 주소 | dinput_probe 실행 기록. 코드: `hod2::kDeviceDialogMessageBoxReturn` (skip_device_dialog에서 사용) | 확인 |
-| `0x4BD209` 등 | 호출 위치 | — | 장치 열거: `DirectDrawCreateEx`(`0x4BD209`), `SetCooperativeLevel(NULL, NORMAL)`(`0x4BD219`, `0x4BD2DE`), `QueryInterface(IID_IDirect3D7)`(`0x4BD2F3`) | ddraw_trace 기록 | 확인 |
-| `0x4BC704` | 호출 위치 | — | `SetCooperativeLevel(hwnd, FULLSCREEN \| ALLOWREBOOT \| EXCLUSIVE)` 직후 주소 | ddraw_trace 기록 | 확인 |
-| `0x4BC7EC` | 호출 위치 | — | `SetDisplayMode(640, 480, 16, 0, 0)` 직후 주소 | ddraw_trace 기록 | 확인 |
-| `0x4BC94F` | 호출 위치 | — | primary 플립 체인 `CreateSurface(PRIMARY \| FLIP \| COMPLEX \| 3DDEVICE, 백버퍼 1)` 직후 주소 | ddraw_trace 기록 | 확인 |
-| `0x4BACE7` | 호출 위치 | — | Z 버퍼 `CreateSurface(ZBUFFER, 640×480, 16bit)` 직후 주소 | ddraw_trace 기록 | 확인 |
-| `0x4B9896` | 호출 위치 | — | 매 프레임 `Flip(NULL, DDFLIP_WAIT)` 직후 주소. 메인 루프 안으로 추정 | ddraw_trace 기록 | 확인 |
-| `0x4A4B69` | 호출 위치 | — | `TestCooperativeLevel` 직후 주소. 화면을 잃었을 때(Alt+Tab) 반복 호출 | ddraw_trace 기록 | 확인 |
-| `0x4A4B30` | 함수 | (프레임 끝 대기) | 프레임마다 목표 시간(16.67ms + 보정)까지 `QueryPerformanceCounter`로 바쁜 대기. 호출하는 곳 `0x4A59DF`, `0x4AB2F0`. D3DX `UpdateFrame`일 가능성 | 바이트 해석, profiler 핫스팟 | 확인 (정체는 추정) |
-| `0x4A4D0F`~`0x4A4D63` | 루프 | — | 위 함수의 대기 루프. 콜백 호출 → QPC(`call edi`, 복귀 `0x4A4D30`) → 경과 ms 계산 → 비교 | 바이트 해석 | 확인 |
-| `0x597444` | 전역 변수 (float) | `g_frameTimeMs` | 목표 프레임 시간 16.6667 (= 1000/60) | 파일 초기값, `0x4A4B8F`에서 읽음 | 확인 (초기값) |
-| `0x59744C` | 전역 변수 (int) | — | 60 (목표 fps로 추정) | 파일 초기값 | 추정 |
-| `0x597440`, `0x59743C` | 전역 변수 (float) | — | 10.0 (보정 상한 ms), 0.2 (보정 단계) | 바이트 해석 | 추정 |
-| `0x597450`, `0x597454` | 전역 변수 (int) | — | 20, 333 (보정 판단 기준과 주기 ms로 추정) | 파일 초기값 | 추정 |
-| `0x7DCE30` | 전역 변수 (float) | — | 프레임 시간 보정 누적값 (±10ms로 제한) | 바이트 해석 | 추정 |
-| `0x7DCE38` | 전역 변수 | — | 직전 프레임의 QPC 값 (하위 32비트) | 바이트 해석 | 확인 |
-| `0x7DCE3C` | 전역 변수 (float) | — | QPC 주파수 | 바이트 해석 | 확인 |
-| `0x7DCDFC` | 전역 변수 (함수 포인터) | `g_frameWaitCallback` | 대기 루프에서 남은 ms를 인자로 부르는 콜백. `0x49DF0B`에서 `0x49E0C0` 저장 (즉시값 위치 `0x49DF11`). 코드: `hod2::kFrameWaitCallbackSlot`, `kFrameWaitCallbackImmediate` (frame_wait_sleep이 즉시값을 바꿈) | 바이트 해석 | 확인 |
-| `0x49E0C0` | 함수 | (대기 콜백) | `cdecl(float 남은 ms)`. 1.0ms보다 크면 `0x41D5D0`으로 점프 | 바이트 해석 | 확인 |
-| `0x41D620` | 함수 | (작업 대기열 처리) | 64칸 순환 대기열(`0x7D8EB0`, 항목 16바이트)에서 하나를 꺼내 `0x41D670`으로 처리. 읽기 위치 `[0x7D8AA8]`, 쓰기 위치 `[0x7D8AAC]`. 처리 함수 표 `0x587C30` | 바이트 해석 | 확인 (작업 종류는 미확인) |
-| `0x49F990` | 호출 위치 | — | 세이브 파일 4개 읽기 `CreateFileA` 직후 주소 (시작 때) | file_trace 기록 | 확인 |
-| `0x49FA17`, `0x49FA8C` | 호출 위치 | — | 세이브 파일 4개 쓰기: `CREATE_ALWAYS` 직후, 이어서 `OPEN_EXISTING` 쓰기 직후 주소 (정상 종료 때) | file_trace 기록 | 확인 |
-| `0x4BBF28` | 호출 위치 | — | `<Windows>\d3dx.dat`를 `OPEN_ALWAYS` 읽기·쓰기로 여는 `CreateFileA` 직후 주소. 경로는 `GetWindowsDirectoryA`(`0x4C0E13`)로 만듦 | file_trace 기록 | 확인 |
-| `0x41DF23` | 호출 위치 | — | `\.\SEGAJOY.VXD` 열기 시도 직후 주소 (라이트건 드라이버) | file_trace 기록 | 확인 |
-| `0x40E4EB`, `0x41DF88`, `0x49DF2F`, `0x4A6093` | 호출 위치 | — | `Toddebug.ini`, `Hod2.ini`(×2), `hglCore.ini`의 `GetFullPathNameA` 직후 주소 | file_trace 기록 | 확인 |
-| `0x4A0899` | 명령 | — | 원본 폴더 `exception.log`의 접근 위반 주소 (`Eax = 0`, `Esi = 0`) | exception.log | 확인 (원인 미확인) |
-| `0x41E812` | 호출 위치 | — | `DirectInputCreateEx(version 0x700)` 호출 직후 주소. 확인창 뒤에 불림 | dinput_probe 실행 기록 | 확인 |
-| `0x7DC890` | 전역 변수 | — | `CheckCdRom`이 처음에 확인. 0이면 CD 확인 없이 통과 | 바이트 확인 | 확인 (의미는 미확인) |
-| `0x7DD660` | 전역 변수 | `g_hglCoreIniPath` | `hglCore.ini` 전체 경로 (256바이트) | 바이트 확인 | 확인 |
+**확인한 함수, 전역 변수, 코드 위치는 [`re/`](../../re/README.md)의 CSV에 적는다** (2026-10-15부터, 이 문서에 있던 표를 옮김).
+
+- [`re/functions.csv`](../../re/functions.csv): 함수 (주소, 이름, 진행 상태, 시그니처)
+- [`re/globals.csv`](../../re/globals.csv): 전역 변수 (주소, 이름, 타입)
+- [`re/locations.csv`](../../re/locations.csv): 호출 위치(복귀 주소), 플래그를 읽는 명령, 패치 흔적
+
+각 행에 근거(`evidence`)와 설명 문서(`doc`)가 있다. 근거를 자세히 설명하는 글은 이 문서의 작업 기록과 각 도메인 문서에 남긴다. 형식과 Ghidra 적용 방법은 [re/README.md](../../re/README.md)를 본다.
 
 ### `g_hglCoreFlags` (`0x7DCE00`) 비트
 
@@ -109,12 +76,16 @@
 
 | 날짜 | 결정 | 이유 / 대안 |
 |---|---|---|
+| 2026-10-15 | **분석 결과의 기준 데이터는 `re/`의 CSV 3종**(`functions.csv`, `globals.csv`, `locations.csv`)이다. Ghidra 프로젝트는 적용 스크립트로 다시 만드는 사본으로 본다. 이 문서의 "확인된 주소" 표는 CSV로 옮겼다 | 텍스트라서 git으로 비교·리뷰·병합할 수 있고, 여러 사람이 같은 이름으로 작업할 수 있다. 대안: Ghidra 프로젝트 공유(바이너리, 원본 코드 포함이라 커밋 불가), Ghidra 서버(설치·운영 부담), JSON(사람이 읽고 고치기 불편) |
+| 2026-10-15 | 함수·전역 변수·코드 위치를 파일 세 개로 나눈다. 코드 위치는 복귀 주소(`ret`)와 명령 주소(`insn`)를 구분한다 | 열이 다르다 (함수는 진행 상태·시그니처, 전역 변수는 타입). 기록 기능은 복귀 주소를 남기므로 그대로 적고, 주석은 적용 스크립트가 바로 앞 call에 단다 |
+| 2026-10-15 | CSV의 `notes`는 영어로 쓴다 | Ghidra 주석으로 들어가서 코드처럼 외부 기여자가 읽는다 (코드·주석은 영어라는 규칙과 같음). 근거를 설명하는 글은 한국어 작업 문서에 쓴다 |
+| 2026-10-15 | 적용 스크립트는 함수 주석(Plate)과 EOL 주석을 `[thod2]`로 시작하는 관리 칸으로 쓰고 매번 덮어쓴다. 내보내기는 이름(과 비어 있을 때 시그니처)만 가져온다 | 적용을 여러 번 해도 결과가 같아야 한다. 주석까지 내보내면 Ghidra와 CSV 중 무엇이 기준인지 흐려진다 |
+| 2026-10-15 | Ghidra 스크립트는 Java로 쓴다 | 추가 설치 없이 Ghidra 12.1.4 기본 기능으로 돈다. PyGhidra는 별도 Python 환경 구성이 필요하다 |
 | 2026-10-15 | 분석 도구는 `external\`, Ghidra 프로젝트는 `ghidra-projects\`(둘 다 저장소 밖)에 두고, 실행 스크립트만 저장소(`tools/re/`)에 둔다 | 도구 바이너리와 원본 코드가 들어간 프로젝트는 커밋하지 않는다는 원칙. 시스템 JDK 설치나 PATH 변경 대신 프로세스 단위 `JAVA_HOME`으로 다른 환경에 영향을 주지 않는다 |
 | 2026-10-14 | 정밀 분석 도구가 갖춰지기 전까지는 Python으로 바이트를 직접 읽어서 분석하고, 결과에 "바이트 확인"이라고 근거를 남긴다 | 디스어셈블러(Ghidra, capstone)가 아직 없음. 외부 도구 설치는 사용자 확인 필요 |
 
 ## 미해결 질문
 
-- Ghidra 분석 결과를 어떤 형식으로 내보낼지 (CSV, JSON, Ghidra 스크립트)
 - `Toddebug.ini` 키가 실제로 동작하는지
 - `0x4A5899`의 NOP 자리에 원래 무엇이 있었는지 (수정 안 된 원본 `Hod2.exe`가 있으면 비교 가능)
 - 원래 CD 확인 실패 시 동작 (메시지 `"Please insert the 'The House of The Dead 2' CD."` 출력 위치)
@@ -122,6 +93,20 @@
 - 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-15 — `re/` CSV와 Ghidra 동기화 스크립트 (관련: G2-2, G2-3, G2-4)
+
+- **한 일:** 이 문서의 "확인된 주소" 표를 `re/functions.csv`(10행), `re/globals.csv`(20행), `re/locations.csv`(41행)로 옮겼다. CSV → Ghidra 적용 스크립트(`ApplyThod2Re.java`), Ghidra → CSV 내보내기 스크립트(`ExportThod2Re.java`), 실행 스크립트(`tools/re/sync.ps1`), 형식 검사(`tools/re/check_re.py`, ctest `re_tables`)를 만들었다. 형식과 사용법은 [re/README.md](../../re/README.md).
+- **결과:**
+  - 실제 프로젝트(`ghidra-projects\hod2`)에 적용: 함수 3개 생성(`0x49DE30`, `0x49E0C0`, `0x4A5C50`. 적용 전 새 프로젝트에서 자동 분석이 놓친 함수를 따로 확인함), 경고 0. 처음에는 `0x5976C4`에 Ghidra가 자동으로 만든 `pointer`가 있어서 `char *`를 넣지 못했다. 그 자리의 데이터 하나만 지우고 바꾸게(`CLEAR_SINGLE_DATA`) 고쳤다.
+  - `locations.csv` 41행 모두 검증 통과: `ret` 행은 모두 call 명령 바로 다음이고, `insn` 행은 모두 명령 안이다. `0x41EBA3`은 `CALL dword ptr [ECX + 0x34]` 명령 자체다. 41행은 명령 40개에 붙는다 (`0x49DF0B`와 즉시값 `0x49DF11`이 같은 명령).
+  - 같은 CSV를 다시 적용해도 생성 0, 경고 0 (반복 적용 가능). 바로 내보내면 변경 0이고, CSV 세 파일의 SHA-256이 내보내기 전과 같다.
+  - 임시 폴더에 새 프로젝트를 만드는 `-Import`: 임포트·분석·적용 78초, 경고 0.
+  - 임시 프로젝트에서 이름을 바꾸고 내보내기를 시험했다: 함수 이름 변경 2건, 새 함수 1건, 새 전역 변수 1건이 반영됐다. 코드 안의 라벨은 제외됐다. 새 행은 `notes`가 비어 있어서 `check_re.py`가 오류 2개로 알려 준다. 잘못된 주소 형식, 상태, 종류 값도 오류로 잡는다.
+  - **새로 확인:** 메인 창 `CreateWindowExA`(복귀 `0x4A588B`)와 지워진 CD 확인 호출 자리(`0x4A5899`)는 Ghidra 자동 분석 기준으로 함수 `0x4A5790` 안에 있다. WinMain 계열 초기화 함수로 보고 `functions.csv`에 이름 없이 넣었다.
+  - Ghidra 헤드리스는 프로젝트 경로에 `..`가 들어가면 `Path element starting with '.' is not permitted`로 실패한다. `sync.ps1`이 절대 경로로 바꾼다. `analyzeHeadless.bat`는 cmd를 거치므로 `-scriptPath`에 `;`로 여러 폴더를 넘길 수 없다.
+  - `check_re.py`가 알려 주는 "문서에만 있는 주소" 11개(`0x4604D5`, `0x49DF14`, `0x49E0D6`, `0x4A4B8F`, `0x4A4D63`, `0x4A588D`, `0x4AC7D5`, `0x4C3000`, `0x4C3120`, `0x4C31EC`, `0x4C31FC`)는 구간 끝, IAT 칸, 스택 값, entry라서 표에 넣지 않았다.
+- **다음:** x32dbg를 게임에 붙여 본다 (G2-5). 입력 경로(DirectInput 장치 열거, 마우스 → 조준점) 분석을 시작한다 ([platform-input.md](platform-input.md)).
 
 ### 2026-10-15 — 분석 도구 설치와 Ghidra 첫 분석 (관련: G2-1)
 

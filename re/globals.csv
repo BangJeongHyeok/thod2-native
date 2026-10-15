@@ -1,0 +1,21 @@
+address,name,type,confidence,evidence,doc,notes
+0x587C30,g_jobHandlers,,guess,bytes,platform-timing.md,Handler table used by DispatchJob (0x41D670).
+0x59743C,g_frameCorrectionStepMs,float,guess,bytes,platform-timing.md,0.2 in the file. Step for the frame time correction.
+0x597440,g_frameCorrectionLimitMs,float,guess,bytes,platform-timing.md,10.0 in the file. The correction g_frameCorrectionMs is clamped to +/- this value.
+0x597444,g_frameTimeMs,float,confirmed,bytes,platform-timing.md,"Target frame time, 16.6667 (= 1000/60) in the file. Read at 0x4A4B8F. Only the initial value is confirmed."
+0x59744C,g_targetFps,int,guess,bytes,platform-timing.md,60 in the file.
+0x597450,g_frameCorrectionThresholdMs,int,guess,bytes,platform-timing.md,20 in the file. Threshold used when deciding the frame time correction.
+0x597454,g_frameCorrectionPeriodMs,int,guess,bytes,platform-timing.md,333 in the file. Period of the frame time correction decision.
+0x5976C4,g_defaultHglCoreIniName,char *,confirmed,bytes,reverse-engineering.md,"Points to the default file name ""hglCore.ini"" used by GetHglCoreIniPath."
+0x7D8AA8,g_jobQueueRead,uint,confirmed,bytes,platform-timing.md,Read index of g_jobQueue. The queue is empty when it equals g_jobQueueWrite. Code: hod2::kJobQueueReadIndex.
+0x7D8AAC,g_jobQueueWrite,uint,confirmed,bytes,platform-timing.md,Write index of g_jobQueue. Code: hod2::kJobQueueWriteIndex.
+0x7D8EB0,g_jobQueue,,confirmed,bytes,platform-timing.md,"Ring buffer of 64 entries, 16 bytes each, processed by ProcessJobQueueEntry. Entry layout unknown."
+0x7DAE18,g_diDevices,,guess,pattern,platform-input.md,Array of DirectInput device pointers (controllers / light guns). SetCooperativeLevel at 0x41EBA3 takes the device from here.
+0x7DC890,g_cdCheckMode,,guess,bytes,reverse-engineering.md,CheckCdRom passes immediately when this is 0. Meaning unknown.
+0x7DC8AC,g_hWnd,HWND,confirmed,bytes;runtime,platform-display.md,"Main window handle, stored at 0x4A588D from CreateWindowExA. Window class and title are both ""The House of the Dead 2""."
+0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.
+0x7DCE00,g_hglCoreFlags,uint,confirmed,bytes;runtime,reverse-engineering.md,hglCore.ini flag bits set by LoadHglCoreIni. Bit table in docs/work/reverse-engineering.md.
+0x7DCE30,g_frameCorrectionMs,float,guess,bytes,platform-timing.md,"Accumulated frame time correction, clamped to +/- 10 ms."
+0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
+0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
+0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.

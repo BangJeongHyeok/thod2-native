@@ -39,7 +39,7 @@ E:\Repos\hod2-native\
 2. **게임 원본 파일(exe, 리소스, 압축본)은 절대 커밋하지 않는다.** 저장소에는 소스 코드, 분석 문서, 스크립트, 패치 데이터만 둔다.
 3. **모드 DLL은 반드시 32비트(x86 / Win32)로 빌드한다.** 게임이 32비트 프로세스라 64비트 DLL은 로드되지 않는다.
 4. 주소는 **VA(가상 주소) 기준 16진수**로 적는다. 예: `0x4AC7D5`. 이미지 베이스가 고정이라 VA가 실행할 때마다 같다.
-5. 리버싱으로 알아낸 함수·전역 변수·구조체는 `re/` 아래 문서에 기록한다. 이름, 주소, 근거(문자열 참조, 호출 관계 등), 확인 상태를 함께 적는다.
+5. 리버싱으로 알아낸 함수·전역 변수·코드 위치는 `re/`의 CSV(`functions.csv`, `globals.csv`, `locations.csv`)에 기록한다. 이름, 주소, 근거(`evidence`), 확신(`confidence`), 진행 상태를 함께 적는다. 형식과 Ghidra 동기화(`tools/re/sync.ps1`)는 [re/README.md](re/README.md), 검사는 `python tools/re/check_re.py`.
 6. 외부 도구나 라이브러리(dgVoodoo2, DDrawCompat, MinHook 등)를 받기 전에 사용자에게 파일명과 출처를 알리고 확인을 받는다.
 7. 문서, PR 제목·본문, **커밋 메시지, 머지 커밋 메시지는 한국어**로 쓴다. 고유명사(도구·라이브러리 이름, 파일명, 함수명, API 이름 등)는 영어 그대로 써도 되지만, **문장 구성은 한국어**로 한다. 코드, 주석, 식별자, 로그 메시지는 영어로 쓴다 ([docs/CONVENTIONS.md](docs/CONVENTIONS.md) "언어").
    - 좋은 예: `dgVoodoo2 설치 스크립트 추가`, `Thod2Core_Initialize에서 해시 계산 실패 처리`
@@ -216,7 +216,7 @@ thod2-native/
 ├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
 │  ├─ work/           ← 도메인별 작업 문서 (있음)
 │  └─ formats/        ← 게임 데이터 파일 포맷 문서
-├─ re/                ← 리버싱 기록 (functions.csv, 구조체, 주소 맵, Ghidra 적용 스크립트)
+├─ re/                ← 리버싱 기록: functions.csv, globals.csv, locations.csv, ghidra_scripts/(적용·내보내기) (있음). 이후 구조체
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
 │  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
@@ -230,7 +230,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등), re/ 분석 도구 실행 스크립트(ghidra.ps1) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
