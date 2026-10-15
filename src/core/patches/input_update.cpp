@@ -1,6 +1,7 @@
 #include "patches/input_update.h"
 
 #include "log.h"
+#include "patches/cursor_map.h"
 
 #include <thod2/interop/hod2_addresses.h>
 #include <thod2/interop/iat_hook.h>
@@ -62,6 +63,7 @@ using CallbackFn = int(__cdecl*)();
 // Calls the game directly: the normal host of the reimplementation.
 class GameHost : public input::InputHost {
  public:
+  void MapCursor(std::int32_t* xy) override { MapCursorToGame(xy); }
   int CallCursorCallback(std::uintptr_t callback) override {
     return reinterpret_cast<CallbackFn>(callback)();
   }
@@ -313,6 +315,8 @@ class ReplayHost : public input::InputHost {
         Next(CallRecord::Kind::Callback, reinterpret_cast<const void*>(callback));
     return call ? static_cast<int>(call->result) : 0;
   }
+  // Same mapping as the patched original call ([input] map_cursor).
+  void MapCursor(std::int32_t* xy) override { MapCursorToGame(xy); }
   // The gun readers are original code; replaying them is not supported.
   int ReadGunJoystick(input::ButtonRecord*, std::uint32_t, std::uint32_t) override {
     unsupported_ = true;

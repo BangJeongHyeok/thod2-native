@@ -99,6 +99,9 @@ class InputHost {
                                 DIDEVICEOBJECTDATA* data, DWORD* count, DWORD flags);
   virtual BOOL GetCursorPos(POINT* point);
   virtual BOOL ClientToScreen(HWND window, POINT* point);
+  // Adjusts the cursor after GetCursorClientPos (e.g. window pixels -> game
+  // screen). The default leaves it as the original does.
+  virtual void MapCursor(std::int32_t* /*xy*/) {}
   // Calls the game's one-shot cursor callback (int __cdecl fn(void)).
   virtual int CallCursorCallback(std::uintptr_t callback) = 0;
   // Original readers that are not reimplemented yet (no hardware to verify).

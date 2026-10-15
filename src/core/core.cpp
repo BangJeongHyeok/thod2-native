@@ -4,6 +4,8 @@
 #include "exe_id.h"
 #include "log.h"
 #include "patches/ddraw_trace.h"
+#include "patches/aspect_experiment.h"
+#include "patches/cursor_map.h"
 #include "patches/device_dialog.h"
 #include "patches/file_redirect.h"
 #include "patches/file_trace.h"
@@ -37,6 +39,16 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallFrameWaitSleep(config.frame_wait_margin_ms);
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
+  }
+  if (config.map_cursor) {
+    // The widescreen experiment draws the 640-wide picture over a 4:3-extended view.
+    const float widen = config.aspect_experiment != 0 ? (16.0f / 9.0f) / (4.0f / 3.0f) : 1.0f;
+    patches::InstallCursorMap(ModulePath(nullptr).parent_path(), widen);
+  } else {
+    Log(LogLevel::Info, "map_cursor: disabled in config");
+  }
+  if (config.aspect_experiment != 0 || config.trace_screen_quads) {
+    patches::InstallAspectExperiment(config.aspect_experiment, config.trace_screen_quads);
   }
   if (config.input_compare) {
     patches::InstallInputUpdate(patches::InputUpdateMode::Compare);

@@ -328,6 +328,7 @@ void GetCursorClientPos(const InputMemory& memory, InputHost& host, std::int32_t
   host.ClientToScreen(*memory.window, &origin);
   xy[0] = cursor.x - origin.x;
   xy[1] = cursor.y - origin.y;
+  host.MapCursor(xy);
 }
 
 // Reimplements: 0x41E7C0 ConsumeCursorCallback

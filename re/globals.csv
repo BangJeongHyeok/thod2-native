@@ -1,4 +1,9 @@
 address,name,type,confidence,evidence,doc,notes
+0x4C33AC,g_constHalf,float,confirmed,bytes,renderer.md,"0.5f in .rdata, shared by many functions (IsInScreenRect uses focal * 0.5 = 320). Do not patch the constant itself."
+0x4C39CC,g_const320,float,confirmed,bytes,renderer.md,"320.0f in .rdata: 4:3 half screen width / screen centre x, shared by many functions."
+0x4D0D10,g_constMinus320,float,confirmed,bytes,renderer.md,"-320.0f in .rdata, used by screen box checks and MoveAimDigital."
+0x576600,g_playerPromptPos,float[2][2],confirmed,bytes;ghidra,renderer.md,"Per-player prompt positions: 1P (50, 412), 2P (392, 412)."
+0x57C458,g_spriteTextures,uint32_t[],confirmed,bytes;ghidra,renderer.md,Sprite index -> texture id (DrawSprite2D). For example sprite 0x6E2 -> texture 0xDA4.
 0x587C30,g_jobHandlers,,guess,bytes,platform-timing.md,Handler table used by DispatchJob (0x41D670).
 0x587CDC,g_inputJoystickButtonMap,uint32_t[14],confirmed,bytes,platform-input.md,"Button bits for joystick buttons 0..13 (initialized data), read by ReadJoystick."
 0x587D14,g_inputPlayer1Mode,uint32_t,confirmed,ghidra;bytes,platform-input.md,Device mode of player 1 (see ResolveControllerModes). High bit: the joystick is a gun. Followed by SEGAJOY gun state at 0x587D18.
@@ -10,6 +15,7 @@ address,name,type,confidence,evidence,doc,notes
 0x597450,g_frameCorrectionThresholdMs,int,guess,bytes,platform-timing.md,20 in the file. Threshold used when deciding the frame time correction.
 0x597454,g_frameCorrectionPeriodMs,int,guess,bytes,platform-timing.md,333 in the file. Period of the frame time correction decision.
 0x5976C4,g_defaultHglCoreIniName,char *,confirmed,bytes,reverse-engineering.md,"Points to the default file name ""hglCore.ini"" used by GetHglCoreIniPath."
+0x5977C8,g_viewMatrix,float[16],confirmed,bytes;ghidra,renderer.md,"Constant view matrix diag(1, 1, -1, 1), set once per frame with SetTransform(VIEW) by 0x4A6A60. Model matrices are therefore camera-space matrices."
 0x7D8AA8,g_jobQueueRead,uint,confirmed,bytes,platform-timing.md,Read index of g_jobQueue. The queue is empty when it equals g_jobQueueWrite. Code: hod2::kJobQueueReadIndex.
 0x7D8AAC,g_jobQueueWrite,uint,confirmed,bytes,platform-timing.md,Write index of g_jobQueue. Code: hod2::kJobQueueWriteIndex.
 0x7D8EB0,g_jobQueue,,confirmed,bytes,platform-timing.md,"Ring buffer of 64 entries, 16 bytes each, processed by ProcessJobQueueEntry. Entry layout unknown."
@@ -38,9 +44,24 @@ address,name,type,confidence,evidence,doc,notes
 0x7DB340,g_inputMousePrevious,uint32_t,confirmed,bytes,platform-input.md,Previous held bits of the mouse.
 0x7DC890,g_cdCheckMode,,guess,bytes,reverse-engineering.md,CheckCdRom passes immediately when this is 0. Meaning unknown.
 0x7DC8AC,g_hWnd,HWND,confirmed,bytes;runtime,platform-display.md,"Main window handle, stored at 0x4A588D from CreateWindowExA. Window class and title are both ""The House of the Dead 2""."
+0x7DCDF4,g_d3dDevice,IDirect3DDevice7 *,confirmed,ghidra,renderer.md,"Direct3D 7 device used for transforms, render states and DrawPrimitive."
 0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.
 0x7DCE00,g_hglCoreFlags,uint,confirmed,bytes;runtime,reverse-engineering.md,hglCore.ini flag bits set by LoadHglCoreIni. Bit table in docs/work/reverse-engineering.md.
 0x7DCE30,g_frameCorrectionMs,float,guess,bytes,platform-timing.md,"Accumulated frame time correction, clamped to +/- 10 ms."
 0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
 0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
 0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.
+0x7E5BC8,g_projectionMatrix,float[16],confirmed,ghidra,renderer.md,"Copy of the projection matrix made by SetMatrixMode; DrawScreenQuad reads m22/m32 (+0x28, +0x38) for quad depth."
+0x7E5C10,g_currentMatrix,float *,confirmed,ghidra,renderer.md,Current matrix of the engine matrix stack.
+0x7E5C14,g_matrixMode,int,confirmed,ghidra,renderer.md,3 = projection.
+0x80EC80,g_textureSizes,uint32_t (*)[2],confirmed,bytes,renderer.md,"Pointer to {width, height} per texture id, read by DrawScreenQuad for the quad size."
+0x80ECC0,g_textureSizes2,uint32_t (*)[2],confirmed,bytes,renderer.md,Same as g_textureSizes for texture ids with the high bit set.
+0x9A0FF0,g_focalLengthPx,float,confirmed,ghidra;bytes,renderer.md,"240 / tan(half vertical fov) = about 640: focal length in 640x480 pixels, used by about 30 functions for software projection and the shot ray."
+0x9A3EE0,g_players,struct[2] (0x130 bytes),guess,ghidra,renderer.md,"Player state. +2 device kind (4 = gun), +6 life (word, read by DrawLifeHud), +0x1C ammo, +0x24 shot count."
+0x9A4914,,,guess,bytes,renderer.md,Word added by MapAimCalibration when raw - calib[3] is negative (0 after 0x40CB30). Purpose unknown.
+0x9A4920,g_modelTable,struct[] (0x10 bytes),confirmed,ghidra;runtime,renderer.md,"Model table: +4 model pointer, +0xC flags (0x8000 | 1 = drawable). Entry 0x93E is the letterbox bar (a static model at 0x894D20 in the tested run)."
+0x9C5580,g_projectionOffset,float[2],guess,ghidra,renderer.md,Projection centre offset in normalized device coordinates (SetProjectionCenter).
+0x9C6A80,g_shotInput,struct[2] (0x28 bytes),guess,ghidra,renderer.md,"Per player shot input from UpdateShots: +0/+2 screen x/y (shorts), +0x12 on screen, +0x14 fired."
+0x9C7080,g_cinemaMode,int,guess,ghidra,renderer.md,"Set to 1 while the letterbox is shown (UpdateLetterbox); shot handling (0x414A10, 0x40D000) reads it."
+0x9C7240,g_aim,struct[2] (0x28 bytes),guess,ghidra,renderer.md,"Per player aim: +0/+2 raw x/y, +4/+6 centred aim (shorts), +8/+0xC centred aim (floats), +0x10 valid, +0x12 on screen, +0x14 fired, +0x16 calibration."
+0x9C8374,g_letterboxState,uint8_t,confirmed,ghidra,renderer.md,"UpdateLetterbox state: 0 show, 1 slide in, 3 slide out, 4 hold, 5 show and leave cinema mode, 6 hide, 7 restore, 8 full cover."

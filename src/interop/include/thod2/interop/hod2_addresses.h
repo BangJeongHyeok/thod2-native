@@ -5,6 +5,7 @@
 // on; tools/re/check_re.py (ctest re_tables) fails otherwise.
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace thod2::interop::hod2 {
@@ -37,10 +38,77 @@ constexpr std::uintptr_t kJobQueueWriteIndex = 0x7D8AAC;
 // Evidence: Ghidra decompile and byte decoding of 0x41E120..0x41E63B.
 constexpr std::uintptr_t kUpdateInput = 0x41E120;
 constexpr std::uintptr_t kUpdateInputCall = 0x40E5F0;
+// GetCursorClientPos 0x41E670 (cursor in client pixels); called at these two places.
+constexpr std::uintptr_t kGetCursorClientPos = 0x41E670;
+constexpr std::uintptr_t kGetCursorClientPosCall1 = 0x41E4DA;  // in UpdateInput
+constexpr std::uintptr_t kGetCursorClientPosCall2 = 0x41E928;  // in CreateInputDevices
 // Original readers still used by the reimplementation (gun joystick, SEGAJOY.VXD gun).
 // int __cdecl(ButtonRecord* record, int device_or_gun, int slot).
 constexpr std::uintptr_t kReadGunJoystick = 0x41F000;
 constexpr std::uintptr_t kReadSegaGun = 0x41F210;
+
+// Projection and screen-space drawing (docs/work/renderer.md "화면 비율 분석").
+// SetPerspective 0x4AB160(fov, aspect, near, far) is called from 0x418590 and
+// 0x419590 with `push 0x3FAAAAAB` (4/3); these are the immediates of those pushes.
+// Evidence: Ghidra decompile and byte decoding of 0x4185C9..0x4185DD, 0x4195BB..0x4195CB.
+constexpr std::uintptr_t kPerspectiveAspectImmediate1 = 0x4185D4;
+constexpr std::uintptr_t kPerspectiveAspectImmediate2 = 0x4195C2;
+// DrawScreenQuad 0x4A6ED0(sprite): the only caller of the XYZRHW DrawPrimitive
+// wrapper besides the screen flash. Called at these two places.
+constexpr std::uintptr_t kDrawScreenQuad = 0x4A6ED0;
+constexpr std::uintptr_t kDrawScreenQuadCall1 = 0x4A6EBE;  // in SubmitScreenQuad 0x4A6E60
+constexpr std::uintptr_t kDrawScreenQuadCall2 = 0x4A7DF9;  // in FlushSortedDraws 0x4A7D00
+// Model draws: 0x4A7310 / 0x4A7860 (model record: +0xC model, +0x34 world-view
+// matrix passed to SetTransform(WORLD)). Called at these places.
+constexpr std::uintptr_t kDrawModel = 0x4A7310;
+constexpr std::uintptr_t kDrawModelAlt = 0x4A7860;
+constexpr std::uintptr_t kDrawModelCall1 = 0x4A72AF;     // DrawModel in 0x4A7270
+constexpr std::uintptr_t kDrawModelCall2 = 0x4A7DEE;     // DrawModel in FlushSortedDraws
+constexpr std::uintptr_t kDrawModelAltCall1 = 0x4A77EF;  // DrawModelAlt in 0x4A77B0
+constexpr std::uintptr_t kDrawModelAltCall2 = 0x4A7DE4;  // DrawModelAlt in FlushSortedDraws
+// Model table: 16-byte entries, +4 model pointer, +0xC flags (0x8000 | 1 = drawable).
+// Entry 0x93E is the cinematic letterbox bar drawn by 0x413A40.
+constexpr std::uintptr_t kModelTable = 0x9A4920;
+constexpr std::size_t kModelTableStride = 0x10;
+constexpr std::size_t kLetterboxModelIndex = 0x93E;
+// 4:3 horizontal limits in software checks (docs/work/renderer.md "4:3 가로 범위").
+// Each entry is the address of the 32-bit absolute operand of an x87 instruction
+// that reads 320.0f (0x4C39CC), -320.0f (0x4D0D10) or 0.5f (0x4C33AC, as focal*0.5).
+inline constexpr std::uintptr_t kHalfWidthOperands[] = {
+    0x406335,  // fld [320] in 0x406330 (half view angle)
+    0x4455DE, 0x4455EB,  // fcomp/fcom [320] in 0x445530 (screen box)
+    0x45C6F2, 0x45C6FF,  // same in 0x45C620
+    0x44C794,  // fld [320] in 0x44C760
+    0x40D16A,  // fcomp [320] in MoveAimDigital 0x40D000
+};
+inline constexpr std::uintptr_t kNegHalfWidthOperands[] = {
+    0x4455FC, 0x445609,  // fcomp [-320] in 0x445530
+    0x45C710, 0x45C71D,  // same in 0x45C620
+    0x40D181,  // fcomp [-320] in MoveAimDigital
+};
+constexpr std::uintptr_t kIsInScreenRectHalfOperand = 0x409C38;  // fmul [0.5] in IsInScreenRect
+// MoveAimDigital clamps with `mov [esi+8], 0x43A00000 / 0xC3A00000` (+-320.0f); immediates:
+constexpr std::uintptr_t kMoveAimClampImmediate = 0x40D178;
+constexpr std::uintptr_t kMoveAimClampNegImmediate = 0x40D18F;
+// UpdateAim passes the x range to MapAimAxis as `push 0x13F` (319) and
+// `push 0xFFFFFEC0` (-320); MapAimAxis returns 0 (invalid) outside it. Immediates:
+inline constexpr std::uintptr_t kAimMaxXImmediates[] = {0x40CCD3, 0x40CD67};
+inline constexpr std::uintptr_t kAimMinXImmediates[] = {0x40CCD8, 0x40CD75};
+// UpdateAim loads the raw x zero-extended (`xor eax,eax; mov ax,[esi+0x9C7240]`,
+// 9 bytes), so a negative cursor x becomes 65536 - x. Starts of those pairs:
+inline constexpr std::uintptr_t kAimRawXLoads[] = {0x40CCC8, 0x40CD6B};
+constexpr std::uintptr_t k320FloatConstant = 0x4C39CC;
+constexpr std::uintptr_t kMinus320FloatConstant = 0x4D0D10;
+constexpr std::uintptr_t kHalfFloatConstant = 0x4C33AC;
+// Sprite draws: DrawSprite2D(int *def) and DrawSpriteAt(sprite, x, y, depth, sx, sy, p7, p8).
+// Their call sites are listed in src/core/patches/hud_call_sites.h.
+constexpr std::uintptr_t kDrawSprite2D = 0x41C700;
+constexpr std::uintptr_t kDrawSpriteAt = 0x41C7A0;
+constexpr std::uintptr_t kDrawSpriteAtInnerCall = 0x41C818;  // DrawSpriteAt -> DrawSprite2D
+// Pointers to the texture size tables ({uint32 width, uint32 height} per id)
+// DrawScreenQuad reads; the second one is for ids with the high bit set.
+constexpr std::uintptr_t kTextureSizeTable = 0x80EC80;
+constexpr std::uintptr_t kTextureSizeTable2 = 0x80ECC0;
 
 // Input globals. Layouts: thod2/platform/input.h.
 constexpr std::uintptr_t kInputSlotStates = 0x7D98F8;      // [24][0x78]
