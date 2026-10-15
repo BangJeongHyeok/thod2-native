@@ -81,6 +81,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
 | `[display] widescreen` | `0` | `1`이면 와이드스크린 (아래 "와이드스크린") |
 | `[display] widescreen_aspect` | `auto` | 화면 비율. `auto`는 주 모니터 해상도로 계산. `16:9`, `21:9`처럼 직접 줄 수 있음 |
+| `[assets] replace_textures` | `1` | 게임 폴더의 `data\tex\<텍스처 번호>.png`를 원본 텍스처 대신 씀 (아래 "텍스처 교체"). 폴더가 없으면 아무 일도 하지 않음 |
 | `[input] map_cursor` | `1` | 마우스 커서를 dgVoodoo2가 그리는 게임 영역 기준으로 바꿈. `0`이면 원본처럼 창 픽셀 그대로 |
 | `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
 | `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
@@ -103,6 +104,16 @@ widescreen = 1
 - dgVoodoo2의 `ScalingMode`는 thod2-native가 맞춘다: 켜면 `stretched`, 끄면 `stretched_ar`로 되돌린다 (`stretched`일 때만). 따로 고칠 필요 없다.
 - 아직 확인하지 않은 것: 화면 양옆에서 나오는 적이 많은 장면에서의 동작, 이번 확인에서 나오지 않은 HUD(점수, 보스 게이지 등). 이런 HUD는 가운데 4:3 영역에 그려진다.
 - 자세한 분석은 [work/renderer.md](work/renderer.md)의 "화면 비율 분석".
+
+## 텍스처 교체 (시험 단계)
+
+게임 폴더에 `data\tex\` 폴더를 만들고, 바꿀 텍스처를 **16진수 텍스처 번호**를 이름으로 한 PNG로 넣는다 (예: `PRESS START BUTTON`은 `10B1.png`).
+
+- 텍스처 번호와 원본 이미지는 `python tools\assets\tex_extract.py <Hod2.exe> <게임 폴더>\tex <출력 폴더> scr_common.bin`으로 뽑은 파일 이름의 `_tex<번호>` 부분이다. 원본은 위아래가 바로 된 PNG로 나온다.
+- 이미지는 원본보다 크게 만들어도 된다. **가로세로 비율은 원본과 같게** 한다 (다르면 원본 크기로 늘어남). 크기는 가로·세로 2048 이하 (dgVoodoo2 2.87.5 기준).
+- 투명도(알파)를 채널당 8비트로 쓴다.
+- 고해상도로 보이려면 dgVoodoo2 `[DirectX] Resolution`이 `max` 같은 높은 값이어야 한다 (권장 프리셋은 이미 `max`).
+- 바꾼 텍스처는 `thod2-native.log`에 `replace_textures: texture 10B1 512x32 -> 2048x128` 처럼 남는다.
 
 ## 되돌리기
 

@@ -61,6 +61,9 @@ address,kind,confidence,evidence,doc,notes
 0x4A7DEE,insn,confirmed,bytes,renderer.md,call DrawModel in FlushSortedDraws.
 0x4A7DF9,insn,confirmed,bytes,renderer.md,call DrawScreenQuad in FlushSortedDraws.
 0x4AB2F0,insn,confirmed,bytes,platform-timing.md,Calls WaitFrameEnd (0x4A4B30).
+0x4ABE1D,insn,confirmed,bytes,assets.md,call CreateTextureFromPvr in LoadModelTextures (texture_replace hooks it).
+0x4ABE42,insn,confirmed,bytes,assets.md,"call CreateTextureFromPvr in LoadModelTextures, callback path (texture_replace hooks it)."
+0x4ABFD1,insn,confirmed,bytes,assets.md,"call CreateTextureFromPvr(entry, pixels) in LoadBankTexture (texture_replace hooks it)."
 0x4AC861,ret,confirmed,trace:dinput_probe,loader.md,"First GetCommandLineA in the CRT startup code (inside entry 0x4AC7D5). thod2-native initializes here, the earliest point outside the loader lock."
 0x4B9896,ret,confirmed,trace:ddraw_trace,platform-display.md,"Flip(NULL, DDFLIP_WAIT) once per frame. Probably inside the main loop."
 0x4BACE7,ret,confirmed,trace:ddraw_trace,platform-display.md,"CreateSurface(ZBUFFER, 640x480, 16 bit)."

@@ -30,7 +30,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. 텍스처 교체 폴더 `data\tex\`는 없다 (2026-10-15 시험 후 지움). 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -175,7 +175,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 | `evt\` | 11 | 309KB | `.bin` | 이벤트/스크립트 |
 | `sound\` | 802 | 368MB | `.wav` | `bgm\`, `SE\`, `voice\` |
 
-`.bin` 포맷은 모두 **미분석** 상태다. 실행 파일 안에 `DXT1`~`DXT5` 문자열이 있어서 텍스처 일부가 DXT 압축일 가능성이 있다.
+**`tex\*.bin`은 분석됨 (2026-10-15):** LZSS로 압축된 픽셀 데이터만 있고, 텍스처 목록(크기, 드림캐스트 PVR 형식, 위치, 텍스처 번호)은 `Hod2.exe` 안의 표에 있다. `tools/assets/tex_extract.py`로 PNG로 뽑을 수 있다 ([docs/formats/tex.md](docs/formats/tex.md)). UI 뱅크에는 DXT가 없다. `[assets] replace_textures`(기본 켬)가 `data\tex\<16진수 텍스처 번호>.png`를 원본 대신 더 큰 32비트 텍스처로 넣는다 (실행 확인됨, [assets.md](docs/work/assets.md) G1). 나머지 `.bin` 포맷은 **미분석**이다.
 
 `tex\scr_blood_green.bin`은 `00_Setup.bat`이 피 색상(초록/빨강)을 바꿀 때 덮어쓰는 파일이다.
 
@@ -219,7 +219,7 @@ thod2-native/
 ├─ config/            ← 배포용 예제 설정 thod2-native.ini, dgVoodoo2 권장 프리셋 (있음)
 ├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
 │  ├─ work/           ← 도메인별 작업 문서 (있음)
-│  └─ formats/        ← 게임 데이터 파일 포맷 문서
+│  └─ formats/        ← 게임 데이터 파일 포맷 문서 (있음: tex.md)
 ├─ re/                ← 리버싱 기록: functions.csv, globals.csv, locations.csv, ghidra_scripts/(적용·내보내기, 규모 측정) (있음). 이후 구조체
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
@@ -234,7 +234,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

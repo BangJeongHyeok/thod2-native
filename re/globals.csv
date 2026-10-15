@@ -1,8 +1,14 @@
 address,name,type,confidence,evidence,doc,notes
+0x4C3380,g_constOne,float,confirmed,bytes,assets.md,1.0f in .rdata; SubmitSprite uses 1 - u / 1 - v for flipped sprites.
 0x4C33AC,g_constHalf,float,confirmed,bytes,renderer.md,"0.5f in .rdata, shared by many functions (IsInScreenRect uses focal * 0.5 = 320). Do not patch the constant itself."
 0x4C39CC,g_const320,float,confirmed,bytes,renderer.md,"320.0f in .rdata: 4:3 half screen width / screen centre x, shared by many functions."
+0x4D0410,g_texBankNames,const char *[],confirmed,bytes,assets.md,"tex/ file name per bank index (index 0 is null, 443 banks)."
 0x4D0D10,g_constMinus320,float,confirmed,bytes,renderer.md,"-320.0f in .rdata, used by screen box checks and MoveAimDigital."
+0x55A9B8,g_texBankEntries,const void *[],confirmed,bytes,assets.md,"Texture entry table per bank: 16 bytes each (int16 w, int16 h, uint32 PVR format, uint32 data offset, int32 texture id). docs/formats/tex.md."
+0x55B0A8,g_texBankCounts,int16_t[],confirmed,bytes,assets.md,"Number of textures per bank (scr_common 76, scr_title 89)."
+0x570250,g_pvrPixelFormatSlots,int32_t[8],confirmed,bytes,assets.md,"PVR pixel format (fmt & 7) -> g_textureFormats slot: {5, 2, 6, 8, 8, 8, 7, 0}; 8 = not supported."
 0x576600,g_playerPromptPos,float[2][2],confirmed,bytes;ghidra,renderer.md,"Per-player prompt positions: 1P (50, 412), 2P (392, 412)."
+0x579020,g_paletteTable,struct[],confirmed,bytes,assets.md,"16-colour palette list read by SetTexturePalettes: from +2, 12 bytes per entry (int16 count = 16, uint32 pointer to 16 uint16 colours)."
 0x57C458,g_spriteTextures,uint32_t[],confirmed,bytes;ghidra,renderer.md,Sprite index -> texture id (DrawSprite2D). For example sprite 0x6E2 -> texture 0xDA4.
 0x587C30,g_jobHandlers,,guess,bytes,platform-timing.md,Handler table used by DispatchJob (0x41D670).
 0x587CDC,g_inputJoystickButtonMap,uint32_t[14],confirmed,bytes,platform-input.md,"Button bits for joystick buttons 0..13 (initialized data), read by ReadJoystick."
@@ -16,6 +22,7 @@ address,name,type,confidence,evidence,doc,notes
 0x597454,g_frameCorrectionPeriodMs,int,guess,bytes,platform-timing.md,333 in the file. Period of the frame time correction decision.
 0x5976C4,g_defaultHglCoreIniName,char *,confirmed,bytes,reverse-engineering.md,"Points to the default file name ""hglCore.ini"" used by GetHglCoreIniPath."
 0x5977C8,g_viewMatrix,float[16],confirmed,bytes;ghidra,renderer.md,"Constant view matrix diag(1, 1, -1, 1), set once per frame with SetTransform(VIEW) by 0x4A6A60. Model matrices are therefore camera-space matrices."
+0x5978EC,g_currentTexturePalette,int,guess,ghidra,assets.md,"Palette of the texture being created (-1 = palette 0); set by LoadBankTexture, read by CreateTextureFromPvr."
 0x7D8AA8,g_jobQueueRead,uint,confirmed,bytes,platform-timing.md,Read index of g_jobQueue. The queue is empty when it equals g_jobQueueWrite. Code: hod2::kJobQueueReadIndex.
 0x7D8AAC,g_jobQueueWrite,uint,confirmed,bytes,platform-timing.md,Write index of g_jobQueue. Code: hod2::kJobQueueWriteIndex.
 0x7D8EB0,g_jobQueue,,confirmed,bytes,platform-timing.md,"Ring buffer of 64 entries, 16 bytes each, processed by ProcessJobQueueEntry. Entry layout unknown."
@@ -44,17 +51,24 @@ address,name,type,confidence,evidence,doc,notes
 0x7DB340,g_inputMousePrevious,uint32_t,confirmed,bytes,platform-input.md,Previous held bits of the mouse.
 0x7DC890,g_cdCheckMode,,guess,bytes,reverse-engineering.md,CheckCdRom passes immediately when this is 0. Meaning unknown.
 0x7DC8AC,g_hWnd,HWND,confirmed,bytes;runtime,platform-display.md,"Main window handle, stored at 0x4A588D from CreateWindowExA. Window class and title are both ""The House of the Dead 2""."
+0x7DC924,g_textureCaps,uint32_t,guess,ghidra,assets.md,"Device texture flags read by ClampTextureSize: bit 1 power of two only, bit 5 square only."
+0x7DC94C,g_textureMaxWidth,uint32_t,confirmed,ghidra;runtime,assets.md,Device maximum texture width read by ClampTextureSize; 2048 with dgVoodoo2 2.87.5 (2026-10-15). Minimum width at 0x7DC944.
+0x7DC950,g_textureMaxHeight,uint32_t,confirmed,ghidra;runtime,assets.md,Device maximum texture height read by ClampTextureSize; 2048 with dgVoodoo2 2.87.5 (2026-10-15). Minimum height at 0x7DC948.
 0x7DCDF4,g_d3dDevice,IDirect3DDevice7 *,confirmed,ghidra,renderer.md,"Direct3D 7 device used for transforms, render states and DrawPrimitive."
 0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.
 0x7DCE00,g_hglCoreFlags,uint,confirmed,bytes;runtime,reverse-engineering.md,hglCore.ini flag bits set by LoadHglCoreIni. Bit table in docs/work/reverse-engineering.md.
 0x7DCE30,g_frameCorrectionMs,float,guess,bytes,platform-timing.md,"Accumulated frame time correction, clamped to +/- 10 ms."
 0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
 0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
+0x7DCE50,g_textureFormats,DDPIXELFORMAT[8],confirmed,ghidra;runtime,assets.md,"Texture formats found by EnumTextureFormat. dgVoodoo2 2.87.5: slots 0 and 4 empty, 1 pal8, 2 RGB565, 3 X1R5G5B5, 5 A1R5G5B5, 6 A4R4G4B4, 7 A8R8G8B8 (used by texture_replace)."
 0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.
 0x7E5BC8,g_projectionMatrix,float[16],confirmed,ghidra,renderer.md,"Copy of the projection matrix made by SetMatrixMode; DrawScreenQuad reads m22/m32 (+0x28, +0x38) for quad depth."
 0x7E5C10,g_currentMatrix,float *,confirmed,ghidra,renderer.md,Current matrix of the engine matrix stack.
 0x7E5C14,g_matrixMode,int,confirmed,ghidra,renderer.md,3 = projection.
+0x80E480,g_texturePalettes,uint16_t[][16],guess,ghidra,assets.md,16-colour palettes copied by SetTexturePalettes; CreateTextureFromPvr indexes it with g_currentTexturePalette.
 0x80EC80,g_textureSizes,uint32_t (*)[2],confirmed,bytes,renderer.md,"Pointer to {width, height} per texture id, read by DrawScreenQuad for the quad size."
+0x80EC88,g_textureRefCounts,int32_t *,guess,ghidra,assets.md,"Pointer to a reference count per texture id (LoadBankTexture, LoadModelTextures)."
+0x80EC8C,g_textureHandles,void **,guess,ghidra,assets.md,Pointer to the texture handle per texture id (0 = not loaded); DrawScreenQuad binds it.
 0x80ECC0,g_textureSizes2,uint32_t (*)[2],confirmed,bytes,renderer.md,Same as g_textureSizes for texture ids with the high bit set.
 0x9A0FF0,g_focalLengthPx,float,confirmed,ghidra;bytes,renderer.md,"240 / tan(half vertical fov) = about 640: focal length in 640x480 pixels, used by about 30 functions for software projection and the shot ray."
 0x9A3EE0,g_players,struct[2] (0x130 bytes),guess,ghidra,renderer.md,"Player state. +2 device kind (4 = gun), +6 life (word, read by DrawLifeHud), +0x1C ammo, +0x24 shot count."
