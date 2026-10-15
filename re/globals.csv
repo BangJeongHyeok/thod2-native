@@ -38,9 +38,17 @@ address,name,type,confidence,evidence,doc,notes
 0x7DB340,g_inputMousePrevious,uint32_t,confirmed,bytes,platform-input.md,Previous held bits of the mouse.
 0x7DC890,g_cdCheckMode,,guess,bytes,reverse-engineering.md,CheckCdRom passes immediately when this is 0. Meaning unknown.
 0x7DC8AC,g_hWnd,HWND,confirmed,bytes;runtime,platform-display.md,"Main window handle, stored at 0x4A588D from CreateWindowExA. Window class and title are both ""The House of the Dead 2""."
+0x7DCDF4,g_d3dDevice,IDirect3DDevice7 *,confirmed,ghidra,renderer.md,"Direct3D 7 device used for transforms, render states and DrawPrimitive."
 0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.
 0x7DCE00,g_hglCoreFlags,uint,confirmed,bytes;runtime,reverse-engineering.md,hglCore.ini flag bits set by LoadHglCoreIni. Bit table in docs/work/reverse-engineering.md.
 0x7DCE30,g_frameCorrectionMs,float,guess,bytes,platform-timing.md,"Accumulated frame time correction, clamped to +/- 10 ms."
 0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
 0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
 0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.
+0x7E5BC8,g_projectionMatrix,float[16],confirmed,ghidra,renderer.md,"Copy of the projection matrix made by SetMatrixMode; DrawScreenQuad reads m22/m32 (+0x28, +0x38) for quad depth."
+0x7E5C10,g_currentMatrix,float *,confirmed,ghidra,renderer.md,Current matrix of the engine matrix stack.
+0x7E5C14,g_matrixMode,int,confirmed,ghidra,renderer.md,3 = projection.
+0x9A0FF0,g_focalLengthPx,float,confirmed,ghidra;bytes,renderer.md,"240 / tan(half vertical fov) = about 640: focal length in 640x480 pixels, used by about 30 functions for software projection and the shot ray."
+0x9C5580,g_projectionOffset,float[2],guess,ghidra,renderer.md,Projection centre offset in normalized device coordinates (SetProjectionCenter).
+0x9C6A80,g_shotInput,struct[2] (0x28 bytes),guess,ghidra,renderer.md,"Per player shot input from UpdateShots: +0/+2 screen x/y (shorts), +0x12 on screen, +0x14 fired."
+0x9C7240,g_aim,struct[2] (0x28 bytes),guess,ghidra,renderer.md,"Per player aim: +0/+2 raw x/y, +4/+6 centred aim (shorts), +8/+0xC centred aim (floats), +0x10 valid, +0x12 on screen, +0x14 fired, +0x16 calibration."

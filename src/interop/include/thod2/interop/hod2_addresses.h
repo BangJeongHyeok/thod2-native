@@ -42,6 +42,18 @@ constexpr std::uintptr_t kUpdateInputCall = 0x40E5F0;
 constexpr std::uintptr_t kReadGunJoystick = 0x41F000;
 constexpr std::uintptr_t kReadSegaGun = 0x41F210;
 
+// Projection and screen-space drawing (docs/work/renderer.md "화면 비율 분석").
+// SetPerspective 0x4AB160(fov, aspect, near, far) is called from 0x418590 and
+// 0x419590 with `push 0x3FAAAAAB` (4/3); these are the immediates of those pushes.
+// Evidence: Ghidra decompile and byte decoding of 0x4185C9..0x4185DD, 0x4195BB..0x4195CB.
+constexpr std::uintptr_t kPerspectiveAspectImmediate1 = 0x4185D4;
+constexpr std::uintptr_t kPerspectiveAspectImmediate2 = 0x4195C2;
+// DrawScreenQuad 0x4A6ED0(sprite): the only caller of the XYZRHW DrawPrimitive
+// wrapper besides the screen flash. Called at these two places.
+constexpr std::uintptr_t kDrawScreenQuad = 0x4A6ED0;
+constexpr std::uintptr_t kDrawScreenQuadCall1 = 0x4A6EBE;  // in SubmitScreenQuad 0x4A6E60
+constexpr std::uintptr_t kDrawScreenQuadCall2 = 0x4A7DF9;  // in FlushSortedDraws 0x4A7D00
+
 // Input globals. Layouts: thod2/platform/input.h.
 constexpr std::uintptr_t kInputSlotStates = 0x7D98F8;      // [24][0x78]
 constexpr std::uintptr_t kInputPlayer2Index = 0x7D98EC;    // int, Hod2.ini PLAYER2_INDEX
