@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 0
 - **관련 코드:** `CMakeLists.txt`, `CMakePresets.json`, `src/core/`, `tests/`, `tools/deploy.ps1`, `config/`
-- **마지막 갱신:** 2026-10-14
+- **마지막 갱신:** 2026-10-15
 
 ## 주요 목표
 
@@ -33,7 +33,7 @@
 ```powershell
 cmake --preset x86                  # 구성 (build/x86, Visual Studio 2022 Win32)
 cmake --build --preset x86-release  # 빌드 (x86-debug도 있음)
-ctest --preset x86-release          # 테스트
+ctest --preset x86-release          # 테스트 (core_tests, loader_tests, re_tables)
 .\tools\deploy.ps1                  # ..\test-game\THOTD2 에 배포 (-Config Debug, -Remove 가능)
 ```
 
@@ -90,8 +90,8 @@ flip_override = 0
 | Ninja | 1.12.1 | VS 내장 (`Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe`). 현재 프리셋은 Visual Studio 생성기를 써서 필요 없음 |
 | Git | 2.55.0.windows.5 | |
 | GitHub CLI | 2.102.0 | `C:\Program Files\GitHub CLI\gh.exe`. 설치 전에 열린 터미널에서는 PATH에 없으므로 새 터미널에서 쓰거나 전체 경로로 호출. `BangJeongHyeok` 계정으로 로그인됨 |
-| Python | 3.14.7 | 조사 스크립트용 |
-| Ghidra, x64dbg | 없음 | 리버싱 단계에서 설치 (사용자 확인 후) |
+| Python | 3.14.7 | 조사 스크립트와 ctest `re_tables`(`tools/re/check_re.py`)용. 구성 단계에서 찾지 못하면 그 테스트만 빠진다 |
+| Ghidra, JDK, x64dbg, capstone | Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27, capstone 5.0.9 | 2026-10-15 설치 (저장소 밖 `external\`). 빌드에는 필요 없음. 상세는 [reverse-engineering.md](reverse-engineering.md) "분석 도구" |
 
 ## 결정 사항
 
@@ -108,6 +108,11 @@ flip_override = 0
 - 지원 빌드 목록에 수정 안 된 원본 `Hod2.exe`를 추가할지 (해시를 구할 방법이 필요)
 
 ## 작업 기록
+
+### 2026-10-15 — ctest에 `re_tables` 추가
+
+- **결과:** `tests/CMakeLists.txt`가 Python 3를 찾으면 `re/` CSV 검사(`tools/re/check_re.py`)를 테스트 `re_tables`로 등록한다. Release 구성·빌드·테스트 3개 통과. 게임 파일이 필요 없어서 CI에서도 돌 수 있다. 상세는 [reverse-engineering.md](reverse-engineering.md).
+- 개발 환경 표의 "Ghidra, x64dbg 없음"을 설치 결과로 고쳤다 (2026-10-15 설치 때 빠뜨림).
 
 ### 2026-10-15 — 개발용 설정을 사용자 문서에서 분리
 

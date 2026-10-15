@@ -31,7 +31,7 @@
 ## 원본 주소 표기
 
 - 원본 `Hod2.exe`의 주소는 **VA, 16진수 대문자**로 쓴다: `0x4A5C50`. 이미지 베이스가 `0x400000`으로 고정이고 재배치 정보가 없어서 VA가 항상 같다.
-- 코드에서 원본 주소를 쓸 때는 `src/interop/include/thod2/interop/hod2_addresses.h`(`thod2::interop::hod2`)에 이름 붙인 상수로 모으고, 근거를 주석으로 남긴다. 같은 주소를 `docs/work/reverse-engineering.md`의 "확인된 주소" 표에도 적는다.
+- 코드에서 원본 주소를 쓸 때는 `src/interop/include/thod2/interop/hod2_addresses.h`(`thod2::interop::hod2`)에 이름 붙인 상수로 모으고, 근거를 주석으로 남긴다. 같은 주소를 `re/`의 CSV(`functions.csv`, `globals.csv`, `locations.csv`)에도 적는다. 빠지면 `tools/re/check_re.py`(ctest `re_tables`)가 실패한다. 형식은 [../re/README.md](../re/README.md)를 본다.
 
   ```cpp
   // CheckCdRom: no callers in the supported build (call removed at 0x4A5899).
@@ -63,7 +63,7 @@ bool CheckCdRom();
 
 - `implemented`: 우리 코드로 교체했고 게임이 돌아간다.
 - `verified`: 원본과 결과가 같은지 확인했다 (확인 방법을 Notes나 작업 문서에 적는다).
-- 같은 내용을 `re/functions.csv`의 상태 열에도 반영한다 (리버싱 인프라를 만들 때 형식 확정).
+- 같은 내용을 `re/functions.csv`의 `status` 열(`implemented`, `verified`)에도 반영한다. 주소, 이름, 상태가 다르면 `tools/re/check_re.py`가 실패한다.
 
 ## 구조
 
