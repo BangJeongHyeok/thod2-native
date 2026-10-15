@@ -39,8 +39,8 @@ void ApplyPatches(const CoreConfig& config) {
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
   }
-  if (config.aspect_experiment != 0) {
-    patches::InstallAspectExperiment(config.aspect_experiment);
+  if (config.aspect_experiment != 0 || config.trace_screen_quads) {
+    patches::InstallAspectExperiment(config.aspect_experiment, config.trace_screen_quads);
   }
   if (config.input_compare) {
     patches::InstallInputUpdate(patches::InputUpdateMode::Compare);

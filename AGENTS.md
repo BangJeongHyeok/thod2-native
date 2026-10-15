@@ -30,7 +30,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **화면 비율 실험 중 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `aspect_experiment = 2`, `dgVoodoo.conf`의 `ScalingMode = stretched`(권장 프리셋은 `stretched_ar`)로 바뀌어 있다. 되돌리려면 두 값을 지우거나 원래대로 한다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙

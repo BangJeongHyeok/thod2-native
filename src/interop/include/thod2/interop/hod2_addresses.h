@@ -5,6 +5,7 @@
 // on; tools/re/check_re.py (ctest re_tables) fails otherwise.
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace thod2::interop::hod2 {
@@ -53,6 +54,23 @@ constexpr std::uintptr_t kPerspectiveAspectImmediate2 = 0x4195C2;
 constexpr std::uintptr_t kDrawScreenQuad = 0x4A6ED0;
 constexpr std::uintptr_t kDrawScreenQuadCall1 = 0x4A6EBE;  // in SubmitScreenQuad 0x4A6E60
 constexpr std::uintptr_t kDrawScreenQuadCall2 = 0x4A7DF9;  // in FlushSortedDraws 0x4A7D00
+// Model draws: 0x4A7310 / 0x4A7860 (model record: +0xC model, +0x34 world-view
+// matrix passed to SetTransform(WORLD)). Called at these places.
+constexpr std::uintptr_t kDrawModel = 0x4A7310;
+constexpr std::uintptr_t kDrawModelAlt = 0x4A7860;
+constexpr std::uintptr_t kDrawModelCall1 = 0x4A72AF;     // DrawModel in 0x4A7270
+constexpr std::uintptr_t kDrawModelCall2 = 0x4A7DEE;     // DrawModel in FlushSortedDraws
+constexpr std::uintptr_t kDrawModelAltCall1 = 0x4A77EF;  // DrawModelAlt in 0x4A77B0
+constexpr std::uintptr_t kDrawModelAltCall2 = 0x4A7DE4;  // DrawModelAlt in FlushSortedDraws
+// Model table: 16-byte entries, +4 model pointer, +0xC flags (0x8000 | 1 = drawable).
+// Entry 0x93E is the cinematic letterbox bar drawn by 0x413A40.
+constexpr std::uintptr_t kModelTable = 0x9A4920;
+constexpr std::size_t kModelTableStride = 0x10;
+constexpr std::size_t kLetterboxModelIndex = 0x93E;
+// Pointers to the texture size tables ({uint32 width, uint32 height} per id)
+// DrawScreenQuad reads; the second one is for ids with the high bit set.
+constexpr std::uintptr_t kTextureSizeTable = 0x80EC80;
+constexpr std::uintptr_t kTextureSizeTable2 = 0x80ECC0;
 
 // Input globals. Layouts: thod2/platform/input.h.
 constexpr std::uintptr_t kInputSlotStates = 0x7D98F8;      // [24][0x78]

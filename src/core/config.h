@@ -28,6 +28,7 @@ namespace thod2::core {
 //   [debug]
 //   input_compare = 0         ; 1 = run our input update next to the original and log differences
 //   aspect_experiment = 0     ; widescreen RE experiment: 1 = 16:9 projection, 2 = 1 + squeezed 2D
+//   trace_screen_quads = 0    ; 1 = log wide/edge 2D quads, models and the letterbox call chain
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
 //   trace_files = 0           ; 1 = log the game's file system calls
@@ -42,6 +43,7 @@ struct CoreConfig {
   bool reimplement_input_update = false;
   bool input_compare = false;
   int aspect_experiment = 0;
+  bool trace_screen_quads = false;
   bool trace_ddraw = false;
   bool profile = false;
   bool trace_files = false;

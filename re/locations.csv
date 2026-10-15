@@ -31,6 +31,10 @@ address,kind,confidence,evidence,doc,notes
 0x4A5C72,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x40 (CDCheckPass) inside CheckCdRom.
 0x4A6093,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for hglCore.ini.
 0x4A6EBE,insn,confirmed,bytes,renderer.md,call DrawScreenQuad in SubmitScreenQuad.
+0x4A72AF,insn,confirmed,bytes,renderer.md,call DrawModel in SubmitModel.
+0x4A77EF,insn,confirmed,bytes,renderer.md,call DrawModelAlt in SubmitModelAlt.
+0x4A7DE4,insn,confirmed,bytes,renderer.md,call DrawModelAlt in FlushSortedDraws.
+0x4A7DEE,insn,confirmed,bytes,renderer.md,call DrawModel in FlushSortedDraws.
 0x4A7DF9,insn,confirmed,bytes,renderer.md,call DrawScreenQuad in FlushSortedDraws.
 0x4AB2F0,insn,confirmed,bytes,platform-timing.md,Calls WaitFrameEnd (0x4A4B30).
 0x4AC861,ret,confirmed,trace:dinput_probe,loader.md,"First GetCommandLineA in the CRT startup code (inside entry 0x4AC7D5). thod2-native initializes here, the earliest point outside the loader lock."
