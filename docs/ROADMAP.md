@@ -77,6 +77,7 @@
 ### 2-1. 리버싱 인프라
 - [ ] Ghidra로 분석한 결과(함수 이름, 주소, 시그니처, 구조체)를 **텍스트로 내보내서** `re/`에 저장한다. 원본 코드를 포함하는 Ghidra 프로젝트 파일은 커밋하지 않는다. → 함수·전역 변수·코드 위치는 완료 (`re/*.csv`, `tools/re/sync.ps1 -Export`). 구조체는 아직
 - [x] 분석 결과를 Ghidra에 다시 적용하는 스크립트를 만들어서, 여러 사람이 같은 이름으로 작업할 수 있게 한다. → `tools/re/sync.ps1 -Apply` / `-Import` ([re/README.md](../re/README.md))
+- [x] 리버싱 규모 산정과 가능성 판정 → 함수 약 2,881개 중 리버싱 대상 2,213개, M1~M3 약 3–6인월(숙련자 기준 가정) ([work/reverse-engineering.md](work/reverse-engineering.md) "리버싱 규모 산정")
 - [x] 함수 진행 상태 목록 (`re/functions.csv`): 미확인 → 이름 붙임 → 재구현됨 → 검증됨 (`unnamed` → `named` → `implemented` → `verified`)
 
 ### 2-2. 플랫폼 계층
