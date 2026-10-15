@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 2-1
 - **관련 코드:** `re/`
-- **마지막 갱신:** 2026-10-14
+- **마지막 갱신:** 2026-10-15
 
 ## 주요 목표
 
@@ -21,10 +21,27 @@
 - [ ] G1-4 `Toddebug.ini` 처리 코드 분석 (참조 위치 `0x40E4D9`)
 - [ ] G1-5 디스플레이 모드(640×480) 설정 위치 찾기
 
-### G2. 분석 도구 환경 — 대기
+### G2. 분석 도구 환경 — 진행 중
 
-- [ ] G2-1 Ghidra(+ JDK 21), x64dbg 설치 (사용자 확인 후)
+- [x] G2-1 Ghidra(+ JDK 21), x64dbg, capstone 설치 (2026-10-15 사용자 확인 후. 아래 "분석 도구")
 - [ ] G2-2 분석 결과 내보내기 형식 결정, `re/functions.csv` 시작
+
+## 분석 도구
+
+2026-10-15에 사용자 확인 후 받았다. 모두 저장소 밖(`E:\Repos\hod2-native\external\`)에 있고, 시스템 PATH나 환경 변수는 바꾸지 않았다.
+
+| 도구 | 버전 | 받은 파일 (출처) | SHA-256 | 설치 위치 |
+|---|---|---|---|---|
+| Ghidra | 12.1.4 (PUBLIC, 2026-09-21) | `ghidra_12.1.4_PUBLIC_20260921.zip`, 569,649,598 bytes (GitHub `NationalSecurityAgency/ghidra` 릴리스 `Ghidra_12.1.4_build`) | `ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db` (릴리스 노트 값과 일치) | `external\ghidra\ghidra_12.1.4_PUBLIC\` |
+| Eclipse Temurin JDK | 21.0.12.1+1 LTS (x64) | `OpenJDK21U-jdk_x64_windows_hotspot_21.0.12.1_1.zip`, 205,073,461 bytes (GitHub `adoptium/temurin21-binaries`, Adoptium API의 최신 안정판) | `f9d6e191ab098c0d416e7d588a24420a8621cd2f4720dab2459b8b7b2d2d8b4e` (Adoptium API 값과 일치) | `external\jdk\jdk-21.0.12.1+1\` |
+| x64dbg (x32dbg 포함) | 2026.05.27 스냅샷 (commit `9c8ca1cae0b6d56cc44f31fddcb10e3b02ffbb87`) | `snapshot_2026-05-27_12-11.zip`, 31,526,833 bytes (GitHub `x64dbg/x64dbg` 릴리스 `2026.05.27`) | `d41966dfc5b435a372798245300ca0ab7bb8e48bdbf48512c6fb20fcca427697` (GitHub asset digest와 일치) | `external\x64dbg\release\x32\x32dbg.exe` |
+| capstone (Python) | 5.0.9 (pip 패키지. `capstone.__version__`은 `5.0.7`로 표시) | PyPI, `pip install --user capstone` (Python 3.14.7) | — | 사용자 site-packages |
+
+- 받은 압축 파일은 `external\downloads\`에 남겨 두었다. 세 도구를 합친 설치 크기는 약 1,273MB다.
+- Ghidra 12.1.4는 JDK 21(64비트)을 요구한다 (`GettingStarted.md`). Python 3.9~3.14는 디버거와 PyGhidra를 쓸 때만 필요하다.
+- **Ghidra 실행:** `.\tools\re\ghidra.ps1` (GUI), `.\tools\re\ghidra.ps1 -Headless <analyzeHeadless 인자>`. Ghidra의 `launch.bat`는 `launch.properties`를 읽기 **전에** PATH나 `JAVA_HOME`에서 `java.exe`를 찾고, 없으면 바로 실패한다. 그래서 스크립트가 그 프로세스에만 `JAVA_HOME`을 넣는다. 위치는 `THOD2_GHIDRA_DIR`, `THOD2_JDK_DIR`로 바꿀 수 있다.
+- `external\ghidra\ghidra_12.1.4_PUBLIC\support\launch.properties`의 `JAVA_HOME_OVERRIDE`도 위 JDK로 지정해 두었다 (Ghidra 설치본 수정, 저장소 밖).
+- **Ghidra 프로젝트:** `E:\Repos\hod2-native\ghidra-projects\hod2.gpr`. 원본 코드가 들어가므로 저장소 밖에 두고 커밋하지 않는다. 테스트 사본의 `Hod2.exe`(SHA-256은 AGENTS.md 3절과 같음)를 임포트했다.
 
 ## 확인된 주소
 
@@ -92,6 +109,7 @@
 
 | 날짜 | 결정 | 이유 / 대안 |
 |---|---|---|
+| 2026-10-15 | 분석 도구는 `external\`, Ghidra 프로젝트는 `ghidra-projects\`(둘 다 저장소 밖)에 두고, 실행 스크립트만 저장소(`tools/re/`)에 둔다 | 도구 바이너리와 원본 코드가 들어간 프로젝트는 커밋하지 않는다는 원칙. 시스템 JDK 설치나 PATH 변경 대신 프로세스 단위 `JAVA_HOME`으로 다른 환경에 영향을 주지 않는다 |
 | 2026-10-14 | 정밀 분석 도구가 갖춰지기 전까지는 Python으로 바이트를 직접 읽어서 분석하고, 결과에 "바이트 확인"이라고 근거를 남긴다 | 디스어셈블러(Ghidra, capstone)가 아직 없음. 외부 도구 설치는 사용자 확인 필요 |
 
 ## 미해결 질문
@@ -104,6 +122,16 @@
 - 플래그를 레지스터로 넘기는 다른 `SetCooperativeLevel` 호출이 있는지 (상수 push 패턴으로는 `0x41EBA3` 한 곳만 발견)
 
 ## 작업 기록
+
+### 2026-10-15 — 분석 도구 설치와 Ghidra 첫 분석 (관련: G2-1)
+
+- **한 일:** 사용자 확인 후 Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27, capstone 5.0.9를 받았다 (위 "분석 도구"). 받은 압축 파일 세 개의 SHA-256을 공식 값과 대조했다. `tools/re/ghidra.ps1`로 Ghidra를 실행하게 했다. 테스트 사본의 `Hod2.exe`를 헤드리스 모드로 임포트하고 기본 자동 분석을 돌렸다.
+- **결과:**
+  - 처음에는 `launch.properties`의 `JAVA_HOME_OVERRIDE`만 지정해서 실패했다 (`ERROR: The 'java' command could not be found in your PATH or with JAVA_HOME.`). `launch.bat`가 그 설정을 읽기 전에 `java.exe`를 먼저 찾기 때문이다. 프로세스에 `JAVA_HOME`을 넣으니 동작했다.
+  - 임포트와 분석 성공. 언어 `x86:LE:32:default`, 컴파일러 사양 `windows`. 자동 분석으로 **함수 2,030개**를 찾았다. 분석 70초 (그중 `Decompiler Switch Analysis` 48.9초), 전체 87초. PDB는 없다.
+  - 이미 확인한 주소와 대조: `0x4AC7D5`(entry), `0x4A6070`, `0x4A60A0`, `0x4A4B30`, `0x41D620`은 함수 시작으로 잡혔다. **`0x4A5C50`(`CheckCdRom`)과 `0x49E0C0`(대기 콜백)은 함수로 잡히지 않았다.** 앞의 것은 호출하는 곳이 없고, 뒤의 것은 함수 포인터로 저장만 되기 때문이다. 자동 분석이 놓치는 이런 함수는 적용 스크립트에서 직접 만들어야 한다.
+  - `tools/re/ghidra.ps1 -Headless`를 Git Bash에서 `powershell -File`로 부르면 출력이 보이지 않았다. PowerShell에서 직접 부르면 정상이다 (원인 미확인).
+- **다음:** G2-2. `re/functions.csv` 형식을 정하고 "확인된 주소" 표를 옮긴다. CSV를 Ghidra 프로젝트에 적용하는 스크립트를 만든다 (이름, 함수 생성, 주석). 첫 분석 대상은 입력 경로다 ([platform-input.md](platform-input.md)).
 
 ### 2026-10-15 — 파일 접근 호출 위치 (관련: G1)
 
