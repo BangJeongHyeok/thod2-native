@@ -30,7 +30,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **화면 비율 실험 중 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `aspect_experiment = 2`, `dgVoodoo.conf`의 `ScalingMode = stretched`(권장 프리셋은 `stretched_ar`)로 바뀌어 있다. 되돌리려면 두 값을 지우거나 원래대로 한다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -131,7 +131,7 @@ E:\Repos\hod2-native\
 
 - **D3DX(DX7용)가 정적으로 링크되어 있다.** `CD3duContext::UpdateFrame`, `CD3duDeviceNode::RefreshCaps` 같은 오류 문자열이 있다. 화면 전환(Flip/Blt) 경로를 찾을 때 실마리가 된다.
 - **코드 구성 (2026-10-15 측정, 경계는 추정):** 함수 약 2,881개 (Ghidra 자동 분석은 1,876개만 찾음. 함수 포인터로만 불리는 함수를 놓침). 게임 `0x401000`–`0x49D8B0` 1,990개, 엔진(HGL) `0x49D8B0`–`0x4AB280` 223개, 라이브러리(CRT, D3DX, 예외 기록) `0x4AB280`–`0x4C3000` 668개. 게임 함수의 절반(986개)은 직접 호출하는 곳이 없다. 디컴파일 실패 0개, 디버거 탐지 없음. 자세한 표와 비용 산정은 [reverse-engineering.md](docs/work/reverse-engineering.md) "리버싱 규모 산정".
-- **화면 비율 (2026-10-15 분석):** 투영은 `SetPerspective`(`0x4AB160`)를 부르는 두 곳에서 4/3(`push 0x3FAAAAAB`, 즉시값 `0x4185D4`, `0x4195C2`)을 넘긴다. 모든 2D는 `DrawScreenQuad`(`0x4A6ED0`)를 지난다. 명중 판정은 조준 좌표와 초점 거리(`0x9A0FF0`, 약 640)로 만든 3D 광선으로 한다. 자세한 것은 [renderer.md](docs/work/renderer.md) "화면 비율 분석".
+- **화면 비율 (2026-10-15 분석):** 투영은 `SetPerspective`(`0x4AB160`)를 부르는 두 곳에서 4/3(`push 0x3FAAAAAB`, 즉시값 `0x4185D4`, `0x4195C2`)을 넘긴다. 모든 2D는 `DrawScreenQuad`(`0x4A6ED0`)를 지난다. 명중 판정은 조준 좌표와 초점 거리(`0x9A0FF0`, 약 640)로 만든 3D 광선으로 한다. 자세한 것은 [renderer.md](docs/work/renderer.md) "화면 비율 분석". 이것으로 만든 `[display] widescreen`(기본 꺼짐)이 있다.
 - **커서 좌표 (2026-10-15 확인):** 게임은 창의 클라이언트 픽셀을 그대로 640×480 좌표로 쓴다. dgVoodoo2 창(1920×1080)에서는 왼쪽 위 640×480만 조준되므로 `[input] map_cursor`(기본 켬)가 바꿔 준다 ([renderer.md](docs/work/renderer.md) "조준").
 - **다른 빌드가 있다:** 공개 분석 프로젝트 saul/hotd2-decomp는 2001-05-09 링크 빌드(`.text` `0xC2520`)를 다룬다. 우리 빌드(2001-03-22)와 주소가 다르다.
 - DLL 프록시 후보: `ddraw.dll`, `dinput.dll`, `dsound.dll` 모두 시스템 DLL을 이름으로 임포트한다. 게임 폴더에 같은 이름의 DLL을 두면 먼저 로드된다.

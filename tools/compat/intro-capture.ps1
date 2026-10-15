@@ -86,4 +86,4 @@ try {
   }
   Stop-Process -Id $p.Id -ErrorAction SilentlyContinue
 } finally { [IO.File]::WriteAllText($ini, $backup) }
-Select-String -Path $log -Pattern 'screen_quad|aspect_experiment' | ForEach-Object { $_.Line -replace '^\[[^\]]*\] \[INFO\] ', '' }
+Select-String -Path $log -Pattern 'screen_quad|widescreen' | ForEach-Object { $_.Line -replace '^\[[^\]]*\] \[INFO\] ', '' }

@@ -36,8 +36,11 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
       GetPrivateProfileIntW(L"input", L"reimplement_update", 0, file) != 0;
   config.input_compare = GetPrivateProfileIntW(L"debug", L"input_compare", 0, file) != 0;
   config.map_cursor = GetPrivateProfileIntW(L"input", L"map_cursor", 1, file) != 0;
-  const UINT aspect_experiment = GetPrivateProfileIntW(L"debug", L"aspect_experiment", 0, file);
-  config.aspect_experiment = aspect_experiment <= 2 ? static_cast<int>(aspect_experiment) : 0;
+  config.widescreen = GetPrivateProfileIntW(L"display", L"widescreen", 0, file) != 0;
+  wchar_t aspect[32] = {};
+  GetPrivateProfileStringW(L"display", L"widescreen_aspect", L"auto", aspect, ARRAYSIZE(aspect), file);
+  config.widescreen_aspect = aspect;
+  config.widescreen_2d = GetPrivateProfileIntW(L"debug", L"widescreen_2d", 1, file) != 0;
   config.trace_screen_quads = GetPrivateProfileIntW(L"debug", L"trace_screen_quads", 0, file) != 0;
   config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   config.profile = GetPrivateProfileIntW(L"debug", L"profile", 0, file) != 0;

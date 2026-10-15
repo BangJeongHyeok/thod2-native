@@ -4,7 +4,6 @@
 #include "exe_id.h"
 #include "log.h"
 #include "patches/ddraw_trace.h"
-#include "patches/aspect_experiment.h"
 #include "patches/cursor_map.h"
 #include "patches/device_dialog.h"
 #include "patches/file_redirect.h"
@@ -12,6 +11,7 @@
 #include "patches/frame_wait.h"
 #include "patches/input_update.h"
 #include "patches/profiler.h"
+#include "patches/widescreen.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -40,15 +40,32 @@ void ApplyPatches(const CoreConfig& config) {
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
   }
+  const std::filesystem::path game_dir = ModulePath(nullptr).parent_path();
+  float aspect = 0.0f;
+  if (config.widescreen) {
+    aspect = patches::ParseWidescreenAspect(config.widescreen_aspect);
+    if (aspect <= 0.0f) {
+      Log(LogLevel::Warn, "widescreen: cannot parse widescreen_aspect '{}', widescreen off",
+          ToUtf8(config.widescreen_aspect));
+    }
+  }
+  // dgVoodoo2 must stretch the 640x480 frame over the whole screen for
+  // widescreen, and keep 4:3 without it.
+  patches::SyncDgVoodooScaling(game_dir, aspect > 0.0f);
+  constexpr float kOriginalAspect = 4.0f / 3.0f;
+  const float widen = aspect > kOriginalAspect + 0.01f ? aspect / kOriginalAspect : 1.0f;
   if (config.map_cursor) {
-    // The widescreen experiment draws the 640-wide picture over a 4:3-extended view.
-    const float widen = config.aspect_experiment != 0 ? (16.0f / 9.0f) / (4.0f / 3.0f) : 1.0f;
-    patches::InstallCursorMap(ModulePath(nullptr).parent_path(), widen);
+    // Widescreen draws the 640-wide picture over a 4:3-extended view.
+    patches::InstallCursorMap(game_dir, widen);
   } else {
     Log(LogLevel::Info, "map_cursor: disabled in config");
   }
-  if (config.aspect_experiment != 0 || config.trace_screen_quads) {
-    patches::InstallAspectExperiment(config.aspect_experiment, config.trace_screen_quads);
+  if (config.widescreen || config.trace_screen_quads) {
+    patches::WidescreenOptions options;
+    options.aspect = aspect;
+    options.squeeze_2d = config.widescreen_2d;
+    options.trace = config.trace_screen_quads;
+    patches::InstallWidescreen(options);
   }
   if (config.input_compare) {
     patches::InstallInputUpdate(patches::InputUpdateMode::Compare);

@@ -13,6 +13,8 @@ PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)
 | 테두리 계단 현상 | 있음 | 안티에일리어싱(MSAA 4x)으로 매끄럽게 |
 | Alt+Enter | 반응 없음 | 창 ↔ 전체 화면 전환 |
 | CPU 사용 | 코어 1개 100% | 약 25% (프레임 끝 바쁜 대기를 잠자기로 바꿈) |
+| 마우스 조준 | dgVoodoo2 창(화면 크기)에서는 화면 왼쪽 위 640×480만 조준됨 | 화면에 그려진 게임 영역 전체로 조준 (`[input] map_cursor`) |
+| 와이드스크린 (선택) | 4:3 | `[display] widescreen = 1`이면 모니터 비율로 넓게 보임 (아래 "와이드스크린") |
 | 세이브 위치 | 게임 폴더의 데이터 파일 4개. 폴더에 쓸 수 없으면 조용히 저장 실패 | `%APPDATA%\thod2-native\save\`. 게임 폴더가 읽기 전용이어도 저장됨. 처음 실행할 때 기존 세이브를 옮겨 옴 |
 
 ## 준비물
@@ -77,11 +79,30 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[core] log_level` | `info` | `debug`, `info`, `warn`, `error` |
 | `[core] allow_unknown_exe` | `0` | `1`이면 지원하지 않는 `Hod2.exe`에서도 패치를 적용 (충돌 가능) |
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
+| `[display] widescreen` | `0` | `1`이면 와이드스크린 (아래 "와이드스크린") |
+| `[display] widescreen_aspect` | `auto` | 화면 비율. `auto`는 주 모니터 해상도로 계산. `16:9`, `21:9`처럼 직접 줄 수 있음 |
+| `[input] map_cursor` | `1` | 마우스 커서를 dgVoodoo2가 그리는 게임 영역 기준으로 바꿈. `0`이면 원본처럼 창 픽셀 그대로 |
 | `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
 | `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
 | `[timing] frame_wait_margin_ms` | `1.0` | 마감 직전 이 시간(ms)만큼은 원래처럼 바쁜 대기 |
 
 개발할 때 쓰는 `[debug]` 설정(호출 기록, 프로파일러 등)은 [work/build.md](work/build.md)의 "개발용 설정"에 있다.
+
+## 와이드스크린
+
+`thod2-native.ini`에 넣는다:
+
+```ini
+[display]
+widescreen = 1
+```
+
+- 세로 시야는 그대로 두고 양옆을 더 보여 준다 (Hor+). 화면 비율은 주 모니터에 맞춘다 (`widescreen_aspect`).
+- HUD(총알, 생명, 플레이어별 표시)는 화면 양 끝으로 붙고, 타이틀 문구·자막 같은 나머지 2D는 원래 비율로 가운데에 그려진다. 영화 장면의 위아래 띠도 화면 전체 폭을 덮는다.
+- 조준은 넓어진 화면 끝까지 커서를 따라간다.
+- dgVoodoo2의 `ScalingMode`는 thod2-native가 맞춘다: 켜면 `stretched`, 끄면 `stretched_ar`로 되돌린다 (`stretched`일 때만). 따로 고칠 필요 없다.
+- 아직 확인하지 않은 것: 화면 양옆에서 나오는 적이 많은 장면에서의 동작, 이번 확인에서 나오지 않은 HUD(점수, 보스 게이지 등). 이런 HUD는 가운데 4:3 영역에 그려진다.
+- 자세한 분석은 [work/renderer.md](work/renderer.md)의 "화면 비율 분석".
 
 ## 되돌리기
 

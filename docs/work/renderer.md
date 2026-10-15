@@ -2,7 +2,7 @@
 
 - **상태:** 진행 중 (자체 렌더러 전까지 dgVoodoo2 설정 관리)
 - **관련 로드맵:** ROADMAP 1-3, 2-3
-- **관련 코드:** `src/renderer/` (예정), `config/dgvoodoo-recommended.ini`, `tools/compat/quality-compare.ps1`, `src/core/patches/aspect_experiment.cpp`, `tools/compat/aspect-capture.ps1`
+- **관련 코드:** `src/renderer/` (예정), `config/dgvoodoo-recommended.ini`, `tools/compat/quality-compare.ps1`, `src/core/patches/widescreen.cpp`, `tools/compat/aspect-capture.ps1`
 - **마지막 갱신:** 2026-10-15
 
 ## 주요 목표
@@ -36,6 +36,7 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 - [ ] G3-9 GDI로 그리는 화면(`0x49E5A0`, `0x49EAB0`의 `BitBlt`, 이름 입력 글꼴 등) 확인
 - [x] G3-10 영화 화면 상하 띠가 넓어진 화면 양옆을 덮지 못하는 문제 (사용자 발견) → 띠 모델 찾아서 가로로 넓힘
 - [ ] G3-11 카메라 공간에 붙은 다른 3D 물체(화면 전체 덮개 등)가 더 있는지 확인
+- [x] G3-12 실험 패치를 정식 설정 `[display] widescreen`으로 정리 (화면 비율 자동 계산, dgVoodoo2 `ScalingMode` 자동 맞춤, 사용자 안내)
 
 ## dgVoodoo2 화질 옵션 비교 (2026-10-15)
 
@@ -99,7 +100,7 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 
 상수 320.0(`0x4C39CC`), −320.0(`0x4D0D10`), 0.5(`0x4C33AC`)는 다른 곳에서도 같이 쓰므로 상수 자체를 바꾸면 안 되고, 위치별로 고쳐야 한다.
 
-### 실행 실험 (`[debug] aspect_experiment`)
+### 실행 실험 (당시 `[debug] aspect_experiment`, 지금은 `[display] widescreen`)
 
 640×480 화면을 그대로 두고 dgVoodoo2가 16:9 화면 전체로 늘리게(`ScalingMode = stretched`) 한 뒤, 게임 쪽에서 맞춘다 (아나모픽 방식, Hor+: 세로 시야각 유지, 가로 확장).
 
@@ -198,10 +199,21 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 6. 카메라 공간 3D 물체: 영화 화면 띠(모델 표 `0x93E`, 실험으로 확인). 다른 것이 있는지는 G3-11
 7. dgVoodoo2 `ScalingMode = stretched` (16:9 모니터 기준. 다른 비율은 비율 값을 설정으로 받아야 함)
 
+## 와이드스크린 설정 (2026-10-15)
+
+`[display] widescreen = 1` (기본 0), `[display] widescreen_aspect = auto` (주 모니터 해상도로 계산, `16:9`·`21:9`·`1.7778`처럼 지정 가능). 코드는 `src/core/patches/widescreen.cpp`.
+
+- 비율 r이 4:3보다 크면 넓힘 배수 w = r ÷ (4/3)를 쓴다. 투영 비율 = 4/3 × w, 2D 압축 = 1/w, HUD 이동 = 320 × (w − 1), 띠 모델 가로 배율 = w, 범위 상수 = 320 × w, 조준 범위 = 319 + 320 × (w − 1) / −320 × w, 커서 가상 좌표 = 320 + (x − 320) × w. 4:3 이하 모니터면 아무것도 바꾸지 않는다.
+- **dgVoodoo2 설정 자동 맞춤:** 켜면 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로, 끄면 `stretched`일 때만 `stretched_ar`로 되돌린다. dgVoodoo2는 thod2-native 초기화(첫 `GetCommandLineA`) **뒤에** 설정을 읽으므로 같은 실행부터 적용된다: `stretched_ar` 상태에서 켜고 실행한 첫 화면이 검은 띠 없는 16:9였다 (2026-10-15 확인).
+- 확인: 끔(4:3, 양옆 검은 띠, 설정이 `stretched_ar`로 돌아감), 투영만(`[debug] widescreen_2d = 0`, HUD가 늘어남), 켬(3D 넓어짐, 2D 비율 정상) 세 가지를 `aspect-capture.ps1`로 찍어 비교했다.
+
 ## 결정 사항
 
 | 날짜 | 결정 | 이유 / 대안 |
 |---|---|---|
+| 2026-10-15 | 와이드스크린은 기본 꺼짐(`[display] widescreen = 0`)이고, 켜면 dgVoodoo2 `ScalingMode`를 thod2-native가 맞춘다 | 아직 확인하지 않은 장면(적이 양옆에서 많이 나오는 곳, 일부 HUD)이 있다. 사용자가 dgVoodoo2 설정을 따로 바꾸지 않아 검은 띠가 생긴 일이 있어서 설정 하나로 끝나게 했다. 대안: dgVoodoo2 설정을 직접 바꾸게 안내 |
+| 2026-10-15 | `[input] map_cursor`는 기본 켬 | 기존 권장 구성(dgVoodoo2 화면 크기 창)에서 조준이 왼쪽 위 640×480에 묶이는 문제를 고친다. 원본 640×480 전체 화면에서는 변환이 1배라 영향이 없다 |
+| 2026-10-15 | 와이드스크린은 640×480을 늘리는 방식(아나모픽, Hor+)으로 한다 | 렌더 크기를 바꾸려면 640·320이 박힌 곳(33개 함수 이상)과 D3DX 화면 생성을 모두 고쳐야 한다. 늘리는 방식은 투영 2곳, 2D 그리기 1곳, 조준·범위 몇 곳만 고친다. 고해상도는 dgVoodoo2 내부 해상도로 얻는다 |
 | 2026-10-15 | **권장 프리셋에 `Antialiasing = 4x` 추가** (사용자 결정) | 4x만으로 테두리 계단이 충분히 줄고, 8x와의 차이는 작다. 다른 사람의 약한 그래픽 카드도 고려. 8x는 원하는 사람이 바꾸도록 [INSTALL.md](../INSTALL.md)에 안내 |
 | 2026-10-15 | **텍스처 필터링은 원본 그대로(`appdriven`)** (사용자 결정) | 강제 필터링은 화질 개선이라기보다 원본의 각진 픽셀 느낌을 부드럽게 바꾸는 것. 원하는 사람만 켜도록 안내 |
 
@@ -214,6 +226,12 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 - 1차 백엔드를 D3D11로 확정할지
 
 ## 작업 기록
+
+### 2026-10-15 — 와이드스크린 정식 설정 (관련: G3-12)
+
+- **한 일:** 실험 패치(`aspect_experiment.cpp`)를 `widescreen.cpp`로 옮기고 `[display] widescreen`, `widescreen_aspect`로 정리했다. 16:9 고정값을 화면 비율에서 계산한 넓힘 배수로 바꾸고, dgVoodoo2 `ScalingMode`를 자동으로 맞추게 했다. 사용자 안내(`docs/INSTALL.md` "와이드스크린")와 예제 설정에 넣었다. `aspect-capture.ps1`을 새 설정으로 바꿨다.
+- **결과:** 위 "와이드스크린 설정". 첫 실행부터 dgVoodoo2 설정이 적용되는 것을 확인했다.
+- **다음:** UI 스프라이트 고해상도 교체 가능성 조사 ([assets.md](assets.md)).
 
 ### 2026-10-15 — 조준과 HUD 배치 (관련: G3-6, G3-7, G3-8)
 
