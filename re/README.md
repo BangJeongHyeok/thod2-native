@@ -11,7 +11,7 @@
 | `functions.csv` | 함수 시작 주소, 이름, 진행 상태, 시그니처 |
 | `globals.csv` | 전역 변수(데이터) 주소, 이름, 타입 |
 | `locations.csv` | 코드 위치: API 호출 위치(복귀 주소), 플래그를 읽는 명령, 패치 흔적, 패치하는 즉시값 |
-| `ghidra_scripts/` | Ghidra 스크립트: `ApplyThod2Re.java`(CSV → Ghidra), `ExportThod2Re.java`(Ghidra → CSV), `Thod2ReCsv.java`(공용 도우미) |
+| `ghidra_scripts/` | Ghidra 스크립트: `ApplyThod2Re.java`(CSV → Ghidra), `ExportThod2Re.java`(Ghidra → CSV), `Thod2ReCsv.java`(공용 도우미), `Scope*.java`(규모 측정. `tools/re/scope.ps1`이 프로젝트 임시 사본에서 실행) |
 
 ## 형식
 

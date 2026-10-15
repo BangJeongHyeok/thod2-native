@@ -130,6 +130,8 @@ E:\Repos\hod2-native\
 | `KERNEL32`, `USER32`, `GDI32` | 일반 Win32 | — |
 
 - **D3DX(DX7용)가 정적으로 링크되어 있다.** `CD3duContext::UpdateFrame`, `CD3duDeviceNode::RefreshCaps` 같은 오류 문자열이 있다. 화면 전환(Flip/Blt) 경로를 찾을 때 실마리가 된다.
+- **코드 구성 (2026-10-15 측정, 경계는 추정):** 함수 약 2,881개 (Ghidra 자동 분석은 1,876개만 찾음. 함수 포인터로만 불리는 함수를 놓침). 게임 `0x401000`–`0x49D8B0` 1,990개, 엔진(HGL) `0x49D8B0`–`0x4AB280` 223개, 라이브러리(CRT, D3DX, 예외 기록) `0x4AB280`–`0x4C3000` 668개. 게임 함수의 절반(986개)은 직접 호출하는 곳이 없다. 디컴파일 실패 0개, 디버거 탐지 없음. 자세한 표와 비용 산정은 [reverse-engineering.md](docs/work/reverse-engineering.md) "리버싱 규모 산정".
+- **다른 빌드가 있다:** 공개 분석 프로젝트 saul/hotd2-decomp는 2001-05-09 링크 빌드(`.text` `0xC2520`)를 다룬다. 우리 빌드(2001-03-22)와 주소가 다르다.
 - DLL 프록시 후보: `ddraw.dll`, `dinput.dll`, `dsound.dll` 모두 시스템 DLL을 이름으로 임포트한다. 게임 폴더에 같은 이름의 DLL을 두면 먼저 로드된다.
 
 ### 게임이 읽는 설정 파일
@@ -216,7 +218,7 @@ thod2-native/
 ├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
 │  ├─ work/           ← 도메인별 작업 문서 (있음)
 │  └─ formats/        ← 게임 데이터 파일 포맷 문서
-├─ re/                ← 리버싱 기록: functions.csv, globals.csv, locations.csv, ghidra_scripts/(적용·내보내기) (있음). 이후 구조체
+├─ re/                ← 리버싱 기록: functions.csv, globals.csv, locations.csv, ghidra_scripts/(적용·내보내기, 규모 측정) (있음). 이후 구조체
 ├─ src/
 │  ├─ core/           ← thod2_core.dll: 로그, 설정, 실행 파일 식별, 공개 C API, patches/ 기능 패치 (있음)
 │  ├─ loader/         ← dinput.dll 프록시: 코어 로드와 초기화 (있음)
@@ -230,7 +232,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py) (있음). 이후 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1) (있음). 이후 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
