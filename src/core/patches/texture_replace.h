@@ -6,7 +6,10 @@ namespace thod2::core::patches {
 
 // Texture replacement ([assets] replace_textures, docs/work/assets.md G1).
 // A PNG named after a texture id (hex, e.g. 10B1.png for "PRESS START BUTTON")
-// in `folder` replaces that texture when the game creates it. The image may be
+// replaces that texture when the game creates it. Images are looked up in
+// `folder`\<bank>\ first (bank = tex file name without .bin, e.g. scr_common;
+// texture ids are reused by other banks) and then in `folder` itself, which
+// applies to any bank and to model textures. The image may be
 // larger than the original: 2D sprites take their screen size from the
 // original width/height (g_textureSizes) and always use UV 0..1, so only the
 // detail changes. The image is stored as 32-bit ARGB when the device offers it.

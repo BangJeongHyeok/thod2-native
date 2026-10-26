@@ -151,6 +151,12 @@ constexpr std::uintptr_t kCreateTextureFromPvrCall3 = 0x4ABE42;  // in LoadModel
 constexpr std::uintptr_t kCreateTextureSurface = 0x4A53B0;
 // handle (IDirectDrawSurface7* surface, uint8 flags): video texture made from it.
 constexpr std::uintptr_t kUploadTextureSurface = 0x4A5430;
+// Texture banks (docs/formats/tex.md), indexed 1..kTexBankCount: file name
+// (const char*), entry table (16-byte entries) and int16 entry count.
+constexpr std::uintptr_t kTexBankNames = 0x4D0410;
+constexpr std::uintptr_t kTexBankEntries = 0x55A9B8;
+constexpr std::uintptr_t kTexBankCounts = 0x55B0A8;
+constexpr std::size_t kTexBankCount = 443;
 constexpr std::uintptr_t kTextureFormats = 0x7DCE50;   // DDPIXELFORMAT[8], slot 7 = 32-bit
 constexpr std::uintptr_t kTextureMaxWidth = 0x7DC94C;  // uint32, device limit
 constexpr std::uintptr_t kTextureMaxHeight = 0x7DC950;  // uint32, device limit

@@ -22,6 +22,7 @@ address,name,type,confidence,evidence,doc,notes
 0x597454,g_frameCorrectionPeriodMs,int,guess,bytes,platform-timing.md,333 in the file. Period of the frame time correction decision.
 0x5976C4,g_defaultHglCoreIniName,char *,confirmed,bytes,reverse-engineering.md,"Points to the default file name ""hglCore.ini"" used by GetHglCoreIniPath."
 0x5977C8,g_viewMatrix,float[16],confirmed,bytes;ghidra,renderer.md,"Constant view matrix diag(1, 1, -1, 1), set once per frame with SetTransform(VIEW) by 0x4A6A60. Model matrices are therefore camera-space matrices."
+0x597808,g_quadCornerTable,int32_t[8],confirmed,bytes;ghidra,renderer.md,"Corner factors (1,3) (3,3) (1,1) (3,1) of DrawScreenQuad: corner x = x + (c - a) * width / 2 with a = sprite[6] bits 0-1 (1 when the low 4 bits are 0), so the default puts the left edge at x."
 0x5978EC,g_currentTexturePalette,int,guess,ghidra,assets.md,"Palette of the texture being created (-1 = palette 0); set by LoadBankTexture, read by CreateTextureFromPvr."
 0x7D8AA8,g_jobQueueRead,uint,confirmed,bytes,platform-timing.md,Read index of g_jobQueue. The queue is empty when it equals g_jobQueueWrite. Code: hod2::kJobQueueReadIndex.
 0x7D8AAC,g_jobQueueWrite,uint,confirmed,bytes,platform-timing.md,Write index of g_jobQueue. Code: hod2::kJobQueueWriteIndex.

@@ -65,6 +65,7 @@ void ApplyPatches(const CoreConfig& config) {
     patches::WidescreenOptions options;
     options.aspect = aspect;
     options.squeeze_2d = config.widescreen_2d;
+    options.mirror_edges = config.widescreen_mirror;
     options.trace = config.trace_screen_quads;
     patches::InstallWidescreen(options);
   }

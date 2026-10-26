@@ -11,11 +11,13 @@
 #include <wincodec.h>
 
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <cstring>
 #include <cwchar>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace thod2::core::patches {
@@ -42,7 +44,15 @@ using CreateTextureFromPvrFn = void*(__cdecl*)(const PvrEntry* entry, const std:
 using CreateTextureSurfaceFn = IDirectDrawSurface7*(__cdecl*)(int width, int height, int slot);
 using UploadTextureSurfaceFn = void*(__cdecl*)(IDirectDrawSurface7* surface, std::uint8_t flags);
 
-std::map<std::int32_t, std::filesystem::path> g_files;
+struct BankRange {
+  std::uintptr_t begin;
+  std::uintptr_t end;
+  std::string name;  // lower case, without .bin
+};
+
+std::vector<BankRange> g_banks;
+// (bank, texture id) -> image; bank "" = images directly in data\tex (any bank).
+std::map<std::pair<std::string, std::int32_t>, std::filesystem::path> g_files;
 bool g_logged_device = false;
 
 struct Image {
@@ -186,10 +196,30 @@ void* CreateReplacement(const PvrEntry& entry, const Image& image) {
   return handle;
 }
 
+// Bank whose entry table (g_texBankEntries) holds `entry`, or "" for entries
+// that are not in a bank table (model textures, LoadModelTextures).
+const std::string& BankOf(const PvrEntry* entry) {
+  static const std::string kNone;
+  const auto address = reinterpret_cast<std::uintptr_t>(entry);
+  for (const BankRange& bank : g_banks) {
+    if (address >= bank.begin && address < bank.end) {
+      return bank.name;
+    }
+  }
+  return kNone;
+}
+
 void* __cdecl ReplacedCreateTextureFromPvr(const PvrEntry* entry, const std::uint8_t* pixels) {
   const auto original = reinterpret_cast<CreateTextureFromPvrFn>(hod2::kCreateTextureFromPvr);
-  const auto file = g_files.find(entry->texture_id);
-  if (file == g_files.end() || entry->width <= 0 || entry->height <= 0) {
+  if (entry->width <= 0 || entry->height <= 0) {
+    return original(entry, pixels);
+  }
+  // data\tex\<bank>\<id>.png first: texture ids are reused by other banks.
+  auto file = g_files.find({BankOf(entry), entry->texture_id});
+  if (file == g_files.end()) {
+    file = g_files.find({std::string(), entry->texture_id});
+  }
+  if (file == g_files.end()) {
     return original(entry, pixels);
   }
   LogDevice();
@@ -213,18 +243,50 @@ std::array<std::uint8_t, 5> CallBytes(std::uintptr_t from, std::uintptr_t to) {
           static_cast<std::uint8_t>(rel >> 16), static_cast<std::uint8_t>(rel >> 24)};
 }
 
-}  // namespace
-
-bool InstallTextureReplace(const std::filesystem::path& folder) {
+// Adds the <hex id>.png files of `dir` under `bank` ("" = any bank).
+void AddImages(const std::filesystem::path& dir, const std::string& bank) {
   std::error_code ec;
-  for (const auto& item : std::filesystem::directory_iterator(folder, ec)) {
+  for (const auto& item : std::filesystem::directory_iterator(dir, ec)) {
     const std::wstring stem = item.path().stem().native();
     wchar_t* end = nullptr;
     const unsigned long id = std::wcstoul(stem.c_str(), &end, 16);
     if (!item.is_regular_file(ec) || stem.empty() || *end != L'\0' || id > 0x7FFFFFFF) {
       continue;
     }
-    g_files[static_cast<std::int32_t>(id)] = item.path();
+    g_files[{bank, static_cast<std::int32_t>(id)}] = item.path();
+  }
+}
+
+std::string Lower(std::string text) {
+  for (char& c : text) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  }
+  return text;
+}
+
+}  // namespace
+
+bool InstallTextureReplace(const std::filesystem::path& folder) {
+  // Entry table range and name (file name without .bin) of every bank.
+  const auto* names = reinterpret_cast<const char* const*>(hod2::kTexBankNames);
+  const auto* tables = reinterpret_cast<const std::uintptr_t*>(hod2::kTexBankEntries);
+  const auto* counts = reinterpret_cast<const std::int16_t*>(hod2::kTexBankCounts);
+  for (std::size_t bank = 1; bank <= hod2::kTexBankCount; ++bank) {
+    if (!names[bank] || !tables[bank] || counts[bank] <= 0) {
+      continue;
+    }
+    std::string name = Lower(names[bank]);
+    if (name.size() > 4 && name.compare(name.size() - 4, 4, ".bin") == 0) {
+      name.resize(name.size() - 4);
+    }
+    g_banks.push_back({tables[bank], tables[bank] + sizeof(PvrEntry) * counts[bank], name});
+  }
+  AddImages(folder, std::string());
+  std::error_code ec;
+  for (const auto& item : std::filesystem::directory_iterator(folder, ec)) {
+    if (item.is_directory(ec)) {
+      AddImages(item.path(), Lower(ToUtf8(item.path().filename().native())));
+    }
   }
   if (g_files.empty()) {
     Log(LogLevel::Info, "replace_textures: no images in {}", ToUtf8(folder.native()));
