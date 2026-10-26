@@ -144,6 +144,17 @@ public static class UiAtlas {
     using (var b = Make(W, H, px)) b.Save(outPath, ImageFormat.Png);
     return n == 0 ? double.MaxValue : (seam / n) / (inner / (2.0 * n) + 1.0);
   }
+  // Puts tiles at given positions (x, y per tile) into a W x H picture; the
+  // rest stays transparent.
+  public static void AssembleAt(string[] tiles, int[] xy, int W, int H, string outPath) {
+    var px = new int[W * H];
+    for (int i = 0; i < tiles.Length; i++) {
+      int[] t; int w, h;
+      using (var b = new Bitmap(tiles[i])) { w = b.Width; h = b.Height; t = Read(b); }
+      for (int r = 0; r < h; r++) Array.Copy(t, r * w, px, (xy[i * 2 + 1] + r) * W + xy[i * 2], w);
+    }
+    using (var b = Make(W, H, px)) b.Save(outPath, ImageFormat.Png);
+  }
   // Cuts rects (x, y, w, h in atlas input pixels) out of an upscaled page.
   public static void Cut(string page, int scale, int[] rects, string[] outs) {
     int[] px; int w;
@@ -184,6 +195,21 @@ function Member($row, $dx, $dy) { [pscustomobject]@{ id = $row.texture_id; dx = 
 # first and kept as a picture when the tiles continue each other across the
 # seams (Assemble score below $MaxSeam).
 $MaxSeam = 2.0
+
+# Pictures that are not laid out row by row, with the tile positions read from
+# the drawing code: texture index -> (x, y).
+#  - scr_result (stage result background): 0x434AB0 draws sprites 0xA2A..0xA3A
+#    (textures 0x11F1..0x1201) on a 128 px grid, 5 columns x 4 rows, leaving
+#    out x = 128..384 of the second row (the photo window).
+$KnownLayouts = @{}
+$resultXY = @{}; $k = 0
+for ($row = 0; $row -lt 4; $row++) {
+  for ($x = 0; $x -lt 640; $x += 128) {
+    if ($row -eq 1 -and $x -ge 128 -and $x -le 384) { continue }
+    $resultXY[$k] = @($x, ($row * 128)); $k++
+  }
+}
+$KnownLayouts['scr_result'] = @{ w = 640; h = 512; xy = $resultXY }
 function PhotoUnits($bank, $items) {
   $units = @(); $i = 0
   while ($i -lt $items.Count) {
@@ -231,6 +257,19 @@ foreach ($group in ($rows | Group-Object bank)) {
     if ($vq[$r.file] -or [UiAtlas]::IsOpaque((Join-Path $srcFull $r.file))) { $candidates += $r }
   }
   $script:units = @()
+  if ($KnownLayouts.ContainsKey($bank)) {
+    # Picture whose tile positions come from the game's drawing code.
+    $layout = $KnownLayouts[$bank]
+    $tiles = @($usable | Where-Object { $layout.xy.ContainsKey([int]$_.index) })
+    $file = Join-Path $pictures "$($bank)_layout.png"
+    $xy = [int[]]($tiles | ForEach-Object { $layout.xy[[int]$_.index] })
+    [UiAtlas]::AssembleAt([string[]]($tiles | ForEach-Object { Join-Path $srcFull $_.file }), $xy, $layout.w, $layout.h, $file)
+    $members = foreach ($t in $tiles) { $p = $layout.xy[[int]$t.index]; Member $t $p[0] $p[1] }
+    $script:units += Unit $file $layout.w $layout.h $members
+    $vq[(Split-Path $file -Leaf)] = $true
+    $candidates = @($candidates | Where-Object { -not $layout.xy.ContainsKey([int]$_.index) })
+    "  $bank : $($tiles.Count) tiles put together from the known layout ($($layout.w)x$($layout.h))"
+  }
   if ($candidates.Count) { PhotoUnits $bank $candidates }
   $photoUnits = @($script:units | Where-Object { $_.members.Count -gt 1 -or $vq[(Split-Path $_.file -Leaf)] })
   $photoIds = @{}; foreach ($u in $photoUnits) { foreach ($m in $u.members) { $photoIds[$m.id] = 1 } }
