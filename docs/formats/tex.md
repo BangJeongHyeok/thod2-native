@@ -77,7 +77,7 @@
 ### 팔레트
 
 - `InitTextureSystem` (`0x418220`)이 `SetTexturePalettes` (`0x4AC0C0`)로 `g_paletteTable` (`0x579020`)의 16색 팔레트를 `g_texturePalettes` (`0x80E480`)에 복사한다. 표는 `+2`부터 12바이트 간격이고, 항목마다 int16 개수(16)와 uint32 색 배열 주소가 있다.
-- 텍스처마다 쓸 팔레트는 `GetTexturePalette(bank, index)` (`0x41CAB0`)가 정한다. 뱅크에 따라 텍스처별 int16 표(예: `scr_common` → `0x579534`)를 보거나, 상수를 돌려주거나, -1(팔레트 0)을 돌려준다.
+- 텍스처마다 쓸 팔레트는 `GetTexturePalette(bank, index)` (`0x41CAB0`)가 정한다. 뱅크에 따라 텍스처별 int16 표(예: `scr_common` → `0x579534`)를 보거나, 상수를 돌려주거나, 텍스처 번호 범위로 고른다 (`scr_ranking`, `scr_vmc`, `scr_endstaff`, `scr_hinichi`). 해당하지 않는 뱅크는 팔레트 0이다. 뱅크별 값은 `tools/assets/tex_extract.py`의 `palette_index()`에 그대로 옮겨 두었다.
 - **팔레트 색은 텍스처의 픽셀 형식과 상관없이 항상 ARGB1555다.** `CreateTextureFromPvr`가 표면 형식에 맞게 바꾼다 (A4R4G4B4면 알파 1비트를 0/15로, 색은 상위 4비트). 그래서 4비트 텍스처의 투명도는 켜짐/꺼짐 두 단계뿐이다.
 - 팔레트 색은 텍스처를 **만들 때** 적용된다. 만든 뒤 팔레트를 바꿔도 이미 만든 텍스처는 그대로다.
 

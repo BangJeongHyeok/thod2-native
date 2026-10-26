@@ -12,7 +12,7 @@ How the game reads them (docs/formats/tex.md):
   - rows are stored bottom-up;
   - 4-bit textures take one of the 16-colour palettes copied from the table at
     0x579020 (0x418220 / 0x4AC0C0); the palette per texture comes from
-    0x41CAB0 (only the table-driven banks are handled here).
+    0x41CAB0 (palette_index()).
 
 Usage:
   python tools/assets/tex_extract.py <Hod2.exe> <game tex folder> <out folder> [bank name ...]
@@ -64,14 +64,15 @@ PALETTES = 0x579020
 # Palette index tables of 0x41CAB0 (bank index -> int16 table, by texture index).
 PALETTE_TABLES = {0x147: 0x579534, 0x14E: 0x579474, 0x169: 0x57944C, 0x16D: 0x57939C,
                   0x170: 0x5794A0, 0x171: 0x5794EC, 0x173: 0x5794DC, 0x184: 0x579508}
-PALETTE_CONSTANTS = {0x156: 0x14, 0x177: 10, 0x179: 0x21, 0x17A: 0x21, 0x17C: 0x1A,
+# Banks with one palette for every texture (0x41CAB0); any other bank uses palette 0.
+PALETTE_CONSTANTS = {0x156: 0x14, 0x177: 10, 0x179: 1, 0x17A: 0x21, 0x17C: 0x1A,
                      0x1B5: 0x1B, 0x1B8: 0x2E, 0x1B9: 0x2D}
 for b in range(0x193, 0x1B5):
     PALETTE_CONSTANTS[b] = 0x14
 for b in range(0x186, 0x18C):
     PALETTE_CONSTANTS[b] = 10
-for b in list(range(0x17D, 0x184)):
-    PALETTE_CONSTANTS[b] = 0x21
+for b in range(0x17D, 0x184):
+    PALETTE_CONSTANTS[b] = 1
 for b in range(0x18C, 0x192):
     PALETTE_CONSTANTS[b] = 0xB
 
@@ -106,9 +107,21 @@ def palettes(exe):
 
 
 def palette_index(exe, bank, k):
+    """Palette of texture k of a bank, as GetTexturePalette (0x41CAB0) picks it."""
     if bank in PALETTE_TABLES:
         return exe.i16(PALETTE_TABLES[bank] + k * 2)
-    return PALETTE_CONSTANTS.get(bank, -1)
+    if bank == 0x168:  # scr_ranking
+        return 0x2F if 0x2B <= k <= 0x38 else 0
+    if bank == 0x176:  # scr_vmc
+        return 0x31 if k == 0x10 else 0
+    if bank == 0x185:  # scr_endstaff
+        return 0x2B if k <= 0x6D else 0xD
+    if bank == 0x192:  # scr_hinichi: one palette per range of textures
+        for limit, palette in ((0x4B, 0x1C), (0x96, 0x1D), (0xE1, 0x1E), (300, 0x1F)):
+            if k < limit:
+                return palette
+        return 0x20
+    return PALETTE_CONSTANTS.get(bank, 0)
 
 
 def decompress(src):
