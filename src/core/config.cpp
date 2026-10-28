@@ -54,6 +54,7 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   const UINT max_fps = GetPrivateProfileIntW(L"display", L"max_fps", 0, file);
   config.max_fps = max_fps <= 1000 ? static_cast<int>(max_fps) : 0;
   config.trace_interp = GetPrivateProfileIntW(L"debug", L"trace_interp", 0, file) != 0;
+  config.interp_2d = GetPrivateProfileIntW(L"debug", L"interp_2d", 1, file) != 0;
   wchar_t snap[32] = {};
   GetPrivateProfileStringW(L"debug", L"interp_snap", L"", snap, ARRAYSIZE(snap), file);
   if (snap[0] != L'\0') {

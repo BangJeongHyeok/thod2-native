@@ -46,6 +46,7 @@ void ApplyPatches(const CoreConfig& config) {
     patches::FrameInterpOptions options;
     options.max_fps = config.max_fps;
     options.snap_distance = config.interp_snap;
+    options.screen_quads = config.interp_2d;
     options.trace = config.trace_interp;
     patches::InstallFrameInterp(options);
   } else {

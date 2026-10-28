@@ -11,9 +11,15 @@ struct FrameInterpOptions {
   // plus a quarter of their distance) are not interpolated: camera cuts, objects
   // that appeared or a pairing between two different objects.
   float snap_distance = 2.0f;
+  // Also interpolates screen-space quads (XYZRHW: crosshair, HUD, menus).
+  bool screen_quads = true;
   // Logs per-interval statistics (presents per tick, interpolated matrices).
   bool trace = false;
 };
+
+// Screen-space quads with a corner that moved more than this many pixels
+// (640x480 back buffer) in one tick are not interpolated.
+inline constexpr float kScreenQuadSnapPixels = 64.0f;
 
 // Draws frames between the game's 60 Hz ticks ([display] interpolate).
 // Hod2.exe updates and draws in the same per-tick function and then waits for
@@ -27,5 +33,12 @@ bool InstallFrameInterp(const FrameInterpOptions& options);
 // element by element (t = 0 gives `from`, 1 gives `to`). Returns false and
 // leaves `out` untouched when the pair should snap instead (see snap_distance).
 bool LerpWorldViewMatrix(const float* from, const float* to, float t, float snap_distance, float* out);
+
+// Pure helper, exposed for the tests: copies `count` pretransformed vertices of
+// `stride` bytes from `to` into `out` and interpolates their screen x, y (the
+// first two floats) from `from`. Returns false and leaves `out` untouched when
+// a vertex moved more than `snap_pixels`.
+bool LerpScreenVertices(const void* from, const void* to, std::size_t stride, std::size_t count, float t,
+                        float snap_pixels, void* out);
 
 }  // namespace thod2::core::patches

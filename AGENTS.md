@@ -206,7 +206,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - **렌더링:** DX7 API가 아니라 게임의 그리기 함수 수준에서 가로채서 자체 렌더 인터페이스(1차 백엔드 D3D11)로 넘긴다. **그 전까지 창 모드·Alt+Enter·고해상도는 dgVoodoo2(DX7 → D3D11 래퍼)로 처리한다** (2026-10-14 결정, [platform-display.md](docs/work/platform-display.md)).
 - **확장성:** 플러그인 DLL, 이벤트 훅, 데이터 덮어쓰기 폴더(RVGL 방식)를 모드 API로 제공한다.
 - **리버싱:** Ghidra(정적 분석)와 x32dbg(동적 분석). 둘 다 `external\`에 설치되어 있고, Ghidra는 `.\tools\re\ghidra.ps1`로 실행한다 ([reverse-engineering.md](docs/work/reverse-engineering.md) "분석 도구"). 분석 결과는 텍스트(함수 목록, 구조체, 포맷 문서)로 `re/`와 `docs/formats/`에 남긴다. 원본 코드를 포함하는 Ghidra 프로젝트 파일이나 디컴파일한 코드를 그대로 커밋하지 않는다.
-- **고프레임:** 게임 로직은 1틱 = 1/60초 고정이다 (프레임 건너뛰기 코드로 확인, [platform-timing.md](docs/work/platform-timing.md) "메인 루프 분석 결과"). 로직과 그리기가 태스크 안에 섞여 있어서, 지금은 한 틱의 Direct3D 호출을 기록하고 모델 행렬을 앞뒤 틱 사이로 보간해서 다시 그린다 (`[display] interpolate`, 기본 꺼짐, G4). 태스크 구조를 리버싱한 뒤에는 갱신과 그리기를 직접 나눌 수 있다.
+- **고프레임:** 게임 로직은 1틱 = 1/60초 고정이다 (프레임 건너뛰기 코드로 확인, [platform-timing.md](docs/work/platform-timing.md) "메인 루프 분석 결과"). 로직과 그리기가 태스크 안에 섞여 있어서, 지금은 한 틱의 Direct3D 호출을 기록하고 모델 행렬과 2D 사각형 꼭짓점을 앞뒤 틱 사이로 보간해서 다시 그린다 (`[display] interpolate`, 기본 꺼짐, G4). 태스크 구조를 리버싱한 뒤에는 갱신과 그리기를 직접 나눌 수 있다.
 
 ## 7. 저장소 구조
 

@@ -46,6 +46,7 @@ namespace thod2::core {
 //   flip_override = 0         ; with trace_ddraw: 1 = Flip without vsync, 2 = every 2nd vsync
 //   trace_interp = 0          ; 1 = log interpolate statistics every 5 s
 //   interp_snap = 2.0         ; matrices that move more than this (+ 1/4 of their distance) per tick snap
+//   interp_2d = 1             ; 0 = interpolate only 3D, 2D quads (crosshair, HUD) move 60 times per second
 struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
@@ -71,6 +72,7 @@ struct CoreConfig {
   int flip_override = 0;
   bool trace_interp = false;
   float interp_snap = 2.0f;
+  bool interp_2d = true;
 };
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path);
