@@ -8,6 +8,7 @@
 #include "patches/device_dialog.h"
 #include "patches/file_redirect.h"
 #include "patches/file_trace.h"
+#include "patches/frame_interp.h"
 #include "patches/frame_wait.h"
 #include "patches/input_update.h"
 #include "patches/profiler.h"
@@ -40,6 +41,15 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallFrameWaitSleep(config.frame_wait_margin_ms);
   } else {
     Log(LogLevel::Info, "frame_wait_sleep: disabled in config");
+  }
+  if (config.interpolate) {
+    patches::FrameInterpOptions options;
+    options.max_fps = config.max_fps;
+    options.snap_distance = config.interp_snap;
+    options.trace = config.trace_interp;
+    patches::InstallFrameInterp(options);
+  } else {
+    Log(LogLevel::Info, "frame_interp: disabled in config (interpolate = 0)");
   }
   const std::filesystem::path game_dir = ModulePath(nullptr).parent_path();
   float aspect = 0.0f;

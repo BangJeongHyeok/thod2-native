@@ -70,6 +70,8 @@ trace_ddraw = 0
 profile = 0
 trace_files = 0
 flip_override = 0
+trace_interp = 0
+interp_snap = 2.0
 ```
 
 | 키 | 기본값 | 설명 | 관련 문서 |
@@ -82,6 +84,8 @@ flip_override = 0
 | `trace_screen_quads` | `0` | 넓거나 화면 가장자리에 걸친 2D 사각형, 모델 행렬, 띠 모델 호출 경로, 스프라이트 호출 위치별 좌표를 기록 | [renderer.md](renderer.md) |
 | `trace_textures` | `0` | `replace_textures`가 켜져 있을 때, 교체 이미지 없이 만들어진 텍스처를 한 번씩 기록 (뱅크, 번호, 크기, PVR 형식). 업스케일이 빠진 텍스처를 찾는 데 쓴다 | [assets.md](assets.md) |
 | `flip_override` | `0` | 실험. `trace_ddraw = 1`과 함께 쓰면 primary `Flip`에 `1` = `DDFLIP_NOVSYNC`, `2` = `DDFLIP_INTERVAL2`를 더함 | [platform-timing.md](platform-timing.md) G3 |
+| `trace_interp` | `0` | `[display] interpolate`가 켜져 있을 때, 5초마다 초당 틱·화면 수, 건너뛴 틱, 보간한 행렬 수, 행렬 이동량 분포를 기록 | [platform-timing.md](platform-timing.md) G4 |
+| `interp_snap` | `2.0` | 보간하지 않고 바로 바꾸는 기준. 한 틱에 이 값 + (카메라에서의 거리의 1/4)보다 많이 움직인 행렬 | [platform-timing.md](platform-timing.md) G4 |
 
 ## 개발 환경 (현재 PC, 2026-10-14 확인)
 

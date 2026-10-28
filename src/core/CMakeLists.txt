@@ -9,6 +9,7 @@ add_library(thod2_core_lib STATIC
   patches/device_dialog.cpp
   patches/file_redirect.cpp
   patches/file_trace.cpp
+  patches/frame_interp.cpp
   patches/frame_wait.cpp
   patches/input_update.cpp
   patches/profiler.cpp

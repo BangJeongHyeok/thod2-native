@@ -81,7 +81,10 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[display] skip_device_dialog` | `1` | 시작 확인창을 자동으로 "예" 처리 |
 | `[display] widescreen` | `0` | `1`이면 와이드스크린 (아래 "와이드스크린") |
 | `[display] widescreen_aspect` | `auto` | 화면 비율. `auto`는 주 모니터 해상도로 계산. `16:9`, `21:9`처럼 직접 줄 수 있음 |
-| `[display] widescreen_mirror` | `1` | 와이드스크린에서 전체 화면 2D 그림(타이틀·로딩·결과 화면 배경)의 양옆을 그림 끝을 거울처럼 뒤집어 채움. `0`이면 양옆에 뒤의 3D 장면이 보임 | (아래 "텍스처 교체"). 폴더가 없으면 아무 일도 하지 않음 |
+| `[display] widescreen_mirror` | `1` | 와이드스크린에서 전체 화면 2D 그림(타이틀·로딩·결과 화면 배경)의 양옆을 그림 끝을 거울처럼 뒤집어 채움. `0`이면 양옆에 뒤의 3D 장면이 보임 |
+| `[display] interpolate` | `0` | `1`이면 고주사율 모니터에서 게임 틱(초당 60회) 사이 프레임을 보간해서 더 그림 (아래 "고주사율") |
+| `[display] max_fps` | `0` | `interpolate`와 함께 쓰는 프레임 제한. `0`이면 모니터 주사율(수직 동기화)까지 |
+| `[assets] replace_textures` | `1` | `data\tex\` 아래 PNG를 원본 텍스처 대신 씀 (아래 "텍스처 교체"). 폴더가 없으면 아무 일도 하지 않음 |
 | `[input] map_cursor` | `1` | 마우스 커서를 dgVoodoo2가 그리는 게임 영역 기준으로 바꿈. `0`이면 원본처럼 창 픽셀 그대로 |
 | `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
 | `[timing] frame_wait_sleep` | `1` | 프레임 끝 대기를 바쁜 대기 대신 잠자기로 (CPU 사용 감소) |
@@ -105,6 +108,20 @@ widescreen = 1
 - dgVoodoo2의 `ScalingMode`는 thod2-native가 맞춘다: 켜면 `stretched`, 끄면 `stretched_ar`로 되돌린다 (`stretched`일 때만). 따로 고칠 필요 없다.
 - 아직 확인하지 않은 것: 화면 양옆에서 나오는 적이 많은 장면에서의 동작, 이번 확인에서 나오지 않은 HUD(점수, 보스 게이지 등). 이런 HUD는 가운데 4:3 영역에 그려진다.
 - 자세한 분석은 [work/renderer.md](work/renderer.md)의 "화면 비율 분석".
+
+## 고주사율 (시험 단계)
+
+`thod2-native.ini`에 넣는다:
+
+```ini
+[display]
+interpolate = 1
+```
+
+- 게임 속도는 원래대로 초당 60틱이다. 그 사이에 모니터 주사율만큼 프레임을 더 그리고, 3D 모델과 카메라는 앞뒤 틱 사이 위치로 보간해서 움직임이 부드러워진다. 240Hz 모니터에서 초당 약 240장을 그린다.
+- 화면이 보간 때문에 1틱(약 17ms) 늦게 따라간다. 조준점, HUD 같은 2D는 보간하지 않아 초당 60번 움직인다.
+- 60Hz 모니터에서는 얻는 것이 없고, 시험하지 않았다. 켜지 않는다.
+- 문제가 있으면 `interpolate = 0`으로 끈다. 자세한 것은 [work/platform-timing.md](work/platform-timing.md) G4.
 
 ## 텍스처 교체 (시험 단계)
 

@@ -18,6 +18,8 @@ namespace thod2::core {
 //   widescreen = 0            ; 1 = Hor+ widescreen (sets dgVoodoo2 ScalingMode = stretched)
 //   widescreen_aspect = auto  ; auto = primary monitor, or W:H such as 16:9 / 21:9
 //   widescreen_mirror = 1     ; 1 = fill the sides of full-screen 2D pictures with their mirrored edge
+//   interpolate = 0           ; 1 = draw interpolated frames between the 60 Hz ticks (high refresh rate)
+//   max_fps = 0               ; with interpolate: frame limit, 0 = vsync only
 //
 //   [assets]
 //   replace_textures = 1      ; 1 = load data\tex\<bank>\<texture id>.png instead of the game's texture
@@ -42,6 +44,8 @@ namespace thod2::core {
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
 //   trace_files = 0           ; 1 = log the game's file system calls
 //   flip_override = 0         ; with trace_ddraw: 1 = Flip without vsync, 2 = every 2nd vsync
+//   trace_interp = 0          ; 1 = log interpolate statistics every 5 s
+//   interp_snap = 2.0         ; matrices that move more than this (+ 1/4 of their distance) per tick snap
 struct CoreConfig {
   LogLevel log_level = LogLevel::Info;
   bool allow_unknown_exe = false;
@@ -55,6 +59,8 @@ struct CoreConfig {
   bool widescreen = false;
   std::wstring widescreen_aspect = L"auto";
   bool widescreen_mirror = true;
+  bool interpolate = false;
+  int max_fps = 0;
   bool replace_textures = true;
   bool widescreen_2d = true;
   bool trace_screen_quads = false;
@@ -63,6 +69,8 @@ struct CoreConfig {
   bool profile = false;
   bool trace_files = false;
   int flip_override = 0;
+  bool trace_interp = false;
+  float interp_snap = 2.0f;
 };
 
 CoreConfig LoadConfig(const std::filesystem::path& ini_path);

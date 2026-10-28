@@ -50,6 +50,19 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.trace_files = GetPrivateProfileIntW(L"debug", L"trace_files", 0, file) != 0;
   const UINT flip_override = GetPrivateProfileIntW(L"debug", L"flip_override", 0, file);
   config.flip_override = flip_override <= 2 ? static_cast<int>(flip_override) : 0;
+  config.interpolate = GetPrivateProfileIntW(L"display", L"interpolate", 0, file) != 0;
+  const UINT max_fps = GetPrivateProfileIntW(L"display", L"max_fps", 0, file);
+  config.max_fps = max_fps <= 1000 ? static_cast<int>(max_fps) : 0;
+  config.trace_interp = GetPrivateProfileIntW(L"debug", L"trace_interp", 0, file) != 0;
+  wchar_t snap[32] = {};
+  GetPrivateProfileStringW(L"debug", L"interp_snap", L"", snap, ARRAYSIZE(snap), file);
+  if (snap[0] != L'\0') {
+    wchar_t* end = nullptr;
+    const float value = std::wcstof(snap, &end);
+    if (end != snap && value >= 0.0f && value <= 10000.0f) {
+      config.interp_snap = value;
+    }
+  }
   return config;
 }
 

@@ -2,8 +2,8 @@
 
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 1-3, 2-2
-- **관련 코드:** `src/platform/` (예정), `src/core/patches/frame_wait.cpp`, `src/core/patches/profiler.cpp` (개발용)
-- **마지막 갱신:** 2026-10-15
+- **관련 코드:** `src/platform/` (예정), `src/core/patches/frame_wait.cpp`, `src/core/patches/frame_interp.cpp`, `src/core/patches/profiler.cpp` (개발용), `tools/compat/interp-test.ps1`
+- **마지막 갱신:** 2026-10-28
 
 ## 주요 목표
 
@@ -31,6 +31,77 @@
 - [x] G3-1 수직 동기화를 끈 `Flip`(무한히 높은 주사율과 같은 조건)에서 게임 속도 확인 → 변화 없음
 - [x] G3-2 실제 240Hz 모니터에서 확인 → 60fps, 게임 속도 그대로 (dgVoodoo2 창 모드, Windows 기본 전체 화면 모두)
 - [ ] G3-3 60Hz보다 느린 화면 갱신에서의 동작 — `DDFLIP_INTERVAL2`가 무시되어 이 방법으로는 시험 불가
+
+### G4. 고주사율: 틱 사이 프레임 보간 — 진행 중
+
+ROADMAP "현재 집중" 3순위 (2026-10-28 시작).
+
+- [x] G4-1 메인 루프 구조 분석: 로직과 그리기가 어떻게 섞여 있는지, 프레임 대기·건너뛰기
+- [x] G4-2 그리기 기록·재생 방식 구현 (`[display] interpolate`, 기본 꺼짐)
+- [x] G4-3 240Hz 모니터에서 게임 속도, 초당 화면 수, 화면 깨짐, Alt+Tab, 정상 종료 확인
+- [ ] G4-4 사용자 플레이 확인 (움직임이 부드러운지, 이상한 떨림·끊김이 없는지)
+- [ ] G4-5 2D 보간 (조준점, 움직이는 글자). 지금은 초당 60번
+- [ ] G4-6 60Hz·144Hz 모니터 확인, 기본값 결정
+
+## 메인 루프 분석 결과 (2026-10-28)
+
+Ghidra 디컴파일(전체 함수 덤프, 저장소 밖)로 확인했다.
+
+```
+RunApplication 0x4A5A10       콜백 5개 저장 (0x7DD124 = 틱 함수 RunTick)
+└ RunMessageLoop 0x4A5920     PeekMessage 루프
+   ├ 활성: [0x7DD124]() = RunTick 0x49DBD0
+   └ 비활성: WaitFrameEnd (호출 0x4A59DF) + WaitMessage
+RunTick 0x49DBD0
+  1. 작업 대기열 5개 처리 (프레임을 건너뛰는 중이면 10개)
+  2. UpdateGameFrame 0x40E850
+     - SetupSceneProjection 0x418590 → BeginFrameScene 0x4AB320 (BeginScene, Clear, 배경색)
+     - 입력 0x40E5F0 (UpdateInput, 조준)
+     - 일시 정지 메뉴 0x40E620 또는 게임 모드 RunGameMode 0x460460 (모드별 함수. 여기서 태스크가 갱신과 그리기를 함께 한다)
+     - 0x418620: 스프라이트 목록 0x41D000, EndFrameDraws 0x4AB350 (반투명 정렬 그리기, EndScene)
+  3. 사격 번쩍임: 따로 BeginScene / DrawScreenFlash / EndScene
+  4. EndTick 0x4AB2F0: WaitFrameEnd 0x4A4B30 (UpdateFrame = Flip, 그다음 16.67ms 대기), 콜백 [0x80ECCC], 0x4A6500
+```
+
+- **로직과 그리기가 한 함수 안에 섞여 있다.** 태스크가 자기 상태를 갱신하면서 바로 모델과 스프라이트를 그린다. 그래서 "로직만 한 번 더" 또는 "그리기만 한 번 더"를 부를 수 있는 함수 경계가 없다.
+- **게임은 프레임 건너뛰기를 이미 가지고 있다.** WaitFrameEnd는 프레임이 `목표 + 보정`보다 늦으면 `g_frameSkipCount`(`0x7DCE2C`)에 `floor(경과 / (16.67 + 보정))`(최대 `[0x597438]` = 4)을 넣고 기다리지 않는다. 이 값이 0이 아닌 동안 BeginFrameScene, EndFrameDraws, 번쩍임이 빠지고 로직만 돈다. 그다음 프레임마다 1씩 줄인다. 다음 프레임 시간은 이전 프레임 끝에서 다시 잰다 (`g_lastFrameQpcLow`), 즉 4틱보다 오래 멈추면 그 시간은 따라잡지 않는다.
+  - 이것으로 **게임 로직은 1틱 = 1/60초로 고정**이라는 것이 코드로 확인된다. 그리기를 빼도 로직은 그대로 돈다.
+- **Direct3D 객체는 모두 D3DX 컨텍스트에서 온다** (`0x4A41C0`): `g_d3dxContext`(`0x7DCDE8`), `GetDD()` → `g_directDraw`(`0x7DCDEC`), `GetD3DDevice()` → `g_d3dDevice`(`0x7DCDF4`). 컨텍스트 메서드 위치(+0x4C UpdateFrame, +0x54 Clear, +0x58 SetClearColor, +0x44 RestoreSurfaces, +0x18 GetPrimary, +0x20 GetBackBuffer)는 DirectX 7 SDK `d3dxcore.h`의 `ID3DXContext` 순서와 맞는다.
+- **장치 호출은 몇 종류뿐이다.** 게임 코드가 부르는 `IDirect3DDevice7` 메서드: BeginScene, EndScene, SetTransform, SetMaterial, SetLight, LightEnable, SetRenderState, SetTexture, SetTextureStageState, DrawPrimitive, ComputeSphereVisibility, EnumTextureFormats(초기화). 화면 지우기는 컨텍스트 Clear로 한다.
+- **카메라는 모델 행렬에 합쳐져 있다.** VIEW 변환은 초기화 때 한 번(`0x4A6A60`) 고정값으로 넣고, 모델마다 DrawModel/DrawModelAlt가 `SetTransform(WORLD, 기록 + 0x34)`로 월드·카메라를 합친 행렬을 넣는다. 투영(PROJECTION)은 틱마다 SetMatrixMode가 넣는다.
+
+## 틱 사이 보간 방식 (G4-2)
+
+`[display] interpolate = 1` (`src/core/patches/frame_interp.cpp`):
+
+1. EndTick의 `call WaitFrameEnd`(`0x4AB2F0`)를 우리 함수로 바꾼다. 처음 불릴 때 장치와 D3DX 컨텍스트의 함수 표에 훅을 건다 (그 틱은 원래 WaitFrameEnd).
+2. **기록:** 그다음부터 한 틱 동안의 장치 호출을 목록으로 모은다. 상태 변경(변환, 렌더 상태, 텍스처, 재질, 조명)은 장치에도 그대로 보내서 게임의 ComputeSphereVisibility가 맞게 동작하게 한다. BeginScene/EndScene, DrawPrimitive, 컨텍스트 Clear는 실행하지 않고 기록만 한다. 정점은 복사하고, 텍스처는 AddRef해서 목록이 버려질 때까지 잡아 둔다.
+3. **짝 맞추기:** 틱이 끝나면 이번 틱의 행렬마다 이전 틱의 같은 행렬을 찾는다. 열쇠는 (변환 종류, 모델 포인터, 그 모델이 이번 틱에 몇 번째로 그려졌는지). 모델 포인터는 SetTransform의 호출 위치가 DrawModel/DrawModelAlt 안이면 `행렬 주소 - 0x34 + 0xC`에서 읽는다.
+4. **재생:** 다음 틱 시각까지 반복해서, 지금 시각이 틱 사이 어디인지(`t`)에 따라 이전 틱 → 이번 틱 행렬을 원소별로 섞어서 목록을 다시 실행하고 UpdateFrame으로 보낸다. Flip이 수직 동기화를 기다리므로 모니터 주사율만큼 그려진다.
+   - 한 틱에 `interp_snap`(기본 2.0) + 거리의 1/4보다 많이 움직였거나, 회전 축이 약 25도보다 많이 돌았거나, 크기가 25%보다 많이 바뀐 행렬은 섞지 않고 이번 틱 값을 쓴다 (화면 전환, 짝이 틀린 경우).
+   - 작업 대기열(로딩)에 일이 있으면 남은 시간을 먼저 거기에 쓰고, 그 틱은 끝에 한 번만 그린다. 원래 WaitFrameEnd가 남는 시간을 전부 로딩에 쓰기 때문이다 (아래 측정).
+   - 1틱보다 늦으면 다음 틱을 그리지 않고 로직만 돌린다 (`g_frameSkipCount = 1`). 8틱보다 늦으면 원래처럼 4틱만 따라잡고 시계를 다시 맞춘다.
+5. 화면은 보간 때문에 1틱 늦게 따라간다 (이번 틱 상태가 다 보이는 것은 다음 틱이 시작될 때).
+
+보간하지 않는 것: 2D(XYZRHW 사각형, 조준점·HUD·자막), 조명 방향, 정점 데이터 자체(모델 모양이 바뀌는 효과).
+
+## 보간 측정 결과 (2026-10-28)
+
+`tools/compat/interp-test.ps1`. 테스트 사본(dgVoodoo2 권장 설정 + 와이드스크린 16:9 + 업스케일 텍스처), 타이틀 → 데모, 사용자가 PC를 쓰지 않는 상태.
+**측정 중 주 모니터(DISPLAY2) 1920×1080 240Hz**, 보조 모니터(DISPLAY1) 60Hz.
+
+| 설정 | 타이틀 → 데모 | 초당 틱 (5초 구간, 안정 구간) | 초당 화면 (Flip) |
+|---|---|---|---|
+| `interpolate = 0` | 8.29 s, 8.30 s | — | 60.0 (로딩 구간 57.2) |
+| `interpolate = 1`, 첫 구현 | **8.95 s** | 60.0 (로딩 구간 56.2) | 239.0~239.6 |
+| `interpolate = 1`, 로딩 우선 | **8.28 s (2회)** | 60.0 (로딩 구간 58.2~58.4) | 239.2~239.8 (로딩 구간 228.6~229.4) |
+
+- 로딩 우선으로 고친 뒤 게임 속도가 보간을 끈 것과 같다. 첫 구현은 남는 시간에 화면을 더 그리느라 로딩(작업 대기열)이 늦어져서, 로딩이 들어가는 타이틀 → 데모 시간이 0.66초 늘었다.
+- 행렬 짝: 5초 구간마다 1만~6.9만 개 중 99% 이상이 이전 틱과 짝지어졌다. 섞지 않은 것(snap)은 구간당 0~210개.
+- 한 틱 동안 행렬이 움직인 거리: 대부분 1 미만, 데모에서 1~10이 수백~수천 개, 10 이상은 구간당 0~8개.
+- 화면: 타이틀, 데모(좀비, 자막 상자, 장전 안내, 와이드스크린 양옆)가 보간을 끈 것과 같이 그려졌다 (캡처 6장).
+- Alt+Tab으로 나갔다 3초 뒤 돌아와도 초당 60틱, 240장으로 돌아온다. 정상 종료(창 닫기 → "예")에서 종료 코드 0, `exception.log` 없음.
+- 60Hz, 144Hz 모니터는 시험하지 않았다. 60Hz에서는 Flip 대기와 틱 시계가 맞물리지 않아 틱마다 0장 또는 2장이 그려지는 떨림이 생길 수 있어서 기본값은 꺼 둔다.
 
 ## CPU 100% 분석 결과 (2026-10-14)
 
@@ -135,6 +206,10 @@ while 경과 < 목표
 
 | 날짜 | 결정 | 이유 / 대안 |
 |---|---|---|
+| 2026-10-28 | **고주사율은 장치 호출을 틱 단위로 기록하고 행렬을 보간해서 다시 그리는 방식으로 한다** | 로직과 그리기가 태스크 안에 섞여 있어서 그리기만 따로 부를 수 없다. 장치 호출 수준에서는 게임 코드를 바꾸지 않고 모든 그리기를 모을 수 있다. 대안: 태스크마다 갱신·그리기를 나누는 재구현(태스크 구조 리버싱이 먼저 필요, 아직 불가), 로직을 60Hz보다 자주 돌리기(게임 속도가 바뀜) |
+| 2026-10-28 | 행렬 짝은 (변환 종류, 모델 포인터, 그 모델의 몇 번째 그리기)로 맞춘다 | 모델 기록이 행렬 바로 앞에 있어서 SetTransform 한 곳에서 알 수 있다. 같은 모델이 여럿이면 그리는 순서가 틱마다 거의 같다. 틀린 짝은 이동량·회전 검사로 걸러서 섞지 않는다 |
+| 2026-10-28 | `[display] interpolate` 기본값 꺼짐 | 240Hz에서만 확인했다. 60Hz에서는 이득이 없고 떨림이 생길 수 있다. 사용자 플레이 확인과 다른 주사율 확인 뒤에 다시 정한다 |
+| 2026-10-28 | 작업 대기열에 일이 있으면 보간 프레임보다 로딩을 먼저 한다 | 보간 프레임을 그리면 로딩이 늦어져 타이틀 → 데모가 8.29 s → 8.95 s로 늘었다. 고친 뒤 8.28 s |
 | 2026-10-15 | **`frame_wait_sleep` 기본값 켬, 여유 `frame_wait_margin_ms` 기본 1.0ms** | CPU 102% → 25%, 프레임 속도·평균 간격 변화 없음. 여유 2.0/3.0ms는 흔들림 개선이 뚜렷하지 않고 CPU만 늘었다 |
 | 2026-10-15 | 콜백 포인터를 저장하는 명령의 즉시값(`0x49DF11`)을 바꾸는 방식으로 설치한다 | 게임 코드 흐름을 바꾸지 않고 함수 포인터 하나만 바꾼다. 바꾸기 전에 원래 값(`0x0049E0C0`)과 같은지 확인한다 (`PatchUint32`). 대안: 대기 함수 `0x4A4B30` 전체 재구현(아직 함수 전체를 이해하지 못함), `QueryPerformanceCounter` 후킹(전역 영향) |
 | 2026-10-15 | 작업 대기열에 일이 있으면 잠들지 않는다 | 원래 게임은 남는 시간에 대기열을 회전마다 하나씩 처리한다. 잠들면 처리 속도가 느려질 수 있어서, 비어 있을 때만 잠든다 |
@@ -142,12 +217,26 @@ while 경과 < 목표
 
 ## 미해결 질문
 
-- `0x4A4B30`이 D3DX의 `CD3duContext::UpdateFrame`인지 (문자열 근거 미확인). 매 프레임 `Flip` 호출 위치 `0x4B9896`과의 관계
 - 대기열 작업의 종류 (`0x587C30` 함수 표의 항목들)
-- 로직과 렌더링이 한 함수 안에 섞여 있는지
-- 게임 로직이 프레임 수에 묶여 있는지 (60fps보다 느린 화면에서 느려지는지). 고프레임 렌더 보간 설계에 필요
+- 같은 모델이 여럿 나오는 장면(좀비 무리, 파편)에서 짝이 틀려 떨리는 곳이 있는지 (G4-4)
+- 동영상이나 화면 직접 복사(Blt)를 틱 중에 하는 곳이 있는지. 있으면 보간 모드에서 지워진다 (지금까지 본 화면에서는 없음)
 
 ## 작업 기록
+
+### 2026-10-28 — 메인 루프 분석과 틱 사이 보간 (관련: G4)
+
+- **한 일:**
+  - 전체 함수 디컴파일 덤프에서 메시지 루프 → 틱 함수 → 게임 프레임 → 프레임 끝 대기까지 따라갔다 (위 "메인 루프 분석 결과"). 프레임 건너뛰기 계산은 `0x4A4CCA`~`0x4A4CF2` 바이트로 확인했다.
+  - `re/`에 함수 7개(UpdateGameFrame, RunGameMode, RunTick, RunMessageLoop, RunApplication, EndTick, BeginFrameScene), 전역 변수 3개(g_d3dxContext, g_directDraw, g_frameSkipCount)를 더했다.
+  - `src/core/patches/frame_interp.cpp`: 장치·컨텍스트 함수 표 훅, 틱 기록, 행렬 짝 맞추기·보간 재생, 프레임 루프. 설정 `[display] interpolate`(기본 0), `max_fps`(기본 0), `[debug] trace_interp`, `interp_snap`(기본 2.0).
+  - `hod2_addresses.h`: `kWaitFrameEnd`, `kWaitFrameEndCall`, `kFrameSkipCount`, `kFrameTimeMs`, `kD3dxContext`, `kDirectDraw`, `kD3dDevice`, `kDrawModelSize`, `kDrawModelAltSize`.
+  - 테스트: 행렬 보간 6개(이동 보간, t = 0, 큰 이동 snap, 먼 물체의 큰 이동 허용, 큰 회전 snap, 크기 변화 snap), 설정 2개.
+  - 시험 스크립트 `tools/compat/interp-test.ps1`.
+- **결과:** 위 "보간 측정 결과". 240Hz에서 초당 약 240장, 게임 속도 원본과 같음, 화면 깨짐 없음.
+  - 첫 구현은 로딩이 늦어져 게임 시간 측정이 0.66초 늘었다. 작업 대기열을 먼저 처리하게 고쳤다.
+  - Release 빌드 경고 0개, `ctest` 4개 모두 통과, `check_re.py` 오류 0개.
+- **테스트 사본:** `thod2-native.ini`에 `interpolate = 1`, `trace_interp = 1`을 넣어 두었다 (사용자 시험용).
+- **다음:** 사용자 플레이 확인(G4-4). 2D 보간(G4-5). 다른 주사율(G4-6).
 
 ### 2026-10-15 — 실제 240Hz 모니터에서 재측정 (관련: G3-2)
 

@@ -5,6 +5,7 @@
 #include "exe_id.h"
 #include "patches/device_dialog.h"
 #include "patches/file_redirect.h"
+#include "patches/frame_interp.h"
 #include "sha256.h"
 #include "util.h"
 
@@ -90,6 +91,17 @@ void TestConfig() {
   Check(!parsed.frame_wait_sleep, "LoadConfig frame_wait_sleep = 0");
   Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
 
+  Check(!missing.interpolate && missing.max_fps == 0 && !missing.trace_interp &&
+            missing.interp_snap == 2.0f,
+        "LoadConfig interpolate defaults");
+  WriteText(file,
+            "[display]\r\ninterpolate = 1\r\nmax_fps = 144\r\n"
+            "[debug]\r\ntrace_interp = 1\r\ninterp_snap = 5.5\r\n");
+  const auto interp = thod2::core::LoadConfig(file);
+  Check(interp.interpolate && interp.max_fps == 144 && interp.trace_interp &&
+            interp.interp_snap == 5.5f,
+        "LoadConfig interpolate, max_fps, trace_interp, interp_snap");
+
   WriteText(file, "[timing]\r\nframe_wait_margin_ms = abc\r\n");
   Check(thod2::core::LoadConfig(file).frame_wait_margin_ms == 1.0f,
         "LoadConfig keeps default margin for unparsable value");
@@ -116,6 +128,39 @@ void TestDeviceDialog() {
   Check(!IsDeviceDialog("The House of the Dead 2", 0x4A4758),
         "IsDeviceDialog: other caption is ignored");
   Check(!IsDeviceDialog(nullptr, 0x4A4758), "IsDeviceDialog: null caption is ignored");
+}
+
+void TestLerpWorldViewMatrix() {
+  using thod2::core::patches::LerpWorldViewMatrix;
+  // Identity rotation at (0, 0, 10) and (1, 0, 10).
+  const float a[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 10, 1};
+  const float b[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 10, 1};
+  float out[16] = {};
+  Check(LerpWorldViewMatrix(a, b, 0.25f, 2.0f, out) && out[12] == 0.25f && out[14] == 10.0f &&
+            out[0] == 1.0f,
+        "LerpWorldViewMatrix: interpolates the translation");
+  Check(LerpWorldViewMatrix(a, b, 0.0f, 2.0f, out) && out[12] == 0.0f,
+        "LerpWorldViewMatrix: t = 0 gives the previous matrix");
+
+  // Moved 50 units at distance 10: snap (2 + 10 / 4 = 4.5 allowed).
+  const float far_jump[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, 0, 10, 1};
+  float untouched[16] = {};
+  Check(!LerpWorldViewMatrix(a, far_jump, 0.5f, 2.0f, untouched) && untouched[12] == 0.0f,
+        "LerpWorldViewMatrix: a large jump snaps and leaves out untouched");
+  // The same 50 units at distance 400 is allowed (camera turn, far object).
+  const float far_a[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 400, 1};
+  const float far_b[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, 0, 400, 1};
+  Check(LerpWorldViewMatrix(far_a, far_b, 0.5f, 2.0f, out) && out[12] == 25.0f,
+        "LerpWorldViewMatrix: movement relative to the distance is allowed");
+
+  // Rotated 90 degrees about z: snap.
+  const float rotated[16] = {0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 10, 1};
+  Check(!LerpWorldViewMatrix(a, rotated, 0.5f, 2.0f, out),
+        "LerpWorldViewMatrix: a large rotation snaps");
+  // Scaled to twice the size: snap (a different object).
+  const float scaled[16] = {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 10, 1};
+  Check(!LerpWorldViewMatrix(a, scaled, 0.5f, 2.0f, out),
+        "LerpWorldViewMatrix: a large scale change snaps");
 }
 
 void TestMapUserFile() {
@@ -183,6 +228,7 @@ int main() {
   TestExeId();
   TestDeviceDialog();
   TestMapUserFile();
+  TestLerpWorldViewMatrix();
   TestDll();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;
