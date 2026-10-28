@@ -24,7 +24,7 @@
 ### G2. 빌드 편의 — 진행 중
 
 - [ ] G2-1 CMake를 PATH 없이 부르는 래퍼 스크립트 (또는 Developer PowerShell 안내만으로 충분한지 결정)
-- [x] G2-2 CI (GitHub Actions, windows 러너에서 x86 빌드 + 테스트) — 2026-10-29 워크플로 추가 (`.github/workflows/build.yml`). GitHub에서 처음 돌리는 것은 머지 뒤
+- [x] G2-2 CI (GitHub Actions, windows 러너에서 x86 빌드 + 테스트) — 2026-10-29 워크플로 추가 (`.github/workflows/build.yml`). PR #27에서 처음 돌아 통과 (2분 6초, 테스트 4개 모두, `loader_tests` 포함)
 
 ### G3. 배포판 (ROADMAP 4단계) — 진행 중
 
@@ -151,7 +151,6 @@ interp_2d = 1
 
 ## 미해결 질문
 
-- GitHub Actions `windows-2022` 러너에서 `loader_tests`(시스템 `dinput.dll`을 불러옴)가 통과하는지 (공개 뒤 첫 실행에서 확인)
 - 지원 빌드 목록에 다른 판본의 `Hod2.exe`를 추가할지 (이슈 양식 "내 Hod2.exe가 지원되지 않음"으로 해시를 받는다)
 
 ## 작업 기록
