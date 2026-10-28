@@ -55,14 +55,21 @@ address,name,type,confidence,evidence,doc,notes
 0x7DC924,g_textureCaps,uint32_t,guess,ghidra,assets.md,"Device texture flags read by ClampTextureSize: bit 1 power of two only, bit 5 square only."
 0x7DC94C,g_textureMaxWidth,uint32_t,confirmed,ghidra;runtime,assets.md,Device maximum texture width read by ClampTextureSize; 2048 with dgVoodoo2 2.87.5 (2026-10-15). Minimum width at 0x7DC944.
 0x7DC950,g_textureMaxHeight,uint32_t,confirmed,ghidra;runtime,assets.md,Device maximum texture height read by ClampTextureSize; 2048 with dgVoodoo2 2.87.5 (2026-10-15). Minimum height at 0x7DC948.
+0x7DCDE8,g_d3dxContext,ID3DXContext *,confirmed,ghidra,platform-timing.md,"D3DX 7 context (statically linked D3DX). Used for GetDD (+0x0C), GetD3DDevice (+0x14), GetPrimary (+0x18), GetBackBuffer (+0x20), RestoreSurfaces (+0x44), UpdateFrame (+0x4C, the flip), Clear (+0x54), SetClearColor (+0x58)."
+0x7DCDEC,g_directDraw,IDirectDraw7 *,confirmed,ghidra,platform-timing.md,From g_d3dxContext->GetDD() at 0x4A41C0. WaitFrameEnd calls +0x68 (TestCooperativeLevel) after a lost flip.
 0x7DCDF4,g_d3dDevice,IDirect3DDevice7 *,confirmed,ghidra,renderer.md,"Direct3D 7 device used for transforms, render states and DrawPrimitive."
 0x7DCDFC,g_frameWaitCallback,void *,confirmed,bytes,platform-timing.md,Function pointer called by WaitFrameEnd with the remaining ms on every spin; void __cdecl (float). Set to FrameWaitCallback at 0x49DF0B. Code: hod2::kFrameWaitCallbackSlot.
 0x7DCE00,g_hglCoreFlags,uint,confirmed,bytes;runtime,reverse-engineering.md,hglCore.ini flag bits set by LoadHglCoreIni. Bit table in docs/work/reverse-engineering.md.
+0x7DCE2C,g_frameSkipCount,int,confirmed,ghidra,platform-timing.md,"Set by WaitFrameEnd when a frame was late; while not 0 BeginFrameScene, EndFrameDraws and the screen flash are skipped (logic still runs) and WaitFrameEnd counts it down."
 0x7DCE30,g_frameCorrectionMs,float,guess,bytes,platform-timing.md,"Accumulated frame time correction, clamped to +/- 10 ms."
 0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
 0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
 0x7DCE50,g_textureFormats,DDPIXELFORMAT[8],confirmed,ghidra;runtime,assets.md,"Texture formats found by EnumTextureFormat. dgVoodoo2 2.87.5: slots 0 and 4 empty, 1 pal8, 2 RGB565, 3 X1R5G5B5, 5 A1R5G5B5, 6 A4R4G4B4, 7 A8R8G8B8 (used by texture_replace)."
+0x7DCF50,g_boundTexture,IDirectDrawSurface7 *,confirmed,ghidra,platform-timing.md,Texture last set on stage 0 by SetTextureCached 0x4A55D0. Not reset per tick.
 0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.
+0x7E5B94,g_modelStateFlags,uint32_t,confirmed,ghidra,platform-timing.md,Cull mode (bits 0-1) and shade mode (bit 0x40) last set by DrawModel; DrawScreenQuad resets them to 0. Not reset per tick.
+0x7E5BAC,g_drawFlags1,uint32_t,guess,ghidra,platform-timing.md,Second flag word last applied by ApplyDrawFlags 0x4A6BB0 (blend 0x17 and z 0x0E bits).
+0x7E5BB0,g_drawFlags2,uint32_t,guess,ghidra,platform-timing.md,"Third flag word last applied by ApplyDrawFlags 0x4A6BB0 (blend factors, alpha, texture address and filter bits)."
 0x7E5BC8,g_projectionMatrix,float[16],confirmed,ghidra,renderer.md,"Copy of the projection matrix made by SetMatrixMode; DrawScreenQuad reads m22/m32 (+0x28, +0x38) for quad depth."
 0x7E5C10,g_currentMatrix,float *,confirmed,ghidra,renderer.md,Current matrix of the engine matrix stack.
 0x7E5C14,g_matrixMode,int,confirmed,ghidra,renderer.md,3 = projection.

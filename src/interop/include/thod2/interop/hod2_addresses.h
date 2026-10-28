@@ -32,6 +32,22 @@ constexpr std::uintptr_t kFrameWaitCallback = 0x49E0C0;
 constexpr std::uintptr_t kJobQueueReadIndex = 0x7D8AA8;
 constexpr std::uintptr_t kJobQueueWriteIndex = 0x7D8AAC;
 
+// Main loop (docs/work/platform-timing.md "메인 루프 분석 결과"). Every tick ends
+// in 0x4AB2F0, whose first instruction `call WaitFrameEnd` (E8 3B 98 FF FF) is
+// at kWaitFrameEndCall. WaitFrameEnd flips (ID3DXContext::UpdateFrame) and then
+// waits. When a frame was late it sets kFrameSkipCount, and while that is not 0
+// the next ticks skip BeginScene, the sorted draws and EndScene.
+// Evidence: Ghidra decompile of 0x4A5920, 0x49DBD0, 0x4AB2F0, 0x4A4B30, 0x4AB320, 0x4AB350.
+constexpr std::uintptr_t kWaitFrameEnd = 0x4A4B30;
+constexpr std::uintptr_t kWaitFrameEndCall = 0x4AB2F0;
+constexpr std::uintptr_t kFrameSkipCount = 0x7DCE2C;  // int32
+constexpr std::uintptr_t kFrameTimeMs = 0x597444;     // float, 16.6667
+// Direct3D objects, all from the D3DX context (D3DX 7 is linked statically):
+// GetDD (+0x0C) and GetD3DDevice (+0x14) at 0x4A41C0.
+constexpr std::uintptr_t kD3dxContext = 0x7DCDE8;  // ID3DXContext*
+constexpr std::uintptr_t kDirectDraw = 0x7DCDEC;   // IDirectDraw7*
+constexpr std::uintptr_t kD3dDevice = 0x7DCDF4;    // IDirect3DDevice7*
+
 // Input update (docs/work/platform-input.md "입력 갱신 분석 결과").
 // UpdateInput 0x41E120 runs once per frame; its only caller is the
 // `call 0x41E120` (E8 2B FB 00 00) at kUpdateInputCall, the first instruction of 0x40E5F0.
@@ -62,6 +78,8 @@ constexpr std::uintptr_t kDrawScreenQuadCall2 = 0x4A7DF9;  // in FlushSortedDraw
 // matrix passed to SetTransform(WORLD)). Called at these places.
 constexpr std::uintptr_t kDrawModel = 0x4A7310;
 constexpr std::uintptr_t kDrawModelAlt = 0x4A7860;
+constexpr std::size_t kDrawModelSize = 0x492;     // bytes, from the Ghidra function bodies
+constexpr std::size_t kDrawModelAltSize = 0x4A0;
 constexpr std::uintptr_t kDrawModelCall1 = 0x4A72AF;     // DrawModel in 0x4A7270
 constexpr std::uintptr_t kDrawModelCall2 = 0x4A7DEE;     // DrawModel in FlushSortedDraws
 constexpr std::uintptr_t kDrawModelAltCall1 = 0x4A77EF;  // DrawModelAlt in 0x4A77B0

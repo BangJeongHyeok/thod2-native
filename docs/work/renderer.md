@@ -3,7 +3,7 @@
 - **상태:** 진행 중 (자체 렌더러 전까지 dgVoodoo2 설정 관리)
 - **관련 로드맵:** ROADMAP 1-3, 2-3
 - **관련 코드:** `src/renderer/` (예정), `config/dgvoodoo-recommended.ini`, `tools/compat/quality-compare.ps1`, `src/core/patches/widescreen.cpp`, `tools/compat/aspect-capture.ps1`
-- **마지막 갱신:** 2026-10-15
+- **마지막 갱신:** 2026-10-28
 
 ## 주요 목표
 
@@ -226,6 +226,11 @@ DX7(DirectDraw7 + Direct3D7)을 쓰지 않는 자체 렌더러를 만든다. DX7
 - 1차 백엔드를 D3D11로 확정할지
 
 ## 작업 기록
+
+### 2026-10-28 — 고주사율 보간에서 넘어온 내용
+
+- **결과:** `[display] interpolate`가 `IDirect3DDevice7`과 `ID3DXContext`의 함수 표에 훅을 걸어 한 틱의 그리기를 기록하고 다시 그린다. 와이드스크린(투영 비율, 2D 압축, 거울 채우기)과 텍스처 교체는 그 앞 단계에서 바뀐 호출이 기록되므로 그대로 동작한다 (240Hz, 16:9에서 확인). 게임이 부르는 장치 메서드 목록과 VIEW/WORLD/PROJECTION 사용 방식은 그쪽 문서에 있다.
+- **상세:** [platform-timing.md](platform-timing.md) "메인 루프 분석 결과", G4
 
 ### 2026-10-26 — 전체 화면 2D 그림 양옆 거울 채우기 (`[display] widescreen_mirror`)
 

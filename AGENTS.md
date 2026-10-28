@@ -30,7 +30,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. **업스케일 텍스처 설치됨 (2026-10-26):** `data\tex\<뱅크>\`에 `tools/assets/upscale-ui.ps1`로 만든 UI 텍스처 3,018개(Real-ESRGAN 4배)가 있어서 UI가 원본과 다르게(선명하게) 보인다. 폴더를 지우면 원본으로 돌아온다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. **업스케일 텍스처 설치됨 (2026-10-26):** `data\tex\<뱅크>\`에 `tools/assets/upscale-ui.ps1`로 만든 UI 텍스처 3,018개(Real-ESRGAN 4배)가 있어서 UI가 원본과 다르게(선명하게) 보인다. 폴더를 지우면 원본으로 돌아온다. **고주사율 보간 켜져 있음 (2026-10-28, 사용자 시험용):** `[display] interpolate = 1`, `[debug] trace_interp = 1`. 240Hz 모니터에서 초당 약 240장 그린다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -206,7 +206,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 - **렌더링:** DX7 API가 아니라 게임의 그리기 함수 수준에서 가로채서 자체 렌더 인터페이스(1차 백엔드 D3D11)로 넘긴다. **그 전까지 창 모드·Alt+Enter·고해상도는 dgVoodoo2(DX7 → D3D11 래퍼)로 처리한다** (2026-10-14 결정, [platform-display.md](docs/work/platform-display.md)).
 - **확장성:** 플러그인 DLL, 이벤트 훅, 데이터 덮어쓰기 폴더(RVGL 방식)를 모드 API로 제공한다.
 - **리버싱:** Ghidra(정적 분석)와 x32dbg(동적 분석). 둘 다 `external\`에 설치되어 있고, Ghidra는 `.\tools\re\ghidra.ps1`로 실행한다 ([reverse-engineering.md](docs/work/reverse-engineering.md) "분석 도구"). 분석 결과는 텍스트(함수 목록, 구조체, 포맷 문서)로 `re/`와 `docs/formats/`에 남긴다. 원본 코드를 포함하는 Ghidra 프로젝트 파일이나 디컴파일한 코드를 그대로 커밋하지 않는다.
-- **고프레임:** 게임 로직은 60Hz 고정 스텝으로 추정된다 (아케이드 → 드림캐스트 → PC 이식작). 프레임 제한만 풀면 게임 속도가 빨라질 가능성이 높다. 그래서 메인 루프를 재구현해서 로직은 60Hz로 두고 렌더링만 보간한다.
+- **고프레임:** 게임 로직은 1틱 = 1/60초 고정이다 (프레임 건너뛰기 코드로 확인, [platform-timing.md](docs/work/platform-timing.md) "메인 루프 분석 결과"). 로직과 그리기가 태스크 안에 섞여 있어서, 지금은 한 틱의 Direct3D 호출을 기록하고 모델 행렬을 앞뒤 틱 사이로 보간해서 다시 그린다 (`[display] interpolate`, 기본 꺼짐, G4). 태스크 구조를 리버싱한 뒤에는 갱신과 그리기를 직접 나눌 수 있다.
 
 ## 7. 저장소 구조
 
@@ -234,7 +234,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale-ui.ps1 Real-ESRGAN 묶음 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture, interp-test 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale-ui.ps1 Real-ESRGAN 묶음 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 
@@ -242,9 +242,8 @@ thod2-native/
 
 ## 8. 아직 모르는 것 (우선 확인 대상)
 
-- 메인 루프, 프레임 타이머 위치. 게임 로직이 프레임 단위인지 시간 단위인지
 - 640×480 디스플레이 모드를 설정하는 코드 위치 (설정으로 바꿀 방법은 없음이 확인됨)
 - `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
 - Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
-- 게임 로직이 프레임 수에 묶여 있는지 (고주사율에서 빨라지지 않는 것은 실제 240Hz 모니터에서 확인됨, [platform-timing.md](docs/work/platform-timing.md) G3)
+- 태스크(게임 객체) 구조. 갱신과 그리기를 나누려면 필요하다 (메인 루프와 틱 구조는 확인됨, [platform-timing.md](docs/work/platform-timing.md) "메인 루프 분석 결과")
 - 와이드스크린에서 넓힌 가시 범위 판정과 조준 범위가 실제로 맞게 동작하는지 (투영·2D·조준 경로는 찾음, [renderer.md](docs/work/renderer.md) "화면 비율 분석")
