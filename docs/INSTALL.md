@@ -3,6 +3,8 @@
 PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)을 적용하는 방법이다.
 게임 파일은 이 프로젝트에 포함되어 있지 않다. 자기가 가진 게임 폴더(`Hod2.exe`가 있는 `THOTD2` 폴더)에 적용한다.
 
+**배포판(`thod2-native.zip`)으로 설치하는 방법은 [README](../README.md)의 "설치"에 있다.** 이 문서는 저장소에서 직접 빌드해서 설치하는 방법과 전체 설정을 다룬다.
+
 ## 적용하면 달라지는 것
 
 | 항목 | 원본 | 적용 후 |
@@ -20,9 +22,9 @@ PC판 The House of the Dead 2에 thod2-native와 권장 화면 설정(dgVoodoo2)
 ## 준비물
 
 - 원본 게임 폴더 (`Hod2.exe` 지원 빌드: SHA-256 `1D71265096661CF034568FF71184FCBBED0CD9AEA0E5E2F041801C39A0FFCE69`)
-- thod2-native 빌드 결과물: `dinput.dll`, `thod2_core.dll` (아직 배포판이 없으므로 [work/build.md](work/build.md)의 "빌드 방법"대로 빌드한다)
+- thod2-native 빌드 결과물: `dinput.dll`, `thod2_core.dll` ([work/build.md](work/build.md)의 "빌드 방법"대로 빌드한다)
 - [dgVoodoo2](https://github.com/dege-diosg/dgVoodoo2/releases) 공식 릴리스 (확인한 버전: v2.87.5, `dgVoodoo2_87_5.zip`)
-- Python 3 (dgVoodoo2 설정 도구용. 손으로 설정해도 된다)
+- (선택) Python 3: `tools\dgvoodoo-setup.py`로 dgVoodoo2 파일을 복사할 때. 손으로 복사해도 된다
 
 원본 게임 폴더를 그대로 두고 싶으면 먼저 복사본을 만들어 거기에 적용한다.
 
@@ -54,17 +56,18 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 
 `install`은 `MS\x86\DDraw.dll`, `MS\x86\D3DImm.dll`, `dgVoodoo.conf`를 게임 폴더에 복사한다. `preset`은 [config/dgvoodoo-recommended.ini](../config/dgvoodoo-recommended.ini)의 값을 `dgVoodoo.conf`에 적용한다.
 
-**Python 없이 하려면:** 위 세 파일을 직접 복사하고, 메모장으로 `dgVoodoo.conf`를 열어 `dgvoodoo-recommended.ini`에 적힌 값을 같은 섹션의 같은 키에 써 넣는다. `Resolution`과 `Antialiasing`은 `[Glide]`와 `[DirectX]` 두 곳에 있으니 `[DirectX]` 쪽을 고친다.
+**Python 없이 하려면:** 위 세 파일을 직접 복사하기만 하면 된다. thod2-native가 게임을 켤 때마다 `dgVoodoo.conf`에 권장값을 넣는다 (`[dgvoodoo] preset = 1`, 기본값). `preset` 명령은 필요 없다.
 
 ### 화질을 더 바꾸고 싶을 때 (선택)
 
-권장 설정은 원본의 분위기를 유지하면서 테두리만 매끄럽게 한다. 취향에 따라 아래처럼 바꿀 수 있다 (`preset` 다음에 실행).
+권장 설정은 원본의 분위기를 유지하면서 테두리만 매끄럽게 한다. 취향에 따라 `thod2-native.ini`의 `[dgvoodoo]`에서 바꿀 수 있다 (thod2-native가 게임을 켤 때 `dgVoodoo.conf`에 넣는다).
 
-| 원하는 것 | 명령 | 비고 |
+| 원하는 것 | `thod2-native.ini` | 비고 |
 |---|---|---|
-| 테두리를 더 매끄럽게 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Antialiasing=8x` | 4x와 차이는 작고 그래픽 카드 부담이 조금 늘어난다 |
-| 텍스처를 부드럽게 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Filtering=16` | 원본은 텍스처를 각진 픽셀로 그린다. 부드러워지지만 분위기가 달라진다 |
-| 안티에일리어싱 끄기 | `python tools\dgvoodoo-setup.py set "<게임 폴더>" DirectX.Antialiasing=appdriven` | 원본과 같은 테두리 |
+| 테두리를 더 매끄럽게 | `[dgvoodoo] antialiasing = 8x` | 4x와 차이는 작고 그래픽 카드 부담이 조금 늘어난다 |
+| 텍스처를 부드럽게 | `[dgvoodoo] filtering = 16` | 원본은 텍스처를 각진 픽셀로 그린다. 부드러워지지만 분위기가 달라진다 |
+| 안티에일리어싱 끄기 | `[dgvoodoo] antialiasing = appdriven` | 원본과 같은 테두리 |
+| dgVoodoo2를 직접 설정 | `[dgvoodoo] preset = 0` | thod2-native가 `dgVoodoo.conf`를 건드리지 않는다 (와이드스크린의 `ScalingMode` 맞춤만 한다). 그다음은 `dgVoodooCpl.exe`나 `python tools\dgvoodoo-setup.py set`으로 바꾼다 |
 
 비교 결과는 [work/renderer.md](work/renderer.md)의 "dgVoodoo2 화질 옵션 비교"에 있다.
 
@@ -84,6 +87,9 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[display] widescreen_mirror` | `1` | 와이드스크린에서 전체 화면 2D 그림(타이틀·로딩·결과 화면 배경)의 양옆을 그림 끝을 거울처럼 뒤집어 채움. `0`이면 양옆에 뒤의 3D 장면이 보임 |
 | `[display] interpolate` | `0` | `1`이면 고주사율 모니터에서 게임 틱(초당 60회) 사이 프레임을 보간해서 더 그림 (아래 "고주사율") |
 | `[display] max_fps` | `0` | `interpolate`와 함께 쓰는 프레임 제한. `0`이면 모니터 주사율(수직 동기화)까지 |
+| `[dgvoodoo] preset` | `1` | 게임을 켤 때마다 `dgVoodoo.conf`에 권장 설정을 넣음 (테두리 없는 전체 화면 창, 최대 해상도, Alt+Enter, 워터마크 끔). `0`이면 건드리지 않음 |
+| `[dgvoodoo] antialiasing` | `4x` | `preset`과 함께: dgVoodoo2 안티에일리어싱. `appdriven`(끔), `2x`, `4x`, `8x` |
+| `[dgvoodoo] filtering` | (비어 있음) | `preset`과 함께: dgVoodoo2 텍스처 필터. 비어 있으면 바꾸지 않음. `16`이면 부드럽게(비등방성) |
 | `[assets] replace_textures` | `1` | `data\tex\` 아래 PNG를 원본 텍스처 대신 씀 (아래 "텍스처 교체"). 폴더가 없으면 아무 일도 하지 않음 |
 | `[input] map_cursor` | `1` | 마우스 커서를 dgVoodoo2가 그리는 게임 영역 기준으로 바꿈. `0`이면 원본처럼 창 픽셀 그대로 |
 | `[files] redirect_user_files` | `1` | 세이브·`d3dx.dat`·`exception.log`를 사용자 폴더(`%APPDATA%`, `%LOCALAPPDATA%`의 `thod2-native`)에 둠 |
@@ -105,7 +111,7 @@ widescreen = 1
 - HUD(총알, 생명, 플레이어별 표시)는 화면 양 끝으로 붙고, 타이틀 문구·자막 같은 나머지 2D는 원래 비율로 가운데에 그려진다. 영화 장면의 위아래 띠도 화면 전체 폭을 덮는다.
 - 조준은 넓어진 화면 끝까지 커서를 따라간다.
 - 타이틀·로딩·결과 화면처럼 화면 전체를 덮는 2D 그림은 4:3이라, 양옆을 그림 끝을 거울처럼 뒤집어 채운다 (`widescreen_mirror`). 16:9까지는 그림 조각 한 줄로 채워진다. 21:9처럼 더 넓으면 조각이 그 폭에 맞게 놓인 그림만 채워지고, 아니면 끝에 빈 곳이 남을 수 있다.
-- dgVoodoo2의 `ScalingMode`는 thod2-native가 맞춘다: 켜면 `stretched`, 끄면 `stretched_ar`로 되돌린다 (`stretched`일 때만). 따로 고칠 필요 없다.
+- dgVoodoo2의 `ScalingMode`는 thod2-native가 맞춘다: 켜면 `stretched`, 끄면 `stretched_ar` (`[dgvoodoo] preset = 0`이면 `stretched`일 때만 되돌린다). 따로 고칠 필요 없다.
 - 아직 확인하지 않은 것: 화면 양옆에서 나오는 적이 많은 장면에서의 동작, 이번 확인에서 나오지 않은 HUD(점수, 보스 게이지 등). 이런 HUD는 가운데 4:3 영역에 그려진다.
 - 자세한 분석은 [work/renderer.md](work/renderer.md)의 "화면 비율 분석".
 
@@ -147,6 +153,8 @@ python tools\dgvoodoo-setup.py uninstall "<게임 폴더>"
 세이브는 `%APPDATA%\thod2-native\save\`에 남는다. thod2-native 없이 원본으로 돌아가면 게임은 다시 게임 폴더의 세이브를 쓴다. 최신 기록을 이어 쓰려면 `save\` 안의 파일 4개를 게임 폴더의 같은 위치(`pol\`, `tex\`)에 덮어쓴다.
 
 ## 문제 해결
+
+문제를 알리는 방법(GitHub 이슈)은 [README](../README.md)의 "문제 신고하기"에 있다.
 
 - **Network 메뉴에 들어가면 DirectPlay 설치 창이 뜬다:** 게임의 네트워크 기능이 Windows의 DirectPlay(기본으로 꺼진 선택적 기능)를 쓴다. 설치하면 Network 화면이 뜬다. 네트워크 기능을 쓰지 않으면 취소해도 된다.
 

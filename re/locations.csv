@@ -50,7 +50,7 @@ address,kind,confidence,evidence,doc,notes
 0x4A5171,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x08 (SmallTexure=1).
 0x4A5850,insn,guess,bytes,reverse-engineering.md,"Inside the WinMain-like initialization function 0x4A5790: CreateWindowExA, then LoadHglCoreIni (0x4A60A0)."
 0x4A588B,ret,confirmed,trace:dinput_probe,loader.md,CreateWindowExA of the main window. The result is stored in g_hWnd at 0x4A588D.
-0x4A5899,insn,guess,bytes,reverse-engineering.md,"5-byte NOP. Most likely the removed call to CheckCdRom (0x4A5C50), which has no callers."
+0x4A5899,insn,guess,bytes,reverse-engineering.md,"5-byte NOP in the start-up code. CheckCdRom (0x4A5C50) has no callers in this build, so it does not check the CD."
 0x4A59DF,insn,confirmed,bytes,platform-timing.md,Calls WaitFrameEnd (0x4A4B30).
 0x4A5C72,insn,confirmed,bytes,reverse-engineering.md,Reads g_hglCoreFlags bit 0x40 (CDCheckPass) inside CheckCdRom.
 0x4A6093,ret,confirmed,trace:file_trace,platform-filesystem.md,GetFullPathNameA for hglCore.ini.

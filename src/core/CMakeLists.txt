@@ -7,6 +7,7 @@ add_library(thod2_core_lib STATIC
   patches/cursor_map.cpp
   patches/ddraw_trace.cpp
   patches/device_dialog.cpp
+  patches/dgvoodoo_preset.cpp
   patches/file_redirect.cpp
   patches/file_trace.cpp
   patches/frame_interp.cpp

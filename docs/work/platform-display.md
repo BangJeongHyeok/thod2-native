@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 1-3, 2-2
 - **관련 코드:** `src/platform/` (예정), `src/core/patches/device_dialog.cpp`, `src/core/patches/ddraw_trace.cpp`
-- **마지막 갱신:** 2026-10-14
+- **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
 
@@ -94,6 +94,7 @@
 | 2026-10-14 | 확인창 처리 결과는 "예"(`IDYES`)로 고정 | 사용자가 항상 "예"를 눌러 왔고, "아니요"의 동작은 아직 분석하지 않음 |
 | 2026-10-14 | **창 모드·Alt+Enter·고해상도는 지금은 dgVoodoo2로 처리한다 (B안, 사용자 결정).** DX7 수준의 창 모드 직접 구현(A안)은 하지 않고, 자체 렌더러(ROADMAP 2-3)에서 구현한다 | A안은 16bpp→32bpp 변환, apphelp 호환 모드와의 충돌, 백버퍼 획득 방식 미확인 등 공수가 크고, 자체 렌더러가 생기면 버리는 코드다. dgVoodoo2 시험 C + Alt+Enter 옵션은 이미 검증됨. 위험: 외부 도구 의존, 재배포 조건 확인 필요 |
 | 2026-10-14 | **dgVoodoo2는 배포물에 넣지 않는다.** 사용자가 공식 릴리스에서 받고, 우리는 설정 프리셋과 설치 도구만 제공한다 | GitHub 저장소(`dege-diosg/dgVoodoo2`)에 명시된 라이선스가 없다. README의 "freely ship" 문구는 64비트 개발자용 API DLL에 대한 것이다 |
+| 2026-10-29 | **dgVoodoo2 권장 설정은 thod2-native가 게임을 켤 때마다 `dgVoodoo.conf`에 넣는다** (`[dgvoodoo] preset`, 기본 1, `src/core/patches/dgvoodoo_preset.cpp`) | 배포판 사용자가 Python(`dgvoodoo-setup.py preset`) 없이 dgVoodoo2 파일 3개만 복사하면 되게 하기 위해. dgVoodoo2는 thod2-native 초기화 뒤에 설정을 읽으므로 같은 실행부터 적용된다 (와이드스크린의 `ScalingMode` 맞춤과 같은 방식). 사용자가 바꾸고 싶은 값(안티에일리어싱, 텍스처 필터)은 `thod2-native.ini`의 `[dgvoodoo] antialiasing`, `filtering`으로 받는다. `preset = 0`이면 건드리지 않는다. 대안: 처음 한 번만 적용(dgVoodooCpl이 파일을 다시 쓰면 표시가 사라져 구분이 어려움) |
 | 2026-10-14 | `skip_device_dialog` 기본값은 켜짐(1)으로 유지 (사용자 결정) | 검토한 위험: 잘못된 장치(예: 내장 그래픽)가 골라져도 화면에서 알 수 없고 로그에만 남는다. 대안: 기본 꺼짐 |
 
 ## 미해결 질문
@@ -104,6 +105,11 @@
 - 원본 해상도는 640×480 고정이고, 이를 바꾸는 설정이 없다 (`hglCore.ini`의 `FullScreen` 키는 쓰이지 않음)
 
 ## 작업 기록
+
+### 2026-10-29 — dgVoodoo2 권장 설정 자동 적용
+
+- `[dgvoodoo] preset`(기본 1), `antialiasing`(기본 `4x`), `filtering`(기본 비어 있음 = 그대로). 섹션 안의 키만 바꾸므로 `[Glide]`와 `[DirectX]`에 같은 이름(`Resolution`, `Antialiasing`)이 있어도 `[DirectX]`만 바뀐다 (테스트 `SetIniValue` 5개).
+- dgVoodoo2 2.87.5 zip의 원래 `dgVoodoo.conf`로 시험: 8개 값이 바뀌고 같은 실행에서 테두리 없는 4:3 화면, 워터마크 없음 ([build.md](build.md) 2026-10-29).
 
 ### 2026-10-15 — 권장 프리셋에 MSAA 4x 추가 (렌더러에서 넘어온 내용)
 

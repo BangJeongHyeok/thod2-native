@@ -5,6 +5,7 @@
 #include "exe_id.h"
 #include "patches/device_dialog.h"
 #include "patches/file_redirect.h"
+#include "patches/dgvoodoo_preset.h"
 #include "patches/frame_interp.h"
 #include "sha256.h"
 #include "util.h"
@@ -91,6 +92,8 @@ void TestConfig() {
   Check(!parsed.frame_wait_sleep, "LoadConfig frame_wait_sleep = 0");
   Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
 
+  Check(missing.dgvoodoo_preset && missing.dgvoodoo_antialiasing == L"4x" && missing.dgvoodoo_filtering.empty(),
+        "LoadConfig dgvoodoo defaults");
   Check(!missing.interpolate && missing.max_fps == 0 && !missing.trace_interp &&
             missing.interp_snap == 2.0f && missing.interp_2d,
         "LoadConfig interpolate defaults");
@@ -184,6 +187,24 @@ void TestLerpScreenVertices() {
         "LerpScreenVertices: a jump over snap_pixels snaps and leaves out untouched");
 }
 
+void TestSetIniValue() {
+  using thod2::core::patches::SetIniValue;
+  std::string text =
+      "[Glide]\r\nResolution                          = unforced\r\n\r\n"
+      "[DirectX]\r\nResolution                          = unforced\r\nAntialiasing = appdriven\n";
+  std::string old;
+  Check(SetIniValue(text, "DirectX", "Resolution", "max", &old) && old == "unforced",
+        "SetIniValue: sets the key of the given section");
+  Check(text.find("[Glide]\r\nResolution                          = unforced\r\n") != std::string::npos,
+        "SetIniValue: the same key in another section is kept");
+  Check(text.find("[DirectX]\r\nResolution                          = max\r\n") != std::string::npos,
+        "SetIniValue: keeps the alignment and the CRLF ending");
+  Check(SetIniValue(text, "DirectX", "Antialiasing", "4x") && text.ends_with("Antialiasing = 4x\n"),
+        "SetIniValue: LF line");
+  Check(!SetIniValue(text, "DirectX", "Missing", "1") && !SetIniValue(text, "General", "Resolution", "1"),
+        "SetIniValue: missing key or section");
+}
+
 void TestMapUserFile() {
   using thod2::core::patches::MapUserFile;
   thod2::core::patches::RedirectPaths p;
@@ -251,6 +272,7 @@ int main() {
   TestMapUserFile();
   TestLerpWorldViewMatrix();
   TestLerpScreenVertices();
+  TestSetIniValue();
   TestDll();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;

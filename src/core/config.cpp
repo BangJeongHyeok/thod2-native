@@ -42,6 +42,12 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.widescreen_aspect = aspect;
   config.widescreen_mirror = GetPrivateProfileIntW(L"display", L"widescreen_mirror", 1, file) != 0;
   config.replace_textures = GetPrivateProfileIntW(L"assets", L"replace_textures", 1, file) != 0;
+  config.dgvoodoo_preset = GetPrivateProfileIntW(L"dgvoodoo", L"preset", 1, file) != 0;
+  wchar_t dgvoodoo_value[64] = {};
+  GetPrivateProfileStringW(L"dgvoodoo", L"antialiasing", L"4x", dgvoodoo_value, ARRAYSIZE(dgvoodoo_value), file);
+  config.dgvoodoo_antialiasing = dgvoodoo_value;
+  GetPrivateProfileStringW(L"dgvoodoo", L"filtering", L"", dgvoodoo_value, ARRAYSIZE(dgvoodoo_value), file);
+  config.dgvoodoo_filtering = dgvoodoo_value;
   config.widescreen_2d = GetPrivateProfileIntW(L"debug", L"widescreen_2d", 1, file) != 0;
   config.trace_screen_quads = GetPrivateProfileIntW(L"debug", L"trace_screen_quads", 0, file) != 0;
   config.trace_textures = GetPrivateProfileIntW(L"debug", L"trace_textures", 0, file) != 0;

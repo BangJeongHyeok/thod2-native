@@ -38,7 +38,7 @@
 
 - 처음부터 전부 다시 쓰는 빅뱅 재작성
 - 원본 게임 파일이나 디컴파일한 원본 코드를 그대로 저장소에 넣는 것
-- 수정된(크랙된) 실행 파일에 의존하는 것. 필요한 패치는 우리 코드가 실행 시점에 적용한다.
+- 실행 파일을 고쳐서 배포하는 것. 필요한 패치는 우리 코드가 실행 시점에 적용한다. 지금은 한 판본만 지원하고, thod2-native로 돌아가지 않는 판본은 이슈로 받아 지원을 넓힌다.
 
 ---
 
@@ -73,7 +73,7 @@
 - [ ] **화면:** 테두리 없는 창 모드, 데스크톱 해상도와 무관한 렌더링, DPI 인식 → 테두리 없는 창·Alt+Enter는 dgVoodoo2로 처리, 설치 안내 [INSTALL.md](INSTALL.md) (DPI 인식은 미확인)
 - [ ] **타이밍:** 모니터 주사율과 관계없이 게임 로직이 원본 속도(60Hz로 추정)로 돈다. → CPU 100%(바쁜 대기)는 `frame_wait_sleep`으로 해결. 게임 속도는 고정 60fps 타이머로 정해지고(로직 1틱 = 1/60초, 2026-10-28 코드로 확인), 240Hz 모니터에서 빨라지지 않음을 확인 ([work/platform-timing.md](work/platform-timing.md))
 - [ ] **입력:** 현대 마우스(Raw Input), 게임패드 대응 → dgVoodoo2 창에서 조준이 왼쪽 위 640×480에 묶이던 문제를 `[input] map_cursor`로 고침 ([work/renderer.md](work/renderer.md) "조준")
-- [ ] **CD 확인:** 원본 실행 파일 수정 없이 우리 코드에서 처리 → **나중으로 미룸** (2026-10-15 사용자 결정. 보유한 실행 파일은 CD 확인이 이미 지워져 있어 지금 막히는 것이 없음. 1단계 완료 기준에 넣지 않음, [work/platform-filesystem.md](work/platform-filesystem.md))
+- [ ] **CD 확인:** 원본 실행 파일 수정 없이 우리 코드에서 처리 → **나중으로 미룸** (2026-10-15 사용자 결정. 지원하는 판본은 시작할 때 CD를 확인하지 않아 지금 막히는 것이 없음. 1단계 완료 기준에 넣지 않음, [work/platform-filesystem.md](work/platform-filesystem.md))
 - [x] **파일 경로:** 세이브와 설정을 게임 폴더 대신 사용자 폴더(`%APPDATA%` 등)에 저장해서 관리자 권한이 필요 없게 한다. → `redirect_user_files`로 세이브·캐시·크래시 로그를 사용자 폴더로 ([work/platform-filesystem.md](work/platform-filesystem.md))
 
 **완료 기준:** 깨끗한 Windows 11에서 런처를 실행하면 테두리 없는 창으로 시작하고, 144Hz 모니터에서도 원본 속도로 처음부터 끝까지 플레이된다.
@@ -143,11 +143,12 @@ M4는 장기 목표다. M1~M3만으로도 현대화 기능과 모드 개발 대�
 
 ## 4단계 — 오픈 소스 프로젝트로 다듬기
 
-- [ ] 라이선스 결정 (참고: OpenRCT2는 GPLv3)
-- [ ] `README.md` (사용자용), `CONTRIBUTING.md` (개발자용)
-- [ ] 빌드 안내, CI (GitHub Actions 등)
+- [x] 라이선스 결정 → CC BY-NC-SA 4.0 (2026-10-29 사용자 결정, 상업적 이용 금지. [LICENSE](../LICENSE))
+- [ ] `README.md` (사용자용), `CONTRIBUTING.md` (개발자용) → README 완료 (2026-10-29), CONTRIBUTING은 아직
+- [x] 빌드 안내, CI (GitHub Actions 등) → `.github/workflows/build.yml` (2026-10-29, [work/build.md](work/build.md))
 - [ ] 원본 데이터 경로 설정 안내 (자산 미포함 원칙)
-- [ ] 배포 패키지와 릴리스 절차
+- [ ] 배포 패키지와 릴리스 절차 → zip·절차는 완료 (`tools/package.ps1`, v* 태그로 Release). 저장소 공개와 첫 Release는 아직
+- [x] 문제 신고 양식 (`.github/ISSUE_TEMPLATE/`: 문제 신고, 지원되지 않는 `Hod2.exe`)
 - [ ] 모드 SDK 정리 (헤더, 예제, 문서)
 
 ---
