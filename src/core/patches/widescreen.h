@@ -16,6 +16,10 @@ namespace thod2::core::patches {
 struct WidescreenOptions {
   float aspect = 0.0f;      // display width / height; 4:3 or less leaves the game unchanged
   bool squeeze_2d = true;   // false: projection only ([debug] widescreen_2d = 0, comparisons)
+  // [display] widescreen_mirror: tiles of full-screen 2D pictures that lie at
+  // a 4:3 edge are drawn again mirrored about that edge, so that the sides
+  // show the picture instead of the 3D scene behind it.
+  bool mirror_edges = true;
   bool trace = false;       // [debug] trace_screen_quads
 };
 

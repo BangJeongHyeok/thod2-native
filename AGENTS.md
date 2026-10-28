@@ -20,7 +20,7 @@ OpenRCT2, RVGL처럼 원본 게임 데이터만 있으면 현대 PC에서 잘 �
 E:\Repos\hod2-native\
 ├─ thod2-native\    ← 이 저장소 (git). 모든 작업 결과물은 여기에 둔다.
 ├─ test-game\       ← 실행·패치 테스트용 사본 (git 아님, 자유롭게 수정 가능)
-├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. dgVoodoo2 v2.87.5, Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27. 목록은 reverse-engineering.md "분석 도구")
+├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. dgVoodoo2 v2.87.5, Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27, Real-ESRGAN ncnn-vulkan 20220424. 목록은 reverse-engineering.md "분석 도구", Real-ESRGAN은 assets.md)
 ├─ ghidra-projects\ ← Ghidra 프로젝트 (git 아님, 원본 코드가 들어가므로 커밋 금지)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
 │  ├─ THOTD2\       ← 게임 본체 (Hod2.exe, 리소스)
@@ -30,7 +30,7 @@ E:\Repos\hod2-native\
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
-- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. 텍스처 교체 폴더 `data\tex\`는 없다 (2026-10-15 시험 후 지움). 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
+- **테스트 사본 현재 상태 (2026-10-15):** 원본과 같은 파일 + dgVoodoo2(`DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`, 권장 프리셋: 시험 C + MSAA 4x) + thod2-native 로더·코어(`dinput.dll`, `thod2_core.dll`, `thod2-native.ini`, Release 빌드, `skip_device_dialog = 1`, `trace_ddraw = 0`, `frame_wait_sleep`·`redirect_user_files`는 기본값(켬))가 설치되어 있다. 그래서 시작 확인창이 뜨지 않는다. **와이드스크린 켜져 있음 (2026-10-15, 사용자 시험용):** `thod2-native.ini`에 `[display] widescreen = 1`이 있고, 그래서 thod2-native가 `dgVoodoo.conf`의 `ScalingMode`를 `stretched`로 바꿔 둔다(권장 프리셋은 `stretched_ar`). `widescreen = 0`으로 바꾸고 실행하면 `stretched_ar`로 돌아간다. **업스케일 텍스처 설치됨 (2026-10-26):** `data\tex\<뱅크>\`에 `tools/assets/upscale-ui.ps1`로 만든 UI 텍스처 3,018개(Real-ESRGAN 4배)가 있어서 UI가 원본과 다르게(선명하게) 보인다. 폴더를 지우면 원본으로 돌아온다. 테스트 사본의 세이브는 이 PC의 `%APPDATA%\thod2-native\save\`에 있다 (2026-10-15에 게임 폴더에서 복사됨, 게임 폴더의 세이브는 그 시점 그대로). dgVoodoo2는 Alt+Enter 전환도 켜져 있다 (`DisableAltEnterToToggleScreenMode = false`). 원본 그대로 시험하려면 `.\tools\deploy.ps1 -Remove`(ini는 수동 삭제)와 `python tools/dgvoodoo-setup.py uninstall <게임 폴더>`로 지운다. 상태를 바꾸면 이 줄을 고친다.
 - 게임 파일 경로는 저장소 안에 하드코딩하지 말고 설정/환경 변수로 받는다 (기본값: `..\original-game\THOTD2`).
 
 ## 2. 작업 규칙
@@ -175,7 +175,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 | `evt\` | 11 | 309KB | `.bin` | 이벤트/스크립트 |
 | `sound\` | 802 | 368MB | `.wav` | `bgm\`, `SE\`, `voice\` |
 
-**`tex\*.bin`은 분석됨 (2026-10-15):** LZSS로 압축된 픽셀 데이터만 있고, 텍스처 목록(크기, 드림캐스트 PVR 형식, 위치, 텍스처 번호)은 `Hod2.exe` 안의 표에 있다. `tools/assets/tex_extract.py`로 PNG로 뽑을 수 있다 ([docs/formats/tex.md](docs/formats/tex.md)). UI 뱅크에는 DXT가 없다. `[assets] replace_textures`(기본 켬)가 `data\tex\<16진수 텍스처 번호>.png`를 원본 대신 더 큰 32비트 텍스처로 넣는다 (실행 확인됨, [assets.md](docs/work/assets.md) G1). 나머지 `.bin` 포맷은 **미분석**이다.
+**`tex\*.bin`은 분석됨 (2026-10-15):** LZSS로 압축된 픽셀 데이터만 있고, 텍스처 목록(크기, 드림캐스트 PVR 형식, 위치, 텍스처 번호)은 `Hod2.exe` 안의 표에 있다. `tools/assets/tex_extract.py`로 PNG로 뽑을 수 있다 ([docs/formats/tex.md](docs/formats/tex.md)). UI 뱅크에는 DXT가 없다. `[assets] replace_textures`(기본 켬)가 `data\tex\<뱅크>\<16진수 텍스처 번호>.png`(또는 `data\tex\<번호>.png`)를 원본 대신 더 큰 32비트 텍스처로 넣는다. 번호가 뱅크마다 겹치므로 뱅크 폴더가 기본이다 (실행 확인됨, [assets.md](docs/work/assets.md) G1). 나머지 `.bin` 포맷은 **미분석**이다.
 
 `tex\scr_blood_green.bin`은 `00_Setup.bat`이 피 색상(초록/빨강)을 바꿀 때 덮어쓰는 파일이다.
 
@@ -234,7 +234,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출) (있음). 이후 다른 리소스 추출/변환
+├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale-ui.ps1 Real-ESRGAN 묶음 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

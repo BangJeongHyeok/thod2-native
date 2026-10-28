@@ -20,6 +20,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace thod2::core::patches {
 namespace {
@@ -36,11 +37,16 @@ float g_widen = 1.0f;
 // Sprite record passed to 0x4A6ED0 (15 dwords). Only the fields used here.
 constexpr std::size_t kSpriteDwords = 15;
 constexpr std::size_t kSpriteTexture = 3;
+constexpr std::size_t kSpriteAngle = 5;
 constexpr std::size_t kSpriteAnchor = 6;
 constexpr std::size_t kSpriteX = 7;
 constexpr std::size_t kSpriteY = 8;
 constexpr std::size_t kSpriteScaleX = 9;
 constexpr std::size_t kSpriteScaleY = 10;
+// Texture u of the left and right vertices (v at 12 and 14); SubmitSprite
+// 0x4AC140 stores 0 and 1, or 1 and 0 for a horizontally flipped sprite.
+constexpr std::size_t kSpriteU0 = 11;
+constexpr std::size_t kSpriteU1 = 13;
 
 using DrawScreenQuadFn = void(__cdecl*)(std::uint32_t* sprite);
 
@@ -172,6 +178,75 @@ std::uint32_t __cdecl HookedDrawModelAlt(std::uint32_t* record, std::uint32_t fl
   return DrawModelWith(hod2::kDrawModelAlt, "DrawModelAlt", record, flag);
 }
 
+// Draws a sprite record squeezed towards the screen centre.
+void DrawSqueezed(std::array<std::uint32_t, kSpriteDwords> copy) {
+  const float x = std::bit_cast<float>(copy[kSpriteX]);
+  const float scale_x = std::bit_cast<float>(copy[kSpriteScaleX]);
+  copy[kSpriteX] = std::bit_cast<std::uint32_t>(kScreenCentreX + (x - kScreenCentreX) / g_widen);
+  copy[kSpriteScaleX] = std::bit_cast<std::uint32_t>(scale_x / g_widen);
+  reinterpret_cast<DrawScreenQuadFn>(hod2::kDrawScreenQuad)(copy.data());
+}
+
+// --- Mirrored background edges ([display] widescreen_mirror) ----------------
+// Full-screen 2D pictures (stage result, loading and title backgrounds) are
+// 4:3 and made of tiles. In the wider view the 3D scene would show next to
+// them; instead, the tiles that lie within the extra width of a 4:3 edge are
+// drawn once more, mirrored about that edge.
+bool g_mirror = false;
+std::set<std::uint64_t> g_traced_mirrors;
+
+// Horizontal extent of a sprite in 640x480 coordinates. DrawScreenQuad places
+// the corners at x + (c - a) * width / 2 with c = 1 and 3 (vertex table
+// 0x597808: (1,3) (3,3) (1,1) (3,1)) and a = sprite[6] bits 0-1, or 1 when the
+// low 4 bits are 0. So a = 1 puts the left edge at x (the default; title
+// background tiles have x = 0, 128, ...), 2 centres the quad, 3 right-aligns it.
+struct Extent {
+  float left;
+  float width;
+  float anchor_offset;  // left - x
+};
+
+Extent SpriteExtent(const std::array<std::uint32_t, kSpriteDwords>& s) {
+  std::uint32_t w = 0;
+  std::uint32_t h = 0;
+  TextureSize(s[kSpriteTexture], &w, &h);
+  const std::uint32_t a = (s[kSpriteAnchor] & 0xF) == 0 ? 1 : (s[kSpriteAnchor] & 3);
+  const float width = static_cast<float>(w) * std::bit_cast<float>(s[kSpriteScaleX]);
+  const float offset = (1.0f - static_cast<float>(a)) * width * 0.5f;
+  return {std::bit_cast<float>(s[kSpriteX]) + offset, width, offset};
+}
+
+// True for tiles of a full-screen picture: unrotated, at least 64 x 32 px
+// (title background tiles are 128 x 32),
+// and on the tile grid that starts at the 4:3 edge (distance from the edge a
+// multiple of the tile width), within the extra width of the wider view.
+bool IsEdgeTile(const std::array<std::uint32_t, kSpriteDwords>& s, float from_edge, float width) {
+  std::uint32_t w = 0;
+  std::uint32_t h = 0;
+  TextureSize(s[kSpriteTexture], &w, &h);
+  const float height = static_cast<float>(h) * std::bit_cast<float>(s[kSpriteScaleY]);
+  const float extra = 320.0f * (g_widen - 1.0f);
+  if (s[kSpriteAngle] != 0 || width < 64.0f || height < 32.0f ||
+      from_edge < -0.5f || from_edge >= extra) {
+    return false;
+  }
+  const float cells = from_edge / width;
+  return std::abs(cells - std::round(cells)) * width < 0.5f;
+}
+
+void DrawMirrored(std::array<std::uint32_t, kSpriteDwords> s, float new_left, const Extent& e) {
+  s[kSpriteX] = std::bit_cast<std::uint32_t>(new_left - e.anchor_offset);
+  std::swap(s[kSpriteU0], s[kSpriteU1]);
+  if (g_trace && g_traced_mirrors.insert((static_cast<std::uint64_t>(s[kSpriteTexture]) << 32) ^
+                                         static_cast<std::uint32_t>(static_cast<std::int32_t>(new_left)))
+                     .second &&
+      g_traced_mirrors.size() <= 200) {
+    Log(LogLevel::Info, "widescreen_mirror: texture 0x{:X} x {:.1f}..{:.1f} -> {:.1f}..{:.1f}", s[kSpriteTexture],
+        e.left, e.left + e.width, new_left, new_left + e.width);
+  }
+  DrawSqueezed(s);
+}
+
 void __cdecl SqueezedDrawScreenQuad(std::uint32_t* sprite) {
   if (g_trace) {
     TraceWideQuad(sprite);
@@ -182,11 +257,17 @@ void __cdecl SqueezedDrawScreenQuad(std::uint32_t* sprite) {
   }
   std::array<std::uint32_t, kSpriteDwords> copy;
   std::memcpy(copy.data(), sprite, sizeof(copy));
-  const float x = std::bit_cast<float>(copy[kSpriteX]);
-  const float scale_x = std::bit_cast<float>(copy[kSpriteScaleX]);
-  copy[kSpriteX] = std::bit_cast<std::uint32_t>(kScreenCentreX + (x - kScreenCentreX) / g_widen);
-  copy[kSpriteScaleX] = std::bit_cast<std::uint32_t>(scale_x / g_widen);
-  reinterpret_cast<DrawScreenQuadFn>(hod2::kDrawScreenQuad)(copy.data());
+  if (g_mirror) {
+    const Extent e = SpriteExtent(copy);
+    const float right = e.left + e.width;
+    if (IsEdgeTile(copy, e.left, e.width)) {
+      DrawMirrored(copy, -right, e);  // [left, right] -> [-right, -left]
+    }
+    if (IsEdgeTile(copy, 640.0f - right, e.width)) {
+      DrawMirrored(copy, 1280.0f - right, e);  // [left, right] -> [1280 - right, 1280 - left]
+    }
+  }
+  DrawSqueezed(copy);
 }
 
 // --- Wider 4:3 limits ---------------------------------------------------------
@@ -314,6 +395,7 @@ bool InstallWidescreen(const WidescreenOptions& options) {
   const bool widen = options.aspect > kOriginalAspect + 0.01f;
   g_widen = widen ? options.aspect / kOriginalAspect : 1.0f;
   g_squeeze = widen && options.squeeze_2d;
+  g_mirror = g_squeeze && options.mirror_edges;
   g_trace = options.trace;
   g_widen_letterbox = widen;
   const auto original = std::bit_cast<std::uint32_t>(kOriginalAspect);
@@ -414,8 +496,9 @@ bool InstallWidescreen(const WidescreenOptions& options) {
     Log(LogLevel::Info, "widescreen: {} sprite call sites hooked, HUD shift {:.1f}", patched, g_anchor_shift);
   }
   if (widen) {
-    Log(LogLevel::Info, "widescreen: aspect {:.4f} ({:.3f} x 4:3){}{}{}", options.aspect, g_widen,
-        g_squeeze ? "" : ", 2D not squeezed", options.trace ? ", tracing" : "", ok ? "" : " (partly installed)");
+    Log(LogLevel::Info, "widescreen: aspect {:.4f} ({:.3f} x 4:3){}{}{}{}", options.aspect, g_widen,
+        g_squeeze ? "" : ", 2D not squeezed", g_mirror ? ", mirrored background edges" : "",
+        options.trace ? ", tracing" : "", ok ? "" : " (partly installed)");
   } else {
     Log(LogLevel::Info, "widescreen: off (aspect {:.4f}){}", options.aspect, options.trace ? ", tracing" : "");
   }
