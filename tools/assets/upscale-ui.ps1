@@ -187,7 +187,15 @@ New-Item -ItemType Directory -Force $pictures | Out-Null
 # A unit is one image in an atlas page: a texture, or a picture put together
 # from tiles (members with their offset inside the unit).
 function Unit($file, $w, $h, $members) { [pscustomobject]@{ file = $file; w = $w; h = $h; members = $members } }
-function Member($row, $dx, $dy) { [pscustomobject]@{ id = $row.texture_id; dx = $dx; dy = $dy; w = [int]$row.width; h = [int]$row.height } }
+function Member($row, $dx, $dy) {
+  [pscustomobject]@{ bank = ($row.bank -replace '\.bin$', ''); id = $row.texture_id; dx = $dx; dy = $dy; w = [int]$row.width; h = [int]$row.height }
+}
+
+# Banks packed into the same atlas pages as another bank, so that textures of
+# one screen get one upscale together: the title menu items (3D drum,
+# komono_title) use the same lettering as the title textures (scr_title).
+$BankGroups = @{ 'komono_title' = 'scr_title' }
+function AtlasGroup($bankFile) { $b = $bankFile -replace '\.bin$', ''; if ($BankGroups.ContainsKey($b)) { $BankGroups[$b] } else { $b } }
 
 # Full-screen pictures are stored as tiles of one size, row-major, 640 px per
 # row (title and stage result backgrounds, loading screens). Upscaled one by
@@ -227,7 +235,9 @@ function PhotoUnits($bank, $items) {
       $tiles = @($run[$k..($k + $take - 1)])
       $file = Join-Path $pictures ("{0}_{1:D3}.png" -f $bank, [int]$tiles[0].index)
       $score = [UiAtlas]::Assemble([string[]]($tiles | ForEach-Object { Join-Path $srcFull $_.file }), $cols, $file)
-      $ok = $score -le $MaxSeam
+      # Only fully opaque tiles: separate sprites with transparent edges
+      # (common.bin blood splats) give a seam score of 0 as well.
+      $ok = $score -le $MaxSeam -and -not ($tiles | Where-Object { -not $script:fullyOpaque[$_.file] })
       "  $bank #$($tiles[0].index)..#$($tiles[-1].index): $cols x $($take / $cols) tiles of $($w)x$($h), seam score {0:N2} -> {1}" -f $score, $(if ($ok) { 'picture' } else { 'tiles' })
       if ($ok) {
         $members = for ($t = 0; $t -lt $take; $t++) { Member $tiles[$t] ($t % $cols * $w) ([math]::Floor($t / $cols) * $h) }
@@ -242,7 +252,10 @@ function PhotoUnits($bank, $items) {
   }
 }
 
-foreach ($group in ($rows | Group-Object bank)) {
+foreach ($atlas in ($rows | Group-Object { AtlasGroup $_.bank })) {
+ $atlasName = $atlas.Name
+ $groupUnits = @{ photo = @(); graphic = @() }
+ foreach ($group in ($atlas.Group | Group-Object bank)) {
   $bank = $group.Name -replace '\.bin$', ''
   $usable = @($group.Group | Where-Object { [int]$_.width * $scale -le $maxSize -and [int]$_.height * $scale -le $maxSize } |
               Sort-Object { [int]$_.index })
@@ -251,10 +264,11 @@ foreach ($group in ($rows | Group-Object bank)) {
   # full-screen picture (title, date and branch screens). Opaque textures that
   # are not part of a picture (for example credits text on black) and
   # everything with transparency (text, icons, logos) are graphics.
-  $vq = @{}; $candidates = @()
+  $vq = @{}; $candidates = @(); $script:fullyOpaque = @{}
   foreach ($r in $usable) {
     $vq[$r.file] = (([Convert]::ToInt32($r.format, 16) -shr 8) -band 0xFF) -eq 3
-    if ($vq[$r.file] -or [UiAtlas]::IsOpaque((Join-Path $srcFull $r.file))) { $candidates += $r }
+    $script:fullyOpaque[$r.file] = [UiAtlas]::IsOpaque((Join-Path $srcFull $r.file))
+    if ($vq[$r.file] -or $script:fullyOpaque[$r.file]) { $candidates += $r }
   }
   $script:units = @()
   if ($KnownLayouts.ContainsKey($bank)) {
@@ -275,18 +289,21 @@ foreach ($group in ($rows | Group-Object bank)) {
   $photoIds = @{}; foreach ($u in $photoUnits) { foreach ($m in $u.members) { $photoIds[$m.id] = 1 } }
   $graphicUnits = @($usable | Where-Object { -not $photoIds.ContainsKey($_.texture_id) } |
                     ForEach-Object { Unit (Join-Path $srcFull $_.file) ([int]$_.width) ([int]$_.height) @(Member $_ 0 0) })
-  foreach ($kind in $models.Keys) {
-    $units = @($(if ($kind -eq 'photo') { $photoUnits } else { $graphicUnits }) | Sort-Object { $_.h }, { $_.w } -Descending)
+  $groupUnits.photo += $photoUnits
+  $groupUnits.graphic += $graphicUnits
+ }
+ foreach ($kind in $models.Keys) {
+    $units = @($groupUnits[$kind] | Sort-Object { $_.h }, { $_.w } -Descending)
     if ($units.Count -eq 0) { continue }
-    $prefix = Join-Path $workFull "$kind\in\$bank"
+    $prefix = Join-Path $workFull "$kind\in\$atlasName"
     $layout = [UiAtlas]::Pack([string[]]($units | ForEach-Object { $_.file }), $Pad, $PageSize, $prefix)
     for ($i = 0; $i -lt $units.Count; $i++) {
       foreach ($m in $units[$i].members) {
-        $jobs += [pscustomobject]@{ kind = $kind; bank = $bank; id = $m.id; page = "$($bank)_$($layout[$i * 3]).png"
+        $jobs += [pscustomobject]@{ kind = $kind; bank = $m.bank; id = $m.id; page = "$($atlasName)_$($layout[$i * 3]).png"
                                     x = $layout[$i * 3 + 1] + $m.dx; y = $layout[$i * 3 + 2] + $m.dy; w = $m.w; h = $m.h }
       }
     }
-  }
+ }
 }
 foreach ($kind in $models.Keys) {
   $in = Join-Path $workFull "$kind\in"; $res = Join-Path $workFull "$kind\out"
@@ -304,10 +321,9 @@ foreach ($pageJobs in ($jobs | Group-Object kind, page)) {
   $first = $pageJobs.Group[0]
   $page = Join-Path $workFull "$($first.kind)\out\$($first.page)"
   if (-not (Test-Path $page)) { "missing output $page"; continue }
-  $folder = Join-Path $outFull $first.bank
-  New-Item -ItemType Directory -Force $folder | Out-Null
+  foreach ($b in ($pageJobs.Group | Select-Object -ExpandProperty bank -Unique)) { New-Item -ItemType Directory -Force (Join-Path $outFull $b) | Out-Null }
   $rects = [int[]]($pageJobs.Group | ForEach-Object { $_.x, $_.y, $_.w, $_.h })
-  $outs = [string[]]($pageJobs.Group | ForEach-Object { Join-Path $folder "$($_.id).png" })
+  $outs = [string[]]($pageJobs.Group | ForEach-Object { Join-Path (Join-Path $outFull $_.bank) "$($_.id).png" })
   [UiAtlas]::Cut($page, $scale, $rects, $outs)
   $written += $outs.Count
 }

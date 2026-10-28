@@ -16,6 +16,7 @@
 #include <cstring>
 #include <cwchar>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,6 +55,8 @@ std::vector<BankRange> g_banks;
 // (bank, texture id) -> image; bank "" = images directly in data\tex (any bank).
 std::map<std::pair<std::string, std::int32_t>, std::filesystem::path> g_files;
 bool g_logged_device = false;
+bool g_trace_missing = false;  // [debug] trace_textures
+std::set<std::pair<std::string, std::int32_t>> g_missing;
 
 struct Image {
   UINT width = 0;
@@ -220,6 +223,11 @@ void* __cdecl ReplacedCreateTextureFromPvr(const PvrEntry* entry, const std::uin
     file = g_files.find({std::string(), entry->texture_id});
   }
   if (file == g_files.end()) {
+    if (g_trace_missing && g_missing.insert({BankOf(entry), entry->texture_id}).second) {
+      const std::string& bank = BankOf(entry);
+      Log(LogLevel::Info, "replace_textures: no image for {} {:X} ({}x{}, format 0x{:X})",
+          bank.empty() ? "(no bank)" : bank, entry->texture_id, entry->width, entry->height, entry->format);
+    }
     return original(entry, pixels);
   }
   LogDevice();
@@ -266,7 +274,8 @@ std::string Lower(std::string text) {
 
 }  // namespace
 
-bool InstallTextureReplace(const std::filesystem::path& folder) {
+bool InstallTextureReplace(const std::filesystem::path& folder, bool trace_missing) {
+  g_trace_missing = trace_missing;
   // Entry table range and name (file name without .bin) of every bank.
   const auto* names = reinterpret_cast<const char* const*>(hod2::kTexBankNames);
   const auto* tables = reinterpret_cast<const std::uintptr_t*>(hod2::kTexBankEntries);

@@ -22,7 +22,7 @@
 - [x] G1-3. 교체 가능성 분석 (그리기 크기와 UV가 텍스처 실제 크기와 무관함을 확인)
 - [x] G1-4. 실행 중 교체: `CreateTextureFromPvr` 호출을 가로채서 교체 이미지가 있으면 큰 32비트 표면을 만든다 (`src/core/patches/texture_replace.cpp`, 시험 이미지 7개로 확인)
 - [x] G1-5. 교체 이미지 폴더 규칙 (`<게임 폴더>\data\tex\<뱅크>\<16진수 텍스처 번호>.png`, G1-8에서 뱅크 폴더 추가)과 PNG 읽기 (Windows 내장 WIC, 외부 라이브러리 없음)
-- [ ] G1-7. 타이틀 메뉴 글자(`Network`/`Arcade mode`/`Original mode`)가 어느 텍스처인지 찾기. `scr_title`의 `Arcade mode`(`DF9`)를 바꿔도 메뉴 화면은 그대로였다
+- [x] G1-7. 타이틀 메뉴 글자(`Network`/`Arcade mode`/`Original mode`)가 어느 텍스처인지 찾기 → `komono_title.bin`(3D 원통 메뉴의 텍스처 7개). `scr_title`과 같은 묶음 그림으로 업스케일 (2026-10-28)
 - [ ] G1-6. 추출한 원본 UI 스프라이트를 업스케일해서 고해상도 이미지 만들기 (2026-10-15 사용자 결정: 다시 그리지 않고 원본 업스케일). 사용자가 결과를 한 번 확인한 뒤 적용한다. 결과물은 저장소에 넣지 않는다
   - [x] `scr_*` 뱅크 117개, 텍스처 3,018개를 Real-ESRGAN으로 4배 업스케일 (`tools/assets/upscale-ui.ps1`, 자동 검증 `tools/assets/verify-upscale.ps1`)
   - [x] 사용자 1차 확인 (2026-10-16): 글자 굵기가 글자마다 따로 노는 느낌, 결과 화면 양옆 빈 곳 → 묶음 업스케일과 거울 이어 붙이기로 진행 (아래 작업 기록)
@@ -58,6 +58,57 @@
 - 2048보다 큰 이미지를 넣으면 `ClampTextureSize`가 줄이는지, 실패하는지
 
 ## 작업 기록
+
+### 2026-10-28 — 타이틀에서 들어가는 화면의 업스케일 범위 확인, common.bin 추가
+
+- **계기:** 사용자 질문. Options, Network 같은 아웃게임 화면에도 업스케일이 다 들어갔는지.
+- **한 일:**
+  - `[debug] trace_textures`를 추가했다. 교체 이미지 없이 만들어진 텍스처를 뱅크·번호·크기·형식과 함께 한 번씩 로그에 남긴다.
+  - 메뉴 이동을 자동화했다.
+    - 게임 시작 6.5초 뒤 Enter로 메뉴에 들어간다.
+    - 위·아래 키로 메뉴 원통이 돈다. 순서는 Arcade → Original → Training → Boss → Rankings → Options → Network(위로 한 번).
+    - 메뉴마다 Enter로 들어가 3초·6초 뒤에 찍고, 한 번 더 Enter를 누르고 찍는다.
+- **첫 시도 실패:**
+  - Network에 들어가자 Windows가 DirectPlay 설치 창(관리자 권한, 보안 데스크톱)을 띄웠다. 그동안 화면 캡처가 `The handle is invalid`로 실패하고 입력도 들어가지 않았다.
+  - 사용자가 설치를 승인해서 이 PC에 DirectPlay가 설치되었다 (2026-10-28, [compat-survey.md](compat-survey.md)).
+- **결과 (6개 화면 모두 진입):** Original(아이템 화면), Training, Boss, Rankings, Options, Network(NETWORK CONNECTION).
+  - **Options, Network, Rankings:** 교체 없이 만들어진 것은 `common`, `st1_*`(타이틀 뒤 3D 무대)뿐이다. Rankings는 여기에 `player3`(3D 인물)가 더해진다. 화면 글자와 그림은 모두 `scr_*` 업스케일로 바뀌었다.
+  - **Training, Boss, Original:** 추가로 빠진 것은 3D 모델·무대·효과다. 예: `player1/2`, `hito_*`, `znsam2`, `boss1z`, `boss1q`, `car_*`, `st1_04b`, `eff_1`, `komono_*`, `garasu`.
+  - **`common.bin`(뱅크 1, 85개)에 게임 중 UI가 있다:** `LIFE UP!`, `MISS SHOT LIFE - 1`(1P/2P 색), 생명 아이템, 금화, 총알 아이콘. 나머지는 피·불꽃·연기 같은 효과다.
+- **common.bin 추가:**
+  - 추출·업스케일 대상에 넣었다. 전체 3,110개, 자동 검증에서 오류 0개.
+  - 넣은 뒤 Options 진입 로그에서 `common`의 교체 누락이 0개다. 남은 것은 `st1_*` 100개뿐이다.
+- **그림 맞춰 붙이기 오판 수정:**
+  - `common`, `scr_blood_green`, `scr_blood_red`의 64×64 피 효과 20개가 이음매 점수 0.00으로 한 그림처럼 처리되고 있었다. 가장자리가 투명한 따로따로의 스프라이트다. PR #23 결과의 `scr_blood_*`도 이렇게 처리되었다.
+  - 그림으로 맞춰 붙이는 조건에 "모든 조각이 완전히 불투명"을 더했다. 그림 수는 40개로, 타이틀·로딩·순위 배경 등은 그대로다.
+- **안 한 것:**
+  - 3D 모델·무대 텍스처(`st*`, `player*`, `hito_*` 등)는 UI가 아니라 대상에 넣지 않았다.
+  - `etc_komono_gal.bin`은 `tex_extract.py`의 LZSS 풀기에서 범위 오류가 난다. 따로 확인해야 한다.
+### 2026-10-28 — 타이틀 메뉴 글자 업스케일 (G1-7)
+
+- **찾은 것:**
+  - 타이틀 메뉴(`Network`/`Arcade mode`/`Original mode` …)는 2D 스프라이트가 아니라 **3D 원통 모델**에 붙은 텍스처다.
+  - 텍스처는 `komono_title.bin`(뱅크 `0x73`)의 7개다: `DF3` Arcade mode, `DF4` Original mode, `DF5` Training mode, `DF6` Boss mode, `DF7` Rankings, `DF8` Options, `DFF` Network. 모두 0x902 배치(직사각형 ARGB4444)다.
+  - `scr_title`에 같은 글자가 다른 번호(`DF9`~`DFE`)로 따로 있다. 그래서 이전에 `DF9`를 바꿔도 메뉴가 그대로였다.
+  - `scr_*`가 아닌 뱅크는 326개다. 메뉴용으로 보이는 것은 `komono_title`뿐이다.
+- **한 일:**
+  - `upscale-ui.ps1`에 `$BankGroups`를 넣었다. 여러 뱅크를 같은 묶음 그림에 넣어 한 번에 업스케일하고, 결과는 뱅크별 폴더에 쓴다. `komono_title`을 `scr_title`과 묶었다 (사용자 요청: 한 화면의 텍스처는 한 번의 업스케일로 일관성 유지).
+  - 추출 대상에 `komono_title.bin`을 더했다. 전체 3,025개다.
+- **결과:**
+  - `scr_title`과 `komono_title`의 글자가 같은 묶음 그림 한 장(`scr_title_0`)에 들어갔다. 자동 검증에서 크기 오류 0개, 빠진 것 0개.
+  - 게임 로그에 `DF3`~`DF8`, `DFF`가 4배로 교체되었다. 뱅크 폴더(`data\tex\komono_title\`)에서 찾았다. 모델 텍스처 경로도 항목 표 주소로 뱅크를 알 수 있다.
+  - 메뉴 글자의 계단 현상이 줄었다 (`screenshots\menu_compare2.png`).
+- **4:3을 넘는 부분:**
+  - 타이틀 로고 오른쪽 조각(`1393`)은 x = 548~676으로 4:3 밖까지 나간다. 와이드스크린에서는 넓어진 화면 안이라 잘리지 않는다.
+  - 메뉴 배경은 화면 비율별로 거울 채우기를 확인했다.
+
+    | 화면 비율 | 넓힘 배수 | 뒤집어 그린 조각 (로그 줄 수) | 빈 곳 |
+    |---|---|---|---|
+    | 16:9 | 1.333 | 32 | 없음 |
+    | 21:9 | 1.750 | 60 (끝에서 2번째 줄까지) | 없음 |
+    | 32:9 | 2.667 | 152 (그림 전체가 양쪽에 한 번씩) | 없음 |
+  - 32:9에서는 거울 그림이라 달이 세 번 보인다.
+  - 첫 타이틀 화면은 배경이 3D라 Hor+로 넓게 보인다.
 
 ### 2026-10-26 — 구출 결과 화면 배경 배치 (G1-10)
 

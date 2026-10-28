@@ -16,6 +16,8 @@ namespace thod2::core::patches {
 //
 // Hooks the three calls of CreateTextureFromPvr (0x4AB690). Returns false if
 // the call sites do not match. An empty or missing folder changes nothing.
-bool InstallTextureReplace(const std::filesystem::path& folder);
+// trace_missing ([debug] trace_textures) logs each texture created without a
+// replacement image once (bank, id, size, PVR format), to find what is left.
+bool InstallTextureReplace(const std::filesystem::path& folder, bool trace_missing = false);
 
 }  // namespace thod2::core::patches
