@@ -22,6 +22,28 @@ PC판 **The House of the Dead 2**(SEGA, 2001)를 현대 Windows에서 잘 돌게
 | 와이드스크린 (선택) | 4:3 | 모니터 비율로 넓게 |
 | 고주사율 (선택) | 초당 60장 | 144Hz·240Hz 모니터에서 주사율만큼 부드럽게 (게임 속도는 그대로) |
 
+## 원본과 비교
+
+왼쪽은 원본(640×480 전체 화면), 오른쪽은 thod2-native입니다. 오른쪽 설정은 1920×1080 화면, 와이드스크린(`widescreen = 1`), 고해상도 UI 텍스처, 안티에일리어싱 4x입니다. 같은 실행 순서로 같은 시각에 찍었습니다. 데모의 "PRESS START BUTTON"은 깜박이는 글자라 한쪽에만 보일 수 있습니다.
+
+**타이틀** — 3D 배경이 화면 양옆까지 넓어지고, 로고와 글자가 선명해집니다.
+![타이틀 비교](docs/images/compare-title.jpg)
+
+**타이틀 메뉴**
+![타이틀 메뉴 비교](docs/images/compare-menu.jpg)
+
+**게임 설명 화면** — 안내 상자, 총알, 생명 표시 같은 2D가 고해상도로 그려집니다.
+![게임 설명 화면 비교](docs/images/compare-tutorial.jpg)
+
+**인트로 컷신** — 위아래 띠와 자막은 원래 비율 그대로, 화면만 넓어집니다.
+![인트로 컷신 비교](docs/images/compare-cutscene.jpg)
+
+**게임 장면** — 총알·생명 HUD는 화면 끝으로 붙고, 조준점은 커서를 따라갑니다.
+![게임 장면 비교](docs/images/compare-gameplay.jpg)
+
+**데모 (골목)** — 같은 장면에서 양옆이 더 보입니다.
+![데모 장면 비교](docs/images/compare-alley.jpg)
+
 ## 준비물
 
 1. **The House of the Dead 2 PC판 게임 폴더** (`Hod2.exe`가 있는 `THOTD2` 폴더)

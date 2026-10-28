@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 1-1
 - **관련 코드:** 없음 (조사 문서)
-- **마지막 갱신:** 2026-10-14
+- **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
 
@@ -113,6 +113,12 @@
 - 게임이 실제로 몇 fps로 그리는지, vsync를 기다리는지
 
 ## 작업 기록
+
+### 2026-10-29 — README 비교 캡처 중 관찰 (원본 실행)
+
+- **관찰:** `original-game\THOTD2`를 새 폴더(`test-game\THOTD2-clean`)에 복사해서 thod2-native·dgVoodoo2 없이 `Hod2.exe`를 실행하면, 15초 동안 창이 보이지 않고(`The House of the Dead 2` 창 `vis=False`, 656×516) 장치 확인창도 뜨지 않은 채 CPU를 계속 썼다. 이 폴더에는 Windows PCA의 `DWM8And16BitMitigation` 등록(HKCU·HKLM `AppCompatFlags\Layers`)이 없다. 등록이 있는 `test-game\THOTD2`에서는 같은 `Hod2.exe`가 확인창을 띄우고 정상 실행됐다.
+- 같은 새 폴더에서 thod2-native 배포 zip + dgVoodoo2로는 정상 실행됐다 ([build.md](build.md) 2026-10-29).
+- 그래서 원본 캡처는 `test-game\THOTD2`에서 `dinput.dll`, `DDraw.dll`, `D3DImm.dll`을 잠시 `.off`로 바꾸고 찍은 뒤 되돌렸다. 도구: `tools/compat/showcase-capture.ps1`(장치 확인창 "예", 1초마다 창 캡처, `-Play`면 Enter 두 번·우클릭 건너뛰기), `tools/compat/showcase-compose.ps1`(좌우 합성 JPEG). 결과는 README "원본과 비교"(`docs/images/compare-*.jpg`, 6장 1,587,448 bytes). 원본 캡처는 640×480, thod2-native는 1920×1080 (측정 중 주 모니터 240Hz).
 
 ### 2026-10-28 — Network 메뉴와 DirectPlay
 
