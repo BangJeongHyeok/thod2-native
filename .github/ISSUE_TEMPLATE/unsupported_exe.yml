@@ -1,0 +1,43 @@
+name: 내 Hod2.exe가 지원되지 않음
+description: 로그에 "unknown host executable"이 나오고 thod2-native 기능이 하나도 켜지지 않을 때
+title: "[지원 요청] "
+labels: [unsupported-exe]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        thod2-native는 확인한 `Hod2.exe` 한 가지에서만 기능을 켭니다. 다른 판본은 코드 위치가 달라서, 잘못 고치면 게임이 꺼질 수 있기 때문입니다.
+        다른 판본도 지원하려면 그 파일의 지문(SHA-256)이 필요합니다. 아래 방법으로 확인해서 알려 주세요.
+
+        **지문 확인 방법:** 게임 폴더에서 빈 곳을 Shift + 오른쪽 클릭 → "PowerShell 창 열기"(또는 "터미널에서 열기") → 아래 명령을 붙여 넣고 Enter.
+        ```
+        Get-FileHash .\Hod2.exe
+        ```
+        `Hash` 줄에 나온 64자리 값을 복사해 주세요.
+
+        게임 파일 자체는 절대 올리지 마세요.
+  - type: input
+    id: sha256
+    attributes:
+      label: Hod2.exe의 SHA-256
+      placeholder: 64자리 16진수
+    validations:
+      required: true
+  - type: input
+    id: size
+    attributes:
+      label: Hod2.exe 파일 크기 (바이트)
+      description: 파일 속성의 "크기" 괄호 안 숫자
+      placeholder: 예) 1,695,744
+  - type: textarea
+    id: edition
+    attributes:
+      label: 어떤 판본인가요?
+      description: 아는 만큼 적어 주세요. 예) 국내 정식 CD판, 일본판, 영어판, 다른 게임과 묶인 판 등. 패치를 따로 깔았다면 그것도 적어 주세요.
+  - type: textarea
+    id: log
+    attributes:
+      label: thod2-native.log
+      description: 게임 폴더의 `thod2-native.log` 파일을 이 칸에 끌어다 놓아 주세요.
+    validations:
+      required: true

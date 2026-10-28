@@ -2,7 +2,7 @@
 
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 0
-- **관련 코드:** `CMakeLists.txt`, `CMakePresets.json`, `src/core/`, `tests/`, `tools/deploy.ps1`, `config/`
+- **관련 코드:** `CMakeLists.txt`, `CMakePresets.json`, `src/core/`, `tests/`, `tools/deploy.ps1`, `tools/package.ps1`, `.github/`, `config/`
 - **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
@@ -21,10 +21,17 @@
 - [x] G1-4 테스트 사본 배포 스크립트 `tools/deploy.ps1`
 - [x] G1-5 코딩 규칙 문서 [docs/CONVENTIONS.md](../CONVENTIONS.md)
 
-### G2. 빌드 편의 — 대기
+### G2. 빌드 편의 — 진행 중
 
 - [ ] G2-1 CMake를 PATH 없이 부르는 래퍼 스크립트 (또는 Developer PowerShell 안내만으로 충분한지 결정)
-- [ ] G2-2 CI (GitHub Actions, windows 러너에서 x86 빌드 + 테스트) — ROADMAP 4단계와 연계
+- [x] G2-2 CI (GitHub Actions, windows 러너에서 x86 빌드 + 테스트) — 2026-10-29 워크플로 추가 (`.github/workflows/build.yml`). GitHub에서 처음 돌리는 것은 머지 뒤
+
+### G3. 배포판 (ROADMAP 4단계) — 진행 중
+
+- [x] G3-1 배포 zip 스크립트 `tools/package.ps1` (zip 안의 파일을 게임 폴더에 그대로 풂)
+- [x] G3-2 v* 태그를 올리면 GitHub Actions가 zip을 Release에 올림. README의 받기 링크는 `releases/latest/download/thod2-native.zip`
+- [x] G3-3 배포 zip + dgVoodoo2 파일 3개만으로 깨끗한 게임 사본에 설치되는지 확인 (Python 없이)
+- [ ] G3-4 저장소 공개, 첫 Release(v0.1.0)
 
 ## 빌드 방법
 
@@ -48,6 +55,32 @@ ctest --preset x86-release          # 테스트 (core_tests, loader_tests, platf
 | `thod2_core_lib.lib`, `thod2_interop_lib.lib`, `thod2_platform_lib.lib` | `build/x86/lib/<Config>/` | 코어·후킹 도우미·재구현 플랫폼 계층 내부 구현 (DLL과 테스트가 링크) |
 
 `deploy.ps1`은 `dinput.dll`(로더)과 `thod2_core.dll`을 복사하고, 게임 폴더에 `thod2-native.ini`가 없을 때만 `config/thod2-native.ini`를 복사한다. `-Remove`는 DLL과 로그를 지우고 ini는 남긴다 (로컬 설정 보존). 로더 동작은 [loader.md](loader.md) "로더 동작"을 본다.
+
+## 배포판 만들기
+
+```powershell
+cmake --build --preset x86-release
+.\tools\package.ps1                 # build\package\thod2-native.zip
+```
+
+zip 안의 파일 (모두 게임 폴더에 그대로 푼다):
+
+| 파일 | 원본 |
+|---|---|
+| `dinput.dll`, `thod2_core.dll` | Release 빌드 |
+| `thod2-native.ini` | `config/thod2-native.ini` |
+| `thod2-native-README.txt` | `config/package-readme.txt` (짧은 설치 안내, 한국어) |
+| `thod2-native-LICENSE.txt` | `LICENSE` (CC BY-NC-SA 4.0 원문) |
+
+dgVoodoo2는 라이선스를 확인할 수 없어서 넣지 않는다 ([INSTALL.md](../INSTALL.md) 끝). 사용자가 받은 dgVoodoo2의 `dgVoodoo.conf`에는 thod2-native가 게임을 켤 때 권장값을 넣는다 (`[dgvoodoo] preset`, [platform-display.md](platform-display.md)).
+
+**릴리스 절차:**
+
+1. `main`에서 `CMakeLists.txt`의 `project(... VERSION x.y.z)`를 올린다 (로그 첫 줄과 `Thod2Core_Version()`에 나온다). 필요하면 `docs/release-notes.md`를 고친다.
+2. `git tag vx.y.z` → `git push origin vx.y.z`.
+3. `.github/workflows/build.yml`이 빌드·테스트·`package.ps1`을 돌리고, `gh release create`로 Release를 만들어 `thod2-native.zip`을 올린다. README의 링크 `https://github.com/BangJeongHyeok/thod2-native/releases/latest/download/thod2-native.zip`은 늘 최신 Release의 zip을 가리킨다.
+
+워크플로는 `main` push와 PR마다 빌드·테스트도 하고, zip을 실행 결과(artifact)로 남긴다. 러너는 `windows-2022`(Visual Studio 2022, Python 포함)다.
 
 ## 코어 DLL 동작 (0.1.0, 로더 추가 후)
 
@@ -112,13 +145,28 @@ interp_2d = 1
 | 2026-10-14 | CRT 정적 링크 (`/MT`) | 게임 폴더에 VC++ 재배포 패키지가 필요 없게 하기 위해 |
 | 2026-10-14 | 테스트는 외부 프레임워크 없이 작성 | 서드파티 추가는 사용자 확인이 필요하고, 지금 규모에서는 충분함. 테스트가 늘면 재검토 |
 | 2026-10-14 | 코어 내부는 정적 라이브러리 + DLL은 공개 API만 | 테스트가 내부 함수를 직접 부를 수 있게 하기 위해 |
+| 2026-10-29 | 라이선스는 CC BY-NC-SA 4.0 | 사용자 결정: 고치고 다시 배포하는 것은 허용하되, 원작의 2차 창작물이므로 상업적 이용은 막는다. 대안: PolyForm Noncommercial 1.0.0(소프트웨어용이지만 덜 알려졌고 동일조건 강제가 없음). 둘 다 OSI 오픈 소스 라이선스는 아니다 |
+| 2026-10-29 | 배포는 GitHub Release의 zip 하나, README에서 `releases/latest/download/` 링크로 받는다 | 저장소 전체를 받지 않고 파일만 받을 수 있다. 바이너리를 저장소에 커밋하지 않는다(`.gitignore`가 `*.dll`, `*.zip` 제외). 대안: 저장소 안에 배포 폴더를 두기(바이너리가 기록에 쌓임) |
+| 2026-10-29 | 배포 zip은 게임 폴더에 바로 푸는 평평한 구조, 안내·라이선스 파일 이름에 `thod2-native-`를 붙인다 | 폴더째 풀면 사용자가 파일을 다시 옮겨야 한다. 게임 폴더의 다른 파일과 이름이 겹치지 않게 한다 |
 
 ## 미해결 질문
 
-- CI를 언제 도입할지 (ROADMAP 4단계와 연계)
+- GitHub Actions `windows-2022` 러너에서 `loader_tests`(시스템 `dinput.dll`을 불러옴)가 통과하는지 (공개 뒤 첫 실행에서 확인)
 - 지원 빌드 목록에 수정 안 된 원본 `Hod2.exe`를 추가할지 (해시를 구할 방법이 필요)
 
 ## 작업 기록
+
+### 2026-10-29 — 배포판, CI, README, 라이선스 (관련: G2-2, G3)
+
+- **한 일:**
+  - `tools/package.ps1`(배포 zip), `config/package-readme.txt`, `.github/workflows/build.yml`(빌드·테스트·zip, v* 태그면 Release), `docs/release-notes.md`(Release 본문).
+  - `README.md`(사용자용: 받기 링크, 설치, 설정, 아직 확인하지 못한 것, 이슈 올리는 방법, 라이선스), `LICENSE`(CC BY-NC-SA 4.0 원문을 creativecommons.org `legalcode.txt`에서 받음, 20,850 bytes, SHA-256 `e66c269d…2b7bbd`), `.github/ISSUE_TEMPLATE/`(문제 신고, 지원되지 않는 `Hod2.exe`).
+  - `[dgvoodoo] preset`(기본 1): 사용자가 dgVoodoo2 파일 3개만 복사하면 thod2-native가 `dgVoodoo.conf`에 권장값을 넣는다. 배포판 설치에 Python이 필요 없다 ([platform-display.md](platform-display.md)).
+- **결과:**
+  - 깨끗한 게임 사본(`original-game\THOTD2`를 `test-game\THOTD2-clean`에 복사)에 zip을 풀고, dgVoodoo2 2.87.5 zip의 원래 `DDraw.dll`, `D3DImm.dll`, `dgVoodoo.conf`를 복사했다. 실행하자 로그에 `dgvoodoo_preset` 8줄(FullScreenMode true → false, ScalingMode unspecified → stretched_ar, WindowedAttributes, Resolution unforced → max, Antialiasing appdriven → 4x, AppControlledScreenMode, DisableAltEnterToToggleScreenMode, dgVoodooWatermark true → false)이 남고, 화면은 테두리 없는 4:3, 워터마크 없이 나왔다. 경고·오류 없음. 측정 중 주 모니터 240Hz.
+  - 그 전에 INSTALL.md 순서(`deploy.ps1` + `dgvoodoo-setup.py`)대로 같은 사본에 설치한 것도 정상 실행됐다 (초당 60장, 경고·오류 없음. 측정 중 사용자가 PC를 쓰고 있었음).
+  - zip 348,149 bytes. Release 빌드 경고 0개, `ctest` 4개 통과.
+- **다음:** 저장소 공개와 첫 Release(G3-4). CI 첫 실행 결과 확인.
 
 ### 2026-10-15 — ctest에 `re_tables` 추가
 

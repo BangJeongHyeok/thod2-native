@@ -1,0 +1,69 @@
+name: 문제 신고
+description: 실행이 안 되거나, 화면·소리·조작이 이상하거나, 게임이 멈추거나 꺼질 때
+title: "[문제] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        신고해 주셔서 고맙습니다. 아래 칸을 아는 만큼만 채워 주세요. 모르는 칸은 비워 두셔도 됩니다.
+        **`thod2-native.log` 파일을 꼭 붙여 주세요.** 게임 폴더(`Hod2.exe`가 있는 곳)에 있습니다. 게임을 끈 뒤에 올려 주세요.
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이 있었나요?
+      description: 무엇이 어떻게 이상했는지 적어 주세요. 화면 캡처나 동영상이 있으면 이 칸에 끌어다 놓으면 올라갑니다.
+      placeholder: 예) 2장 보스전에서 화면이 몇 초마다 깜빡입니다.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 어떻게 하면 다시 생기나요?
+      description: 순서대로 적어 주세요. 매번 생기는지, 가끔 생기는지도 알려 주세요.
+      placeholder: |
+        1. 게임을 켠다
+        2. 스토리 모드 1장을 시작한다
+        3. ...
+  - type: textarea
+    id: log
+    attributes:
+      label: thod2-native.log
+      description: 게임 폴더의 `thod2-native.log` 파일을 이 칸에 끌어다 놓아 주세요. 게임 폴더에 없으면 `%LOCALAPPDATA%\thod2-native\` 폴더를 봐 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: 바꾼 설정
+      description: "`thod2-native.ini`에서 바꾼 줄이 있으면 적어 주세요. 파일을 통째로 끌어다 놓아도 됩니다."
+      placeholder: |
+        [display]
+        widescreen = 1
+        interpolate = 1
+  - type: input
+    id: version
+    attributes:
+      label: thod2-native 버전
+      description: 받은 Release 이름(예: v0.1.0). 모르면 비워 두세요. 로그 첫 줄에도 나옵니다.
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 버전
+      placeholder: 예) Windows 11 23H2
+  - type: input
+    id: display
+    attributes:
+      label: 모니터 해상도와 주사율
+      description: 모니터가 여러 대면 게임이 뜨는 모니터를 적어 주세요.
+      placeholder: 예) 1920x1080 144Hz
+  - type: input
+    id: gpu
+    attributes:
+      label: 그래픽 카드
+      placeholder: 예) NVIDIA GeForce RTX 3060
+  - type: input
+    id: dgvoodoo
+    attributes:
+      label: dgVoodoo2 버전
+      placeholder: 예) 2.87.5

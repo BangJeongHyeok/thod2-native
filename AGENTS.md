@@ -20,6 +20,8 @@ OpenRCT2, RVGL처럼 원본 게임 데이터만 있으면 현대 PC에서 잘 �
 E:\Repos\hod2-native\
 ├─ thod2-native\    ← 이 저장소 (git). 모든 작업 결과물은 여기에 둔다.
 ├─ test-game\       ← 실행·패치 테스트용 사본 (git 아님, 자유롭게 수정 가능)
+│  ├─ THOTD2\       ← 평소 시험용 사본 (아래 "테스트 사본 현재 상태")
+│  └─ THOTD2-clean\ ← 배포판 설치 시험용 사본 (2026-10-29, original-game 복사 + 배포 zip + dgVoodoo2 원래 파일 3개)
 ├─ external\        ← 사용자 확인 후 받은 외부 도구 (git 아님. dgVoodoo2 v2.87.5, Ghidra 12.1.4, Temurin JDK 21.0.12.1, x64dbg 2026.05.27, Real-ESRGAN ncnn-vulkan 20220424. 목록은 reverse-engineering.md "분석 도구", Real-ESRGAN은 assets.md)
 ├─ ghidra-projects\ ← Ghidra 프로젝트 (git 아님, 원본 코드가 들어가므로 커밋 금지)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
@@ -215,6 +217,9 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 ```
 thod2-native/
 ├─ AGENTS.md          ← 이 문서 (있음)
+├─ README.md          ← 사용자용 안내: 받기 링크, 설치, 이슈 올리는 방법 (있음)
+├─ LICENSE            ← CC BY-NC-SA 4.0 원문 (있음, 2026-10-29 사용자 결정)
+├─ .github/           ← GitHub Actions(빌드·테스트·Release), 이슈 양식 (있음)
 ├─ CMakeLists.txt     ← 최상위 빌드 (있음). CMakePresets.json의 x86 프리셋 사용
 ├─ config/            ← 배포용 예제 설정 thod2-native.ini, dgVoodoo2 권장 프리셋 (있음)
 ├─ docs/              ← 로드맵, 코딩 규칙(CONVENTIONS.md), 사용자 설치 안내(INSTALL.md) (있음)
@@ -234,7 +239,7 @@ thod2-native/
 ├─ tests/             ← core_tests, loader_tests, platform_tests (있음)
 ├─ experiments/       ← 결정을 위한 측정용 코드 (있음: dinput_probe). 제품 코드 아님
 ├─ mods/              ← 예제 모드
-├─ tools/             ← deploy.ps1, dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture, interp-test 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale-ui.ps1 Real-ESRGAN 묶음 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
+├─ tools/             ← deploy.ps1, package.ps1(배포 zip), dgvoodoo-setup.py, compat/ 조사 스크립트(runtest, alttab-run, altenter-run, graceful-exit-run, frame-wait-compare, input-compare-run, aspect-capture, aspect-scalefit, intro-capture, interp-test 등), re/ 분석 도구 스크립트(ghidra.ps1, sync.ps1, check_re.py, scope.ps1, find_calls.py), assets/ 자산 도구(tex_extract.py 텍스처 추출, upscale-ui.ps1 Real-ESRGAN 묶음 업스케일, verify-upscale.ps1 결과 검증) (있음). 이후 다른 리소스 추출/변환
 └─ third_party/       ← MinHook 등 (라이선스 확인 후)
 ```
 

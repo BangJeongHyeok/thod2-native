@@ -6,6 +6,7 @@
 #include "patches/ddraw_trace.h"
 #include "patches/cursor_map.h"
 #include "patches/device_dialog.h"
+#include "patches/dgvoodoo_preset.h"
 #include "patches/file_redirect.h"
 #include "patches/file_trace.h"
 #include "patches/frame_interp.h"
@@ -63,7 +64,15 @@ void ApplyPatches(const CoreConfig& config) {
   }
   // dgVoodoo2 must stretch the 640x480 frame over the whole screen for
   // widescreen, and keep 4:3 without it.
-  patches::SyncDgVoodooScaling(game_dir, aspect > 0.0f);
+  if (config.dgvoodoo_preset) {
+    patches::DgVoodooPreset preset;
+    preset.widescreen = aspect > 0.0f;
+    preset.antialiasing = ToUtf8(config.dgvoodoo_antialiasing);
+    preset.filtering = ToUtf8(config.dgvoodoo_filtering);
+    patches::ApplyDgVoodooPreset(game_dir, preset);
+  } else {
+    patches::SyncDgVoodooScaling(game_dir, aspect > 0.0f);
+  }
   constexpr float kOriginalAspect = 4.0f / 3.0f;
   const float widen = aspect > kOriginalAspect + 0.01f ? aspect / kOriginalAspect : 1.0f;
   if (config.map_cursor) {

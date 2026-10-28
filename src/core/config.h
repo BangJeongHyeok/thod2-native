@@ -21,6 +21,11 @@ namespace thod2::core {
 //   interpolate = 0           ; 1 = draw interpolated frames between the 60 Hz ticks (high refresh rate)
 //   max_fps = 0               ; with interpolate: frame limit, 0 = vsync only
 //
+//   [dgvoodoo]
+//   preset = 1                ; 1 = write the recommended dgVoodoo2 settings into dgVoodoo.conf at startup
+//   antialiasing = 4x         ; dgVoodoo2 [DirectX] Antialiasing (appdriven, 2x, 4x, 8x)
+//   filtering =               ; dgVoodoo2 [DirectX] Filtering, empty = keep (e.g. 16 for anisotropic)
+//
 //   [assets]
 //   replace_textures = 1      ; 1 = load data\tex\<bank>\<texture id>.png instead of the game's texture
 //
@@ -60,6 +65,9 @@ struct CoreConfig {
   bool widescreen = false;
   std::wstring widescreen_aspect = L"auto";
   bool widescreen_mirror = true;
+  bool dgvoodoo_preset = true;
+  std::wstring dgvoodoo_antialiasing = L"4x";
+  std::wstring dgvoodoo_filtering;  // empty: dgVoodoo.conf value kept
   bool interpolate = false;
   int max_fps = 0;
   bool replace_textures = true;
