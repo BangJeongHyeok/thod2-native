@@ -235,7 +235,9 @@ function PhotoUnits($bank, $items) {
       $tiles = @($run[$k..($k + $take - 1)])
       $file = Join-Path $pictures ("{0}_{1:D3}.png" -f $bank, [int]$tiles[0].index)
       $score = [UiAtlas]::Assemble([string[]]($tiles | ForEach-Object { Join-Path $srcFull $_.file }), $cols, $file)
-      $ok = $score -le $MaxSeam
+      # Only fully opaque tiles: separate sprites with transparent edges
+      # (common.bin blood splats) give a seam score of 0 as well.
+      $ok = $score -le $MaxSeam -and -not ($tiles | Where-Object { -not $script:fullyOpaque[$_.file] })
       "  $bank #$($tiles[0].index)..#$($tiles[-1].index): $cols x $($take / $cols) tiles of $($w)x$($h), seam score {0:N2} -> {1}" -f $score, $(if ($ok) { 'picture' } else { 'tiles' })
       if ($ok) {
         $members = for ($t = 0; $t -lt $take; $t++) { Member $tiles[$t] ($t % $cols * $w) ([math]::Floor($t / $cols) * $h) }
@@ -262,10 +264,11 @@ foreach ($atlas in ($rows | Group-Object { AtlasGroup $_.bank })) {
   # full-screen picture (title, date and branch screens). Opaque textures that
   # are not part of a picture (for example credits text on black) and
   # everything with transparency (text, icons, logos) are graphics.
-  $vq = @{}; $candidates = @()
+  $vq = @{}; $candidates = @(); $script:fullyOpaque = @{}
   foreach ($r in $usable) {
     $vq[$r.file] = (([Convert]::ToInt32($r.format, 16) -shr 8) -band 0xFF) -eq 3
-    if ($vq[$r.file] -or [UiAtlas]::IsOpaque((Join-Path $srcFull $r.file))) { $candidates += $r }
+    $script:fullyOpaque[$r.file] = [UiAtlas]::IsOpaque((Join-Path $srcFull $r.file))
+    if ($vq[$r.file] -or $script:fullyOpaque[$r.file]) { $candidates += $r }
   }
   $script:units = @()
   if ($KnownLayouts.ContainsKey($bank)) {

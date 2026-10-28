@@ -112,7 +112,7 @@ widescreen = 1
 
 - 텍스처 번호는 뱅크마다 겹친다(예: 챕터마다 같은 번호에 다른 제목). 그래서 뱅크 폴더를 쓴다. `data\tex\` 바로 아래의 `<번호>.png`는 모든 뱅크에 적용된다.
 - 텍스처 번호와 원본 이미지는 `python tools\assets\tex_extract.py <Hod2.exe> <게임 폴더>\tex <출력 폴더> scr_common.bin`으로 뽑은 파일 이름의 `_tex<번호>` 부분이다. 원본은 위아래가 바로 된 PNG로 나온다.
-- UI 전체를 Real-ESRGAN으로 4배로 만드는 도구가 있다: `tools\assets\upscale-ui.ps1` ([work/assets.md](work/assets.md)). 대상은 `scr_*.bin`과 타이틀 메뉴 `komono_title.bin`을 `tex_extract.py`로 뽑은 것이다. 결과 폴더가 그대로 `data\tex\` 구조다.
+- UI 전체를 Real-ESRGAN으로 4배로 만드는 도구가 있다: `tools\assets\upscale-ui.ps1` ([work/assets.md](work/assets.md)). 대상은 `scr_*.bin`, 타이틀 메뉴 `komono_title.bin`, 게임 중 UI·효과 `common.bin`을 `tex_extract.py`로 뽑은 것이다. 결과 폴더가 그대로 `data\tex\` 구조다.
 - 이미지는 원본보다 크게 만들어도 된다. **가로세로 비율은 원본과 같게** 한다 (다르면 원본 크기로 늘어남). 크기는 가로·세로 2048 이하 (dgVoodoo2 2.87.5 기준).
 - 투명도(알파)를 채널당 8비트로 쓴다.
 - 고해상도로 보이려면 dgVoodoo2 `[DirectX] Resolution`이 `max` 같은 높은 값이어야 한다 (권장 프리셋은 이미 `max`).
@@ -130,6 +130,8 @@ python tools\dgvoodoo-setup.py uninstall "<게임 폴더>"
 세이브는 `%APPDATA%\thod2-native\save\`에 남는다. thod2-native 없이 원본으로 돌아가면 게임은 다시 게임 폴더의 세이브를 쓴다. 최신 기록을 이어 쓰려면 `save\` 안의 파일 4개를 게임 폴더의 같은 위치(`pol\`, `tex\`)에 덮어쓴다.
 
 ## 문제 해결
+
+- **Network 메뉴에 들어가면 DirectPlay 설치 창이 뜬다:** 게임의 네트워크 기능이 Windows의 DirectPlay(기본으로 꺼진 선택적 기능)를 쓴다. 설치하면 Network 화면이 뜬다. 네트워크 기능을 쓰지 않으면 취소해도 된다.
 
 - **thod2-native.log가 생기지 않는다:** `dinput.dll`과 `thod2_core.dll`이 `Hod2.exe`와 같은 폴더에 있는지 확인한다. 게임 폴더에 쓸 수 없으면 로그는 `%LOCALAPPDATA%\thod2-native\thod2-native.log`에 생긴다.
 - **로그에 `unknown host executable`:** 지원하지 않는 `Hod2.exe`다. 패치는 적용되지 않고 게임은 원래대로 실행된다.

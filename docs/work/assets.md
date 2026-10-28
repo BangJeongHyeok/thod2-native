@@ -59,19 +59,31 @@
 
 ## 작업 기록
 
-### 2026-10-28 — 타이틀에서 들어가는 화면의 업스케일 범위 확인 (진행 중)
+### 2026-10-28 — 타이틀에서 들어가는 화면의 업스케일 범위 확인, common.bin 추가
 
 - **계기:** 사용자 질문. Options, Network 같은 아웃게임 화면에도 업스케일이 다 들어갔는지.
 - **한 일:**
   - `[debug] trace_textures`를 추가했다. 교체 이미지 없이 만들어진 텍스처를 뱅크·번호·크기·형식과 함께 한 번씩 로그에 남긴다.
-  - 메뉴 이동을 자동화했다. 게임 시작 6.5초 뒤 Enter로 메뉴에 들어간다. 위·아래 키로 메뉴 원통이 돈다. 순서는 Arcade → Original → Training → Boss → Rankings → Options → Network(위로 한 번).
-- **결과 (일부):**
-  - 각 메뉴에 들어가 보는 실행은 중간에 PC 화면이 잠겨서 실패했다. 화면 캡처가 `The handle is invalid`로 실패했고, 입력도 들어가지 않아 데모만 돌았다.
-  - 데모에서 교체 없이 만들어진 텍스처는 `scr_` 밖의 뱅크뿐이었다: `st1_03b`, `st1_03`, `st1_1`, `tutorial`(3D 무대), `common`, `etc_komono_gal`.
-  - **`common.bin`(뱅크 1, 85개)에 게임 중 UI 글자가 있다:** `LIFE UP!`, `MISS SHOT LIFE - 1`(1P/2P 색), 생명 아이템, 금화, 총알 아이콘. 나머지는 피·불꽃·연기 같은 효과다.
-  - `etc_komono_gal.bin`은 `tex_extract.py`로 풀다가 LZSS 범위 오류가 났다. 압축 방식이 다른지 확인이 필요하다.
-- **다음:** 화면이 켜진 상태에서 메뉴별 진입을 다시 돌려 아웃게임 화면이 쓰는 뱅크를 확인한다. `common.bin`의 UI 글자도 업스케일 대상에 넣을지 정한다.
-
+  - 메뉴 이동을 자동화했다.
+    - 게임 시작 6.5초 뒤 Enter로 메뉴에 들어간다.
+    - 위·아래 키로 메뉴 원통이 돈다. 순서는 Arcade → Original → Training → Boss → Rankings → Options → Network(위로 한 번).
+    - 메뉴마다 Enter로 들어가 3초·6초 뒤에 찍고, 한 번 더 Enter를 누르고 찍는다.
+- **첫 시도 실패:**
+  - Network에 들어가자 Windows가 DirectPlay 설치 창(관리자 권한, 보안 데스크톱)을 띄웠다. 그동안 화면 캡처가 `The handle is invalid`로 실패하고 입력도 들어가지 않았다.
+  - 사용자가 설치를 승인해서 이 PC에 DirectPlay가 설치되었다 (2026-10-28, [compat-survey.md](compat-survey.md)).
+- **결과 (6개 화면 모두 진입):** Original(아이템 화면), Training, Boss, Rankings, Options, Network(NETWORK CONNECTION).
+  - **Options, Network, Rankings:** 교체 없이 만들어진 것은 `common`, `st1_*`(타이틀 뒤 3D 무대)뿐이다. Rankings는 여기에 `player3`(3D 인물)가 더해진다. 화면 글자와 그림은 모두 `scr_*` 업스케일로 바뀌었다.
+  - **Training, Boss, Original:** 추가로 빠진 것은 3D 모델·무대·효과다. 예: `player1/2`, `hito_*`, `znsam2`, `boss1z`, `boss1q`, `car_*`, `st1_04b`, `eff_1`, `komono_*`, `garasu`.
+  - **`common.bin`(뱅크 1, 85개)에 게임 중 UI가 있다:** `LIFE UP!`, `MISS SHOT LIFE - 1`(1P/2P 색), 생명 아이템, 금화, 총알 아이콘. 나머지는 피·불꽃·연기 같은 효과다.
+- **common.bin 추가:**
+  - 추출·업스케일 대상에 넣었다. 전체 3,110개, 자동 검증에서 오류 0개.
+  - 넣은 뒤 Options 진입 로그에서 `common`의 교체 누락이 0개다. 남은 것은 `st1_*` 100개뿐이다.
+- **그림 맞춰 붙이기 오판 수정:**
+  - `common`, `scr_blood_green`, `scr_blood_red`의 64×64 피 효과 20개가 이음매 점수 0.00으로 한 그림처럼 처리되고 있었다. 가장자리가 투명한 따로따로의 스프라이트다. PR #23 결과의 `scr_blood_*`도 이렇게 처리되었다.
+  - 그림으로 맞춰 붙이는 조건에 "모든 조각이 완전히 불투명"을 더했다. 그림 수는 40개로, 타이틀·로딩·순위 배경 등은 그대로다.
+- **안 한 것:**
+  - 3D 모델·무대 텍스처(`st*`, `player*`, `hito_*` 등)는 UI가 아니라 대상에 넣지 않았다.
+  - `etc_komono_gal.bin`은 `tex_extract.py`의 LZSS 풀기에서 범위 오류가 난다. 따로 확인해야 한다.
 ### 2026-10-28 — 타이틀 메뉴 글자 업스케일 (G1-7)
 
 - **찾은 것:**

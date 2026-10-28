@@ -114,6 +114,13 @@
 
 ## 작업 기록
 
+### 2026-10-28 — Network 메뉴와 DirectPlay
+
+- **관찰:** 타이틀 메뉴에서 Network에 들어가자 Windows가 DirectPlay 설치 창을 띄웠다. 이 창은 관리자 권한이 필요하고 보안 데스크톱에 뜬다. 창이 떠 있는 동안 자동 조작 스크립트의 화면 캡처와 입력이 막혔다.
+- **조치:** 사용자가 설치를 승인했다. 이 PC에는 이제 DirectPlay(Windows 선택적 기능, `C:\Windows\SysWOW64\dplayx.dll`)가 있다.
+- **설치 후:** Network 화면(NETWORK CONNECTION, JOIN SESSION / CREATE SESSION)이 정상으로 뜨고, IP 주소 입력까지 들어갔다.
+- **의미:** 현대 Windows에서 Network 메뉴를 쓰려면 DirectPlay가 필요하다. 기본으로 꺼져 있어서 처음 한 번 설치 창이 뜬다. 원본 그대로의 동작이고 thod2-native와는 관계없다. 나중에 네트워크 기능을 다룰 때 DirectPlay를 대체할지 정해야 한다.
+
 ### 2026-10-15 — 세이브 위치와 원본 비정상 종료 기록 (파일 접근 분석에서 넘어온 내용)
 
 - **결과:**
