@@ -48,7 +48,7 @@
 | 5 | **Alt+Enter** | **아무 반응이 없다** (깜빡임, 해상도 변경 없음). 원본에는 창 모드가 없다 (`hglCore.ini`의 `FullScreen` 키도 쓰이지 않음). 처음에 "Alt+Tab이 안 된다"로 보고됐으나 사용자가 Alt+Enter와 혼동한 것으로 확인 | 실제 키보드로 Alt+Enter | platform-display |
 | 6 | CPU 사용 | 실행 중 **CPU 코어 1개를 100% 사용** (대기 없이 도는 루프로 추정). 최소화하면 1% | 5초간 프로세스 CPU 시간 측정 | platform-timing. **해결:** thod2-native `frame_wait_sleep`으로 약 25% (platform-timing G2) |
 | 7 | 고주사율 모니터 속도 | 2026-10-14에는 미확인 (당시 모니터 60Hz). **2026-10-15 실제 240Hz 모니터에서 60fps, 게임 속도 그대로 확인** | 주 모니터 240Hz에서 실행, `refresh-test.ps1` | platform-timing |
-| 8 | CD 확인 | CD 없이 실행됨. 실행 파일의 CD 확인 호출이 NOP으로 지워진 것으로 보임 (reverse-engineering 참고) | — | platform-filesystem, loader |
+| 8 | CD 확인 | CD 없이 실행됨. 이 판본은 CD 확인 함수를 부르지 않음 (reverse-engineering 참고) | — | platform-filesystem, loader |
 | 9 | 숨은 설정 | `hglCore.ini`의 `DispFps`, `FullScreen`, `DispVersion`은 읽기만 하고 쓰이지 않음. 창 모드나 FPS 표시를 설정으로 켤 수 없음 | `hglCore.ini` 작성 후 실행 | reverse-engineering |
 | 10 | 해상도 설정 | 해상도를 바꾸는 설정이 없음. `Config.exe`는 컨트롤러·밝기·번쩍임 설정 전용 | 정적 분석 | renderer |
 | 11 | 보안 경고 | `Config.exe`에 인터넷 다운로드 표시(Zone.Identifier)가 남아 있어서 실행할 때 "파일 열기 - 보안 경고"가 뜬다. `Hod2.exe`에는 표시가 없다 | 탐색기나 `Start-Process`로 실행 | (배포 안내) |

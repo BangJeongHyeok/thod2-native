@@ -26,9 +26,9 @@ E:\Repos\hod2-native\
 ├─ ghidra-projects\ ← Ghidra 프로젝트 (git 아님, 원본 코드가 들어가므로 커밋 금지)
 ├─ original-game\   ← 압축을 푼 게임 원본 (git 아님, 수정 금지)
 │  ├─ THOTD2\       ← 게임 본체 (Hod2.exe, 리소스)
-│  ├─ DxWnd\        ← 재배포자가 동봉한 DxWnd v2.04.65
-│  └─ 00_Setup.bat  ← 재배포자가 만든 실행 도우미 메뉴
-└─ packed-game\     ← 인터넷에서 받은 분할 압축 원본 (하우스 오브 데드2.zip + .z01~.z21)
+│  ├─ DxWnd\        ← 게임 사본에 함께 들어 있던 DxWnd v2.04.65
+│  └─ 00_Setup.bat  ← 게임 사본에 함께 들어 있던 실행 도우미 메뉴
+└─ packed-game\     ← 게임 사본의 압축본 (git 아님, 수정 금지)
 ```
 
 - `thod2-native`만 git 저장소다. 상위 폴더 `hod2-native`는 저장소가 아니다.
@@ -104,7 +104,7 @@ E:\Repos\hod2-native\
 | 링크 타임스탬프 | 2001-03-22 10:52:43 UTC |
 | 파일 수정일 | 2010-07-04 (링크 날짜와 다름) |
 | SHA-256 | `1D71265096661CF034568FF71184FCBBED0CD9AEA0E5E2F041801C39A0FFCE69` |
-| **수정 여부** | **CD 확인을 지운 수정본으로 판단.** CD 확인 함수 `0x4A5C50`을 호출하는 곳이 없고, 초기화 코드 `0x4A5899`에 5바이트 `NOP`이 있다 ([reverse-engineering.md](docs/work/reverse-engineering.md)) |
+| **CD 확인** | **이 판본은 시작할 때 CD를 확인하지 않는다.** CD 확인 함수 `0x4A5C50`을 부르는 곳이 없고, 초기화 코드 `0x4A5899`가 5바이트 `NOP`이다 ([reverse-engineering.md](docs/work/reverse-engineering.md)). 지금 thod2-native가 지원하는 판본은 이것 하나다 |
 | 컴파일러 | MSVC (Rich 헤더, "Microsoft Visual C" 문자열. VC6로 추정) |
 | 이미지 베이스 | `0x400000` 고정 |
 | 재배치 정보 | **없음** → 항상 같은 주소에 로드됨. 고정 주소 패치와 후킹에 유리 |
@@ -183,7 +183,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 
 ## 5. 동봉된 실행 환경
 
-- **출처:** 인터넷 블로그(tistory)에 올라온 "무설치" 재배포본의 분할 압축. `original-game` 파일 2162개 중 1201개에 인터넷 다운로드 표시(Zone.Identifier, ZoneId=3)가 남아 있다 (`Config.exe`, `dxwnd.exe`, `cam\*.bin` 등). 표시가 있는 실행 파일은 실행할 때 Windows 보안 경고가 뜨므로 사용자 확인 없이 실행하지 않는다. `Hod2.exe`에는 표시가 없다.
+- **출처:** 사용자가 가진 게임 사본. `original-game` 파일 2162개 중 1201개에 인터넷 다운로드 표시(Zone.Identifier, ZoneId=3)가 남아 있다 (`Config.exe`, `dxwnd.exe`, `cam\*.bin` 등). 표시가 있는 실행 파일은 실행할 때 Windows 보안 경고가 뜨므로 사용자 확인 없이 실행하지 않는다. `Hod2.exe`에는 표시가 없다.
 
 - **DxWnd v2.04.65** (`original-game\DxWnd\`): DirectX 게임을 후킹해서 창 모드 등으로 띄우는 도구. `dxwnd.ini`에 프로필 2개(창 화면, 전체 화면, 둘 다 640×480, `maxddinterface=7`)가 들어 있다. `proxy\` 폴더에 `ddraw.dll`, `d3d8.dll`, `d3d9.dll`, `dinput.dll`, `wing32.dll` 프록시가 있지만 게임 폴더에 복사되어 있지는 않다.
 - **`00_Setup.bat` 메뉴**
@@ -248,7 +248,7 @@ thod2-native/
 ## 8. 아직 모르는 것 (우선 확인 대상)
 
 - 640×480 디스플레이 모드를 설정하는 코드 위치 (설정으로 바꿀 방법은 없음이 확인됨)
-- `Hod2.exe`에서 CD 확인 말고 수정된 곳이 더 있는지 (수정 안 된 원본과 비교 필요)
+- 다른 판본의 `Hod2.exe`와 이 판본이 어디가 다른지 (CD 확인 말고도 차이가 있는지)
 - Alt+Enter 창/전체 화면 전환을 어떻게 제공할지 (원본에는 창 모드가 없어서 Alt+Enter가 아무 동작도 하지 않음. Alt+Tab은 정상)
 - 태스크(게임 객체) 구조. 갱신과 그리기를 나누려면 필요하다 (메인 루프와 틱 구조는 확인됨, [platform-timing.md](docs/work/platform-timing.md) "메인 루프 분석 결과")
 - 와이드스크린에서 넓힌 가시 범위 판정과 조준 범위가 실제로 맞게 동작하는지 (투영·2D·조준 경로는 찾음, [renderer.md](docs/work/renderer.md) "화면 비율 분석")

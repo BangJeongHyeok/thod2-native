@@ -152,7 +152,7 @@ interp_2d = 1
 ## 미해결 질문
 
 - GitHub Actions `windows-2022` 러너에서 `loader_tests`(시스템 `dinput.dll`을 불러옴)가 통과하는지 (공개 뒤 첫 실행에서 확인)
-- 지원 빌드 목록에 수정 안 된 원본 `Hod2.exe`를 추가할지 (해시를 구할 방법이 필요)
+- 지원 빌드 목록에 다른 판본의 `Hod2.exe`를 추가할지 (이슈 양식 "내 Hod2.exe가 지원되지 않음"으로 해시를 받는다)
 
 ## 작업 기록
 
@@ -167,6 +167,7 @@ interp_2d = 1
   - 그 전에 INSTALL.md 순서(`deploy.ps1` + `dgvoodoo-setup.py`)대로 같은 사본에 설치한 것도 정상 실행됐다 (초당 60장, 경고·오류 없음. 측정 중 사용자가 PC를 쓰고 있었음).
   - zip 348,149 bytes. Release 빌드 경고 0개, `ctest` 4개 통과.
 - **다음:** 저장소 공개와 첫 Release(G3-4). CI 첫 실행 결과 확인.
+- **공개 준비 (같은 날, 사용자 의견):** 문서의 게임 입수 경로 서술을 지우고, 지원 판본은 "시작할 때 CD를 확인하지 않는 판본", 다른 판본은 "thod2-native로 돌아가지 않는 판본"처럼 중립적으로 적었다 (AGENTS.md, ROADMAP.md, loader.md, platform-filesystem.md, reverse-engineering.md, compat-survey.md, `re/locations.csv`). git 기록의 예전 서술과 커밋 작성자 이메일은 그대로 남는다. 사용자는 문제가 생기면 그때 저장소를 정리하기로 했다.
 
 ### 2026-10-15 — ctest에 `re_tables` 추가
 
