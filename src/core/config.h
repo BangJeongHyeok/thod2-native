@@ -37,6 +37,7 @@ namespace thod2::core {
 //   input_compare = 0         ; 1 = run our input update next to the original and log differences
 //   widescreen_2d = 1         ; 0 = widescreen projection only, 2D not squeezed (comparisons)
 //   trace_screen_quads = 0    ; 1 = log wide/edge 2D quads, models and the letterbox call chain
+//   trace_textures = 0        ; 1 = log textures created without a replacement image (replace_textures)
 //   trace_ddraw = 0           ; 1 = log DirectDraw calls (display mode, surfaces, flips)
 //   profile = 0               ; 1 = sample the main thread and log where CPU time goes
 //   trace_files = 0           ; 1 = log the game's file system calls
@@ -57,6 +58,7 @@ struct CoreConfig {
   bool replace_textures = true;
   bool widescreen_2d = true;
   bool trace_screen_quads = false;
+  bool trace_textures = false;
   bool trace_ddraw = false;
   bool profile = false;
   bool trace_files = false;

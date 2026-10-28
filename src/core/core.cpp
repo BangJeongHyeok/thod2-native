@@ -70,7 +70,7 @@ void ApplyPatches(const CoreConfig& config) {
     patches::InstallWidescreen(options);
   }
   if (config.replace_textures) {
-    patches::InstallTextureReplace(game_dir / L"data" / L"tex");
+    patches::InstallTextureReplace(game_dir / L"data" / L"tex", config.trace_textures);
   } else {
     Log(LogLevel::Info, "replace_textures: disabled in config");
   }

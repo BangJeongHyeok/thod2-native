@@ -44,7 +44,8 @@ CoreConfig LoadConfig(const std::filesystem::path& ini_path) {
   config.replace_textures = GetPrivateProfileIntW(L"assets", L"replace_textures", 1, file) != 0;
   config.widescreen_2d = GetPrivateProfileIntW(L"debug", L"widescreen_2d", 1, file) != 0;
   config.trace_screen_quads = GetPrivateProfileIntW(L"debug", L"trace_screen_quads", 0, file) != 0;
-  config.trace_ddraw = GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
+  config.trace_textures = GetPrivateProfileIntW(L"debug", L"trace_textures", 0, file) != 0;
+  config.trace_ddraw =GetPrivateProfileIntW(L"debug", L"trace_ddraw", 0, file) != 0;
   config.profile = GetPrivateProfileIntW(L"debug", L"profile", 0, file) != 0;
   config.trace_files = GetPrivateProfileIntW(L"debug", L"trace_files", 0, file) != 0;
   const UINT flip_override = GetPrivateProfileIntW(L"debug", L"flip_override", 0, file);

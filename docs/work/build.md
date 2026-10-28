@@ -80,6 +80,7 @@ flip_override = 0
 | `input_compare` | `0` | 입력 갱신을 원본과 재구현으로 함께 돌려 결과를 비교·기록 | [platform-input.md](platform-input.md) |
 | `widescreen_2d` | `1` | `0`이면 와이드스크린에서 투영만 넓히고 2D는 압축하지 않음 (비교용) | [renderer.md](renderer.md) |
 | `trace_screen_quads` | `0` | 넓거나 화면 가장자리에 걸친 2D 사각형, 모델 행렬, 띠 모델 호출 경로, 스프라이트 호출 위치별 좌표를 기록 | [renderer.md](renderer.md) |
+| `trace_textures` | `0` | `replace_textures`가 켜져 있을 때, 교체 이미지 없이 만들어진 텍스처를 한 번씩 기록 (뱅크, 번호, 크기, PVR 형식). 업스케일이 빠진 텍스처를 찾는 데 쓴다 | [assets.md](assets.md) |
 | `flip_override` | `0` | 실험. `trace_ddraw = 1`과 함께 쓰면 primary `Flip`에 `1` = `DDFLIP_NOVSYNC`, `2` = `DDFLIP_INTERVAL2`를 더함 | [platform-timing.md](platform-timing.md) G3 |
 
 ## 개발 환경 (현재 PC, 2026-10-14 확인)
