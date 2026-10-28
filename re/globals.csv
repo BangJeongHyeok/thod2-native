@@ -65,7 +65,11 @@ address,name,type,confidence,evidence,doc,notes
 0x7DCE38,g_lastFrameQpcLow,uint,confirmed,bytes,platform-timing.md,Low 32 bits of the QueryPerformanceCounter value of the previous frame.
 0x7DCE3C,g_qpcFrequency,float,confirmed,bytes,platform-timing.md,QueryPerformanceFrequency value.
 0x7DCE50,g_textureFormats,DDPIXELFORMAT[8],confirmed,ghidra;runtime,assets.md,"Texture formats found by EnumTextureFormat. dgVoodoo2 2.87.5: slots 0 and 4 empty, 1 pal8, 2 RGB565, 3 X1R5G5B5, 5 A1R5G5B5, 6 A4R4G4B4, 7 A8R8G8B8 (used by texture_replace)."
+0x7DCF50,g_boundTexture,IDirectDrawSurface7 *,confirmed,ghidra,platform-timing.md,Texture last set on stage 0 by SetTextureCached 0x4A55D0. Not reset per tick.
 0x7DD660,g_hglCoreIniPath,char[256],confirmed,bytes,reverse-engineering.md,Full path of hglCore.ini written by GetHglCoreIniPath.
+0x7E5B94,g_modelStateFlags,uint32_t,confirmed,ghidra,platform-timing.md,Cull mode (bits 0-1) and shade mode (bit 0x40) last set by DrawModel; DrawScreenQuad resets them to 0. Not reset per tick.
+0x7E5BAC,g_drawFlags1,uint32_t,guess,ghidra,platform-timing.md,Second flag word last applied by ApplyDrawFlags 0x4A6BB0 (blend 0x17 and z 0x0E bits).
+0x7E5BB0,g_drawFlags2,uint32_t,guess,ghidra,platform-timing.md,"Third flag word last applied by ApplyDrawFlags 0x4A6BB0 (blend factors, alpha, texture address and filter bits)."
 0x7E5BC8,g_projectionMatrix,float[16],confirmed,ghidra,renderer.md,"Copy of the projection matrix made by SetMatrixMode; DrawScreenQuad reads m22/m32 (+0x28, +0x38) for quad depth."
 0x7E5C10,g_currentMatrix,float *,confirmed,ghidra,renderer.md,Current matrix of the engine matrix stack.
 0x7E5C14,g_matrixMode,int,confirmed,ghidra,renderer.md,3 = projection.

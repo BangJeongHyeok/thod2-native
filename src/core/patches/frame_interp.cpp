@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#pragma intrinsic(_ReturnAddress)
+#pragma intrinsic(_ReturnAddress, _AddressOfReturnAddress)
 
 namespace thod2::core::patches {
 namespace {
@@ -165,7 +165,29 @@ struct Frame {
   }
 };
 
+// Device state set through the hooks. The game caches render states, texture
+// stage states and the texture (0x7E5B94, 0x7E5BAC, 0x7DCF50) and only sets
+// them when they change, so a tick relies on the state the previous tick left.
+// A replay starts from the end of its own tick instead: every recorded tick
+// therefore begins with the state at its start.
+struct DeviceState {
+  static constexpr std::size_t kRenderStates = 256, kStages = 8, kStageStates = 32;
+  std::array<DWORD, kRenderStates> render{};
+  std::array<bool, kRenderStates> render_set{};
+  std::array<std::array<DWORD, kStageStates>, kStages> stage{};
+  std::array<std::array<bool, kStageStates>, kStages> stage_set{};
+  std::array<IDirectDrawSurface7*, kStages> texture{};  // referenced while set
+  std::array<bool, kStages> texture_set{};
+  bool material_set = false;
+  D3DMATERIAL7 material{};
+  bool viewport_set = false;
+  D3DVIEWPORT7 viewport{};
+  std::vector<std::pair<DWORD, D3DLIGHT7>> lights;
+  std::vector<std::pair<DWORD, BOOL>> light_enable;
+};
+
 FrameInterpOptions g_options;
+DeviceState g_state;
 Frame g_frames[3];
 Frame* g_record = &g_frames[0];
 Frame* g_cur = &g_frames[1];
@@ -184,6 +206,12 @@ HANDLE g_timer = nullptr;
 struct Stats {
   std::uint64_t ticks = 0, presents = 0, skipped = 0, resyncs = 0, fallback = 0;
   std::uint64_t matrices = 0, linked = 0, snapped = 0;
+  // Matrices paired with another draw of the same model than by call order.
+  std::uint64_t reordered = 0;
+  // Pairs dropped because another model took the previous place.
+  std::uint64_t replaced = 0;
+  // Ticks whose start state differs from the state at their end.
+  std::uint64_t state_changed = 0;
   // Translation change of linked matrices: < 0.01, < 0.1, < 1, < 10, >= 10.
   std::array<std::uint64_t, 5> delta{};
   ULONGLONG since = 0;
@@ -226,17 +254,29 @@ std::uint32_t FvfStride(DWORD fvf) {
   return size;
 }
 
-// Model whose draw set this world-view matrix: SetTransform(WORLD) is called
-// by DrawModel / DrawModelAlt with record + 0x34, and record + 0xC is the model.
-std::uint32_t ModelOf(std::uintptr_t caller, const D3DMATRIX* matrix) {
+// Matrix key: transform state, model, and whether the draw is the second one
+// of a translucent model (sorted by depth in FlushSortedDraws).
+constexpr std::uint64_t kSortedPass = 1ull << 48;
+constexpr std::uint64_t kStateKeyMask = (1ull << 48) - 1;
+
+// SetTransform(WORLD) is the first call of DrawModel / DrawModelAlt, with
+// record + 0x34; record + 0xC is the model. Their arguments are (record, pass):
+// pass is 0 from SubmitModel and 1 from FlushSortedDraws. At the call, the
+// stack holds 0x38 bytes of DrawModel below its return address.
+std::uint64_t KeyOf(D3DTRANSFORMSTATETYPE state, std::uintptr_t caller, const std::uint32_t* return_slot,
+                    const D3DMATRIX* matrix) {
+  const std::uint64_t key = static_cast<std::uint64_t>(state) << 32;
   const bool from_model = (caller >= hod2::kDrawModel && caller < hod2::kDrawModel + hod2::kDrawModelSize) ||
                           (caller >= hod2::kDrawModelAlt &&
                            caller < hod2::kDrawModelAlt + hod2::kDrawModelAltSize);
-  if (!from_model || !matrix) {
-    return 0;
+  if (!from_model) {
+    return key;
   }
-  const auto* record = reinterpret_cast<const std::uint8_t*>(matrix) - 0x34;
-  return *reinterpret_cast<const std::uint32_t*>(record + 0xC);
+  const auto record = reinterpret_cast<std::uintptr_t>(matrix) - 0x34;
+  const std::uint32_t model = *reinterpret_cast<const std::uint32_t*>(record + 0xC);
+  const std::uint32_t* args = return_slot + 0x38 / 4 + 1;
+  const bool sorted = args[0] == record && args[1] != 0;
+  return key | model | (sorted ? kSortedPass : 0);
 }
 
 // ---- hooks: while armed, record the call; state changes also go through so
@@ -277,10 +317,21 @@ HRESULT STDMETHODCALLTYPE H_SetTransform(IDirect3DDevice7* self, D3DTRANSFORMSTA
   MatrixSlot slot{static_cast<std::uint32_t>(state)};
   std::memcpy(slot.value.data(), matrix, sizeof(slot.value));
   f.matrices.push_back(slot);
-  const std::uint64_t key = (static_cast<std::uint64_t>(state) << 32) | ModelOf(caller, matrix);
-  f.by_key[key].push_back(index);
+  const auto* return_slot = static_cast<const std::uint32_t*>(_AddressOfReturnAddress());
+  f.by_key[KeyOf(state, caller, return_slot, matrix)].push_back(index);
   f.cmds.push_back({Op::SetTransform, static_cast<std::uint32_t>(state), 0, 0, 0, 0.0f, index});
   return o_SetTransform(self, state, matrix);
+}
+
+template <class T>
+void SetIndexed(std::vector<std::pair<DWORD, T>>& list, DWORD index, const T& value) {
+  for (auto& [i, v] : list) {
+    if (i == index) {
+      v = value;
+      return;
+    }
+  }
+  list.emplace_back(index, value);
 }
 
 HRESULT STDMETHODCALLTYPE H_SetViewport(IDirect3DDevice7* self, LPD3DVIEWPORT7 viewport) {
@@ -288,6 +339,8 @@ HRESULT STDMETHODCALLTYPE H_SetViewport(IDirect3DDevice7* self, LPD3DVIEWPORT7 v
   Cmd cmd{Op::SetViewport};
   cmd.offset = g_record->Push(viewport, sizeof(*viewport));
   g_record->cmds.push_back(cmd);
+  g_state.viewport_set = true;
+  g_state.viewport = *viewport;
   return o_SetViewport(self, viewport);
 }
 
@@ -296,6 +349,8 @@ HRESULT STDMETHODCALLTYPE H_SetMaterial(IDirect3DDevice7* self, LPD3DMATERIAL7 m
   Cmd cmd{Op::SetMaterial};
   cmd.offset = g_record->Push(material, sizeof(*material));
   g_record->cmds.push_back(cmd);
+  g_state.material_set = true;
+  g_state.material = *material;
   return o_SetMaterial(self, material);
 }
 
@@ -304,6 +359,7 @@ HRESULT STDMETHODCALLTYPE H_SetLight(IDirect3DDevice7* self, DWORD index, LPD3DL
   Cmd cmd{Op::SetLight, index};
   cmd.offset = g_record->Push(light, sizeof(*light));
   g_record->cmds.push_back(cmd);
+  SetIndexed(g_state.lights, index, *light);
   return o_SetLight(self, index, light);
 }
 
@@ -311,6 +367,10 @@ HRESULT STDMETHODCALLTYPE H_SetRenderState(IDirect3DDevice7* self, D3DRENDERSTAT
                                            DWORD value) {
   if (g_passthrough || !g_armed) return o_SetRenderState(self, state, value);
   g_record->cmds.push_back({Op::SetRenderState, static_cast<std::uint32_t>(state), value});
+  if (static_cast<std::size_t>(state) < DeviceState::kRenderStates) {
+    g_state.render[state] = value;
+    g_state.render_set[state] = true;
+  }
   return o_SetRenderState(self, state, value);
 }
 
@@ -348,6 +408,12 @@ HRESULT STDMETHODCALLTYPE H_SetTexture(IDirect3DDevice7* self, DWORD stage,
   }
   g_record->cmds.push_back(
       {Op::SetTexture, stage, static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(texture))});
+  if (stage < DeviceState::kStages) {
+    if (texture) texture->AddRef();
+    if (g_state.texture[stage]) g_state.texture[stage]->Release();
+    g_state.texture[stage] = texture;
+    g_state.texture_set[stage] = true;
+  }
   return o_SetTexture(self, stage, texture);
 }
 
@@ -356,12 +422,17 @@ HRESULT STDMETHODCALLTYPE H_SetTextureStageState(IDirect3DDevice7* self, DWORD s
   if (g_passthrough || !g_armed) return o_SetTextureStageState(self, stage, state, value);
   g_record->cmds.push_back(
       {Op::SetTextureStageState, stage, static_cast<std::uint32_t>(state), value});
+  if (stage < DeviceState::kStages && static_cast<std::size_t>(state) < DeviceState::kStageStates) {
+    g_state.stage[stage][state] = value;
+    g_state.stage_set[stage][state] = true;
+  }
   return o_SetTextureStageState(self, stage, state, value);
 }
 
 HRESULT STDMETHODCALLTYPE H_LightEnable(IDirect3DDevice7* self, DWORD index, BOOL enable) {
   if (g_passthrough || !g_armed) return o_LightEnable(self, index, enable);
   g_record->cmds.push_back({Op::LightEnable, index, static_cast<std::uint32_t>(enable)});
+  SetIndexed(g_state.light_enable, index, enable);
   return o_LightEnable(self, index, enable);
 }
 
@@ -417,33 +488,234 @@ bool Arm() {
   return ok;
 }
 
+// Above this many candidate pairs for one model, pair by call order.
+constexpr std::size_t kMaxPairs = 16384;
+
+float MatrixDistance(const std::array<float, 16>& a, const std::array<float, 16>& b) {
+  float sum = 0.0f;
+  for (int i = 0; i < 15; ++i) {
+    const float d = a[i] - b[i];
+    sum += d * d;
+  }
+  return sum;
+}
+
+std::uint64_t PositionHash(const std::array<float, 16>& m) {
+  std::uint64_t h = 1469598103934665603ull;
+  for (int i = 12; i < 15; ++i) {
+    h = (h ^ std::bit_cast<std::uint32_t>(m[i])) * 1099511628211ull;
+  }
+  return h;
+}
+
+std::uint64_t MatrixHash(std::uint64_t key, const std::array<float, 16>& m) {
+  std::uint64_t h = 1469598103934665603ull ^ key;
+  for (const float v : m) {
+    h = (h ^ std::bit_cast<std::uint32_t>(v)) * 1099511628211ull;
+  }
+  return h;
+}
+
 // Pairs every matrix of the current tick with the same matrix of the previous
-// tick: same transform state, same model, same position among that model's draws.
+// tick, among the draws of the same transform state and model:
+// - first draws (SubmitModel): a draw that did not move pairs with its exact
+//   copy; the rest come in the order of the game's objects, so they pair by
+//   call order while their number stays the same, and by distance (closest
+//   pairs first) when objects appeared or went away;
+// - the second draw of a translucent model (FlushSortedDraws, sorted by depth)
+//   repeats the matrix of its first draw and follows that draw's pair.
+//
+// A pair is dropped when another model now sits exactly where the previous
+// matrix was: score digits are one model per digit value at fixed places, so
+// when "39" becomes "40" the old 4 must not slide into its new place.
 void Link(Frame& cur, const Frame& prev) {
   if (prev.tick + 1 != cur.tick) {
     return;
   }
+  constexpr std::uint64_t kSeveral = ~0ull;
+  std::unordered_map<std::uint64_t, std::uint64_t> taken;  // position -> key there
+  std::unordered_map<std::uint64_t, std::uint32_t> first_draws;  // matrix -> index
+  taken.reserve(cur.matrices.size());
   for (const auto& [key, indices] : cur.by_key) {
+    const std::uint64_t place_key = key & kStateKeyMask;
+    for (const std::uint32_t i : indices) {
+      const auto [it, inserted] = taken.emplace(PositionHash(cur.matrices[i].value), place_key);
+      if (!inserted && it->second != place_key) it->second = kSeveral;
+    }
+  }
+  const auto pair_with = [&](std::uint64_t key, MatrixSlot& slot, std::uint32_t p) {
+    const auto& from = prev.matrices[p].value;
+    if (from[12] != slot.value[12] || from[13] != slot.value[13] || from[14] != slot.value[14]) {
+      const auto it = taken.find(PositionHash(from));
+      if (it != taken.end() && it->second != (key & kStateKeyMask)) {
+        ++g_stats.replaced;
+        return;
+      }
+    }
+    slot.prev = static_cast<std::int32_t>(p);
+  };
+
+  struct Pair {
+    float cost;
+    std::uint32_t c, p;
+  };
+  std::vector<Pair> pairs;
+  std::vector<bool> used, done;
+  const auto pair_closest = [&](std::uint64_t key, const std::vector<std::uint32_t>& indices,
+                                const std::vector<std::uint32_t>& candidates) {
+    if (indices.size() * candidates.size() > kMaxPairs) {
+      const std::size_t n = std::min(indices.size(), candidates.size());
+      for (std::size_t i = 0; i < n; ++i) {
+        pair_with(key, cur.matrices[indices[i]], candidates[i]);
+      }
+      return;
+    }
+    pairs.clear();
+    for (std::uint32_t c = 0; c < indices.size(); ++c) {
+      for (std::uint32_t p = 0; p < candidates.size(); ++p) {
+        pairs.push_back({MatrixDistance(cur.matrices[indices[c]].value, prev.matrices[candidates[p]].value), c, p});
+      }
+    }
+    std::sort(pairs.begin(), pairs.end(), [](const Pair& a, const Pair& b) { return a.cost < b.cost; });
+    used.assign(candidates.size(), false);
+    done.assign(indices.size(), false);
+    for (const Pair& pair : pairs) {
+      if (done[pair.c] || used[pair.p]) continue;
+      used[pair.p] = true;
+      done[pair.c] = true;
+      if (pair.c != pair.p) ++g_stats.reordered;
+      pair_with(key, cur.matrices[indices[pair.c]], candidates[pair.p]);
+    }
+  };
+
+  std::unordered_multimap<std::uint64_t, std::uint32_t> still;  // matrix -> position in candidates
+  std::vector<std::uint32_t> rest_cur, rest_prev;
+  for (const auto& [key, indices] : cur.by_key) {
+    if (key & kSortedPass) continue;
     const auto it = prev.by_key.find(key);
-    if (it == prev.by_key.end()) continue;
-    const std::size_t n = std::min(indices.size(), it->second.size());
-    for (std::size_t i = 0; i < n; ++i) {
-      cur.matrices[indices[i]].prev = static_cast<std::int32_t>(it->second[i]);
+    if (it != prev.by_key.end()) {
+      const auto& candidates = it->second;
+      // Draws that did not move (text, still objects) pair with their exact
+      // copy, so that one appearing or going away does not shift the others.
+      still.clear();
+      for (std::uint32_t p = 0; p < candidates.size(); ++p) {
+        still.emplace(MatrixHash(key, prev.matrices[candidates[p]].value), p);
+      }
+      used.assign(candidates.size(), false);
+      rest_cur.clear();
+      for (const std::uint32_t i : indices) {
+        MatrixSlot& slot = cur.matrices[i];
+        bool paired = false;
+        const auto [first, last] = still.equal_range(MatrixHash(key, slot.value));
+        for (auto s = first; s != last; ++s) {
+          if (!used[s->second] && prev.matrices[candidates[s->second]].value == slot.value) {
+            used[s->second] = true;
+            slot.prev = static_cast<std::int32_t>(candidates[s->second]);
+            paired = true;
+            break;
+          }
+        }
+        if (!paired) rest_cur.push_back(i);
+      }
+      rest_prev.clear();
+      for (std::uint32_t p = 0; p < candidates.size(); ++p) {
+        if (!used[p]) rest_prev.push_back(candidates[p]);
+      }
+      if (rest_cur.size() == rest_prev.size()) {
+        for (std::size_t i = 0; i < rest_cur.size(); ++i) {
+          pair_with(key, cur.matrices[rest_cur[i]], rest_prev[i]);
+        }
+      } else if (!rest_cur.empty() && !rest_prev.empty()) {
+        pair_closest(key, rest_cur, rest_prev);
+      }
+    }
+    for (const std::uint32_t i : indices) {
+      first_draws.emplace(MatrixHash(key, cur.matrices[i].value), i);
+    }
+  }
+  for (const auto& [key, indices] : cur.by_key) {
+    if (!(key & kSortedPass)) continue;
+    std::vector<std::uint32_t> unmatched;
+    for (const std::uint32_t i : indices) {
+      MatrixSlot& slot = cur.matrices[i];
+      const auto first = first_draws.find(MatrixHash(key & ~kSortedPass, slot.value));
+      if (first != first_draws.end() && cur.matrices[first->second].value == slot.value) {
+        slot.prev = cur.matrices[first->second].prev;
+      } else {
+        unmatched.push_back(i);
+      }
+    }
+    const auto it = prev.by_key.find(key);
+    if (!unmatched.empty() && it != prev.by_key.end()) {
+      pair_closest(key, unmatched, it->second);
     }
   }
 }
 
+// Commands that put the device into `state`, at the start of a recorded tick.
+void EmitState(Frame& f, const DeviceState& state) {
+  if (state.viewport_set) {
+    Cmd cmd{Op::SetViewport};
+    cmd.offset = f.Push(&state.viewport, sizeof(state.viewport));
+    f.cmds.push_back(cmd);
+  }
+  if (state.material_set) {
+    Cmd cmd{Op::SetMaterial};
+    cmd.offset = f.Push(&state.material, sizeof(state.material));
+    f.cmds.push_back(cmd);
+  }
+  for (const auto& [index, light] : state.lights) {
+    Cmd cmd{Op::SetLight, index};
+    cmd.offset = f.Push(&light, sizeof(light));
+    f.cmds.push_back(cmd);
+  }
+  for (const auto& [index, enable] : state.light_enable) {
+    f.cmds.push_back({Op::LightEnable, index, static_cast<std::uint32_t>(enable)});
+  }
+  for (std::uint32_t i = 0; i < DeviceState::kRenderStates; ++i) {
+    if (state.render_set[i]) f.cmds.push_back({Op::SetRenderState, i, state.render[i]});
+  }
+  for (std::uint32_t s = 0; s < DeviceState::kStages; ++s) {
+    for (std::uint32_t i = 0; i < DeviceState::kStageStates; ++i) {
+      if (state.stage_set[s][i]) f.cmds.push_back({Op::SetTextureStageState, s, i, state.stage[s][i]});
+    }
+    if (state.texture_set[s]) {
+      IDirectDrawSurface7* texture = state.texture[s];
+      if (texture) {
+        texture->AddRef();
+        f.textures.push_back(texture);
+      }
+      f.cmds.push_back(
+          {Op::SetTexture, s, static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(texture))});
+    }
+  }
+}
+
+bool SameState(const DeviceState& a, const DeviceState& b) {
+  return a.render == b.render && a.render_set == b.render_set && a.stage == b.stage &&
+         a.stage_set == b.stage_set && a.texture == b.texture && a.texture_set == b.texture_set &&
+         std::memcmp(&a.material, &b.material, sizeof(a.material)) == 0;
+}
+
+DeviceState g_tick_start;  // compared with g_state when tracing (no references held)
+
 void FinishTick() {
   ++g_tick;
   ++g_stats.ticks;
+  if (g_options.trace && g_record->has_scene) {
+    if (!SameState(g_tick_start, g_state)) ++g_stats.state_changed;
+    g_tick_start = g_state;
+  }
   if (!g_record->has_scene) {
     g_record->Clear();
+    EmitState(*g_record, g_state);
     return;
   }
   g_record->tick = g_tick;
   std::swap(g_prev, g_cur);
   std::swap(g_cur, g_record);
   g_record->Clear();
+  EmitState(*g_record, g_state);
   Link(*g_cur, *g_prev);
 }
 
@@ -569,10 +841,12 @@ void TraceStats() {
   const double seconds = static_cast<double>(now - g_stats.since) / 1000.0;
   Log(LogLevel::Info,
       "frame_interp: {:.1f} ticks/s, {:.1f} presents/s, skipped {}, resyncs {}, fallback {}; "
-      "matrices {} linked {} snapped {}; moved <0.01 {} <0.1 {} <1 {} <10 {} >=10 {}",
+      "matrices {} linked {} snapped {} reordered {} replaced {}; state changed in {} ticks; "
+      "moved <0.01 {} <0.1 {} <1 {} <10 {} >=10 {}",
       g_stats.ticks / seconds, g_stats.presents / seconds, g_stats.skipped, g_stats.resyncs,
-      g_stats.fallback, g_stats.matrices, g_stats.linked, g_stats.snapped, g_stats.delta[0],
-      g_stats.delta[1], g_stats.delta[2], g_stats.delta[3], g_stats.delta[4]);
+      g_stats.fallback, g_stats.matrices, g_stats.linked, g_stats.snapped, g_stats.reordered,
+      g_stats.replaced, g_stats.state_changed, g_stats.delta[0], g_stats.delta[1], g_stats.delta[2], g_stats.delta[3],
+      g_stats.delta[4]);
   g_stats = Stats{};
   g_stats.since = now;
 }
