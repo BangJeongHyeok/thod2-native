@@ -112,7 +112,7 @@ widescreen = 1
 
 - 텍스처 번호는 뱅크마다 겹친다(예: 챕터마다 같은 번호에 다른 제목). 그래서 뱅크 폴더를 쓴다. `data\tex\` 바로 아래의 `<번호>.png`는 모든 뱅크에 적용된다.
 - 텍스처 번호와 원본 이미지는 `python tools\assets\tex_extract.py <Hod2.exe> <게임 폴더>\tex <출력 폴더> scr_common.bin`으로 뽑은 파일 이름의 `_tex<번호>` 부분이다. 원본은 위아래가 바로 된 PNG로 나온다.
-- UI 전체를 Real-ESRGAN으로 4배로 만드는 도구가 있다: `tools\assets\upscale-ui.ps1` ([work/assets.md](work/assets.md)). 결과 폴더가 그대로 `data\tex\` 구조다.
+- UI 전체를 Real-ESRGAN으로 4배로 만드는 도구가 있다: `tools\assets\upscale-ui.ps1` ([work/assets.md](work/assets.md)). 대상은 `scr_*.bin`과 타이틀 메뉴 `komono_title.bin`을 `tex_extract.py`로 뽑은 것이다. 결과 폴더가 그대로 `data\tex\` 구조다.
 - 이미지는 원본보다 크게 만들어도 된다. **가로세로 비율은 원본과 같게** 한다 (다르면 원본 크기로 늘어남). 크기는 가로·세로 2048 이하 (dgVoodoo2 2.87.5 기준).
 - 투명도(알파)를 채널당 8비트로 쓴다.
 - 고해상도로 보이려면 dgVoodoo2 `[DirectX] Resolution`이 `max` 같은 높은 값이어야 한다 (권장 프리셋은 이미 `max`).
