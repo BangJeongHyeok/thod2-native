@@ -26,12 +26,12 @@
 - [ ] G2-1 CMake를 PATH 없이 부르는 래퍼 스크립트 (또는 Developer PowerShell 안내만으로 충분한지 결정)
 - [x] G2-2 CI (GitHub Actions, windows 러너에서 x86 빌드 + 테스트) — 2026-10-29 워크플로 추가 (`.github/workflows/build.yml`). PR #27에서 처음 돌아 통과 (2분 6초, 테스트 4개 모두, `loader_tests` 포함)
 
-### G3. 배포판 (ROADMAP 4단계) — 진행 중
+### G3. 배포판 (ROADMAP 4단계) — 완료
 
 - [x] G3-1 배포 zip 스크립트 `tools/package.ps1` (zip 안의 파일을 게임 폴더에 그대로 풂)
 - [x] G3-2 v* 태그를 올리면 GitHub Actions가 zip을 Release에 올림. README의 받기 링크는 `releases/latest/download/thod2-native.zip`
 - [x] G3-3 배포 zip + dgVoodoo2 파일 3개만으로 깨끗한 게임 사본에 설치되는지 확인 (Python 없이)
-- [ ] G3-4 저장소 공개, 첫 Release(v0.1.0)
+- [x] G3-4 저장소 공개, 첫 Release(v0.1.0): 2026-10-29
 
 ## 빌드 방법
 
@@ -154,6 +154,14 @@ interp_2d = 1
 - 지원 빌드 목록에 다른 판본의 `Hod2.exe`를 추가할지 (이슈 양식 "내 Hod2.exe가 지원되지 않음"으로 해시를 받는다)
 
 ## 작업 기록
+
+### 2026-10-29 — 저장소 공개와 첫 Release (관련: G3-4)
+
+- 사용자 결정으로 PR #27을 머지하고 저장소를 공개(PUBLIC)로 바꿨다. git 기록은 그대로다 (예전 문서의 서술, 커밋 작성자 이메일 포함). 문제가 생기면 그때 정리하기로 했다.
+- 이슈 라벨 `unsupported-exe`를 만들었다 (이슈 양식 "내 Hod2.exe가 지원되지 않음"이 붙인다. `bug`는 기본 라벨).
+- `v0.1.0` 태그 → GitHub Actions가 빌드·테스트·zip을 돌리고 Release "thod2-native v0.1.0"을 만들었다. 자산 `thod2-native.zip` 357,612 bytes (러너에서 텍스트 파일이 CRLF가 되어 로컬 zip보다 크다), SHA-256 `7C42FD7A…3A05E181`.
+- 로그인하지 않은 상태로 README 링크(`releases/latest/download/thod2-native.zip`)를 받아 보니 HTTP 200, zip 안에 파일 5개가 있었다.
+- 업스케일 텍스처는 배포 zip과 저장소에 넣지 않았다. 사용자가 직접 올리기로 했다.
 
 ### 2026-10-29 — 배포판, CI, README, 라이선스 (관련: G2-2, G3)
 
