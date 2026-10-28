@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 2-4
 - **관련 코드:** `src/assets/`, `tools/assets/`, `docs/formats/`
-- **마지막 갱신:** 2026-10-28
+- **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
 
@@ -58,6 +58,16 @@
 - 2048보다 큰 이미지를 넣으면 `ClampTextureSize`가 줄이는지, 실패하는지
 
 ## 작업 기록
+
+### 2026-10-29 — 고해상도 UI 텍스처 팩 배포 (사용자)
+
+- 사용자가 테스트 사본의 `data\tex`를 zip으로 묶어 별도 Release `hd-ui-1`("고해상도 UI 텍스처", latest 아님)에 올렸다. `thod2-native-hd-ui.zip` 419,667,702 bytes, 항목 3,111개(맨 위 `data\tex\`, 뱅크 폴더 119개, PNG 3,110장). zip 안의 경로 구분자는 `\`다 (PowerShell 5.1 `Compress-Archive`). 목록은 zip 끝의 중앙 디렉터리만 HTTP Range로 받아 확인했다.
+- README에 받기 링크와 적용 방법("고해상도 UI 텍스처 적용")을 넣었다. 배포 zip(`thod2-native.zip`)에는 넣지 않는다.
+- **README 순서대로 적용 확인:** README 링크로 `thod2-native.zip`(357,612 bytes)과 텍스처 팩을 받았다. 원본 상태의 `test-game\THOTD2-clean`에 둘을 풀고(PowerShell `Expand-Archive`, 텍스처 팩 28초), dgVoodoo2 2.87.5 파일 3개를 복사했다.
+  - 압축을 풀자 `data\tex` 아래 폴더 119개, 파일 3,110개가 생겼다. `\` 구분자 경로도 폴더로 풀렸다.
+  - 26초 동안 실행(타이틀 → 데모)한 로그에는 `replace_textures: 3110 images`와 텍스처 교체 291줄이 남았다. 경고·오류는 없었고, `dgvoodoo_preset` 8줄이 남았다.
+  - 같은 폴더의 팩 없는 캡처와 비교하니, 총알·"1P" HUD 가장자리가 계단 없이 매끄럽게 그려졌다 (`screenshots\hd-check\crop.png`, 저장소 밖).
+  - 측정 중 주 모니터 240Hz.
 
 ### 2026-10-28 — 타이틀에서 들어가는 화면의 업스케일 범위 확인, common.bin 추가
 

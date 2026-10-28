@@ -66,7 +66,8 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 |---|---|---|
 | 테두리를 더 매끄럽게 | `[dgvoodoo] antialiasing = 8x` | 4x와 차이는 작고 그래픽 카드 부담이 조금 늘어난다 |
 | 텍스처를 부드럽게 | `[dgvoodoo] filtering = 16` | 원본은 텍스처를 각진 픽셀로 그린다. 부드러워지지만 분위기가 달라진다 |
-| 안티에일리어싱 끄기 | `[dgvoodoo] antialiasing = appdriven` | 원본과 같은 테두리 |
+| 테두리를 가장 매끄럽게 | `[dgvoodoo] antialiasing = 16x` | 그래픽 카드가 지원할 때만. 시험하지 않았다 |
+| 안티에일리어싱 끄기 | `[dgvoodoo] antialiasing = off` | 원본과 같은 테두리 |
 | dgVoodoo2를 직접 설정 | `[dgvoodoo] preset = 0` | thod2-native가 `dgVoodoo.conf`를 건드리지 않는다 (와이드스크린의 `ScalingMode` 맞춤만 한다). 그다음은 `dgVoodooCpl.exe`나 `python tools\dgvoodoo-setup.py set`으로 바꾼다 |
 
 비교 결과는 [work/renderer.md](work/renderer.md)의 "dgVoodoo2 화질 옵션 비교"에 있다.
@@ -88,7 +89,7 @@ python tools\dgvoodoo-setup.py preset "<게임 폴더>"
 | `[display] interpolate` | `0` | `1`이면 고주사율 모니터에서 게임 틱(초당 60회) 사이 프레임을 보간해서 더 그림 (아래 "고주사율") |
 | `[display] max_fps` | `0` | `interpolate`와 함께 쓰는 프레임 제한. `0`이면 모니터 주사율(수직 동기화)까지 |
 | `[dgvoodoo] preset` | `1` | 게임을 켤 때마다 `dgVoodoo.conf`에 권장 설정을 넣음 (테두리 없는 전체 화면 창, 최대 해상도, Alt+Enter, 워터마크 끔). `0`이면 건드리지 않음 |
-| `[dgvoodoo] antialiasing` | `4x` | `preset`과 함께: dgVoodoo2 안티에일리어싱. `appdriven`(끔), `2x`, `4x`, `8x` |
+| `[dgvoodoo] antialiasing` | `4x` | `preset`과 함께: dgVoodoo2 안티에일리어싱. `off`(끔), `appdriven`(게임에 맡김, 이 게임은 쓰지 않아 끈 것과 같음), `2x`, `4x`, `8x`, `16x`(그래픽 카드가 지원할 때). 값 목록은 dgVoodoo2 2.87.5 `dgVoodoo.conf`의 설명 줄 기준이고, 직접 비교한 것은 `appdriven`·`4x`·`8x`다 |
 | `[dgvoodoo] filtering` | (비어 있음) | `preset`과 함께: dgVoodoo2 텍스처 필터. 비어 있으면 바꾸지 않음. `16`이면 부드럽게(비등방성) |
 | `[assets] replace_textures` | `1` | `data\tex\` 아래 PNG를 원본 텍스처 대신 씀 (아래 "텍스처 교체"). 폴더가 없으면 아무 일도 하지 않음 |
 | `[input] map_cursor` | `1` | 마우스 커서를 dgVoodoo2가 그리는 게임 영역 기준으로 바꿈. `0`이면 원본처럼 창 픽셀 그대로 |
