@@ -1,3 +1,5 @@
+**한국어** | [English](README.en.md) | [日本語](README.ja.md)
+
 # thod2-native
 
 ### [최신 버전 파일 다운받기 (thod2-native.zip)](https://github.com/BangJeongHyeok/thod2-native/releases/latest/download/thod2-native.zip)

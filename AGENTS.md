@@ -217,7 +217,7 @@ PE32 i386, 135,168 bytes, 링크 2001-03-21, SHA-256 `BFFA11376A21311994A4F3BC0E
 ```
 thod2-native/
 ├─ AGENTS.md          ← 이 문서 (있음)
-├─ README.md          ← 사용자용 안내: 받기 링크, 설치, 이슈 올리는 방법 (있음)
+├─ README.md          ← 사용자용 안내: 받기 링크, 설치, 이슈 올리는 방법 (있음). 영어 README.en.md, 일본어 README.ja.md (내용을 바꾸면 세 개를 같이 고친다)
 ├─ LICENSE            ← CC BY-NC-SA 4.0 원문 (있음, 2026-10-29 사용자 결정)
 ├─ .github/           ← GitHub Actions(빌드·테스트·Release), 이슈 양식 (있음)
 ├─ CMakeLists.txt     ← 최상위 빌드 (있음). CMakePresets.json의 x86 프리셋 사용
