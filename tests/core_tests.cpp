@@ -92,15 +92,15 @@ void TestConfig() {
   Check(parsed.frame_wait_margin_ms == 2.5f, "LoadConfig frame_wait_margin_ms = 2.5");
 
   Check(!missing.interpolate && missing.max_fps == 0 && !missing.trace_interp &&
-            missing.interp_snap == 2.0f,
+            missing.interp_snap == 2.0f && missing.interp_2d,
         "LoadConfig interpolate defaults");
   WriteText(file,
             "[display]\r\ninterpolate = 1\r\nmax_fps = 144\r\n"
-            "[debug]\r\ntrace_interp = 1\r\ninterp_snap = 5.5\r\n");
+            "[debug]\r\ntrace_interp = 1\r\ninterp_snap = 5.5\r\ninterp_2d = 0\r\n");
   const auto interp = thod2::core::LoadConfig(file);
   Check(interp.interpolate && interp.max_fps == 144 && interp.trace_interp &&
-            interp.interp_snap == 5.5f,
-        "LoadConfig interpolate, max_fps, trace_interp, interp_snap");
+            interp.interp_snap == 5.5f && !interp.interp_2d,
+        "LoadConfig interpolate, max_fps, trace_interp, interp_snap, interp_2d");
 
   WriteText(file, "[timing]\r\nframe_wait_margin_ms = abc\r\n");
   Check(thod2::core::LoadConfig(file).frame_wait_margin_ms == 1.0f,
@@ -161,6 +161,27 @@ void TestLerpWorldViewMatrix() {
   const float scaled[16] = {2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 10, 1};
   Check(!LerpWorldViewMatrix(a, scaled, 0.5f, 2.0f, out),
         "LerpWorldViewMatrix: a large scale change snaps");
+}
+
+void TestLerpScreenVertices() {
+  using thod2::core::patches::LerpScreenVertices;
+  // Two XYZRHW + diffuse vertices (20 bytes each): the quad moved 10 px right.
+  struct Vertex {
+    float x, y, z, rhw;
+    std::uint32_t color;
+  };
+  const Vertex from[2] = {{100, 50, 0.5f, 1, 0x11111111}, {120, 50, 0.5f, 1, 0x11111111}};
+  const Vertex to[2] = {{110, 50, 0.25f, 2, 0x22222222}, {130, 50, 0.25f, 2, 0x22222222}};
+  Vertex out[2] = {};
+  Check(LerpScreenVertices(from, to, sizeof(Vertex), 2, 0.5f, 64.0f, out) && out[0].x == 105.0f &&
+            out[1].x == 125.0f && out[0].y == 50.0f,
+        "LerpScreenVertices: interpolates x, y");
+  Check(out[0].z == 0.25f && out[0].rhw == 2.0f && out[1].color == 0x22222222,
+        "LerpScreenVertices: other fields come from the current tick");
+  const Vertex jump[2] = {{300, 50, 0.5f, 1, 0}, {320, 50, 0.5f, 1, 0}};
+  Vertex untouched[2] = {};
+  Check(!LerpScreenVertices(from, jump, sizeof(Vertex), 2, 0.5f, 64.0f, untouched) && untouched[0].x == 0.0f,
+        "LerpScreenVertices: a jump over snap_pixels snaps and leaves out untouched");
 }
 
 void TestMapUserFile() {
@@ -229,6 +250,7 @@ int main() {
   TestDeviceDialog();
   TestMapUserFile();
   TestLerpWorldViewMatrix();
+  TestLerpScreenVertices();
   TestDll();
   std::printf("%d failure(s)\n", g_failures);
   return g_failures;

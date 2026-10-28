@@ -134,6 +134,15 @@ struct MatrixSlot {
   std::int32_t prev = -1;  // index of the same matrix in the previous tick
 };
 
+// A pretransformed (XYZRHW) draw: DrawScreenQuad's quads and the shot flash.
+struct QuadSlot {
+  std::uint32_t offset;  // vertices in Frame::data
+  std::uint32_t count;
+  std::uint32_t stride;
+  float x, y;            // centre
+  std::int32_t prev = -1;
+};
+
 // The Direct3D calls of one tick.
 struct Frame {
   std::vector<Cmd> cmds;
@@ -142,6 +151,9 @@ struct Frame {
   std::vector<IDirectDrawSurface7*> textures;  // referenced until the frame is cleared
   // (transform state << 32 | model) -> matrix indices in call order.
   std::unordered_map<std::uint64_t, std::vector<std::uint32_t>> by_key;
+  std::vector<QuadSlot> quads;
+  // (texture, vertex format, texture coordinates) -> quad indices in call order.
+  std::unordered_map<std::uint64_t, std::vector<std::uint32_t>> quads_by_key;
   bool has_scene = false;
   std::uint64_t tick = 0;
 
@@ -154,6 +166,8 @@ struct Frame {
     matrices.clear();
     textures.clear();
     by_key.clear();
+    quads.clear();
+    quads_by_key.clear();
     has_scene = false;
   }
 
@@ -214,6 +228,8 @@ struct Stats {
   std::uint64_t state_changed = 0;
   // Translation change of linked matrices: < 0.01, < 0.1, < 1, < 10, >= 10.
   std::array<std::uint64_t, 5> delta{};
+  // Screen-space quads drawn, paired with the previous tick, and not interpolated.
+  std::uint64_t quads = 0, quads_linked = 0, quads_snapped = 0, quads_replaced = 0;
   ULONGLONG since = 0;
 } g_stats;
 
@@ -253,6 +269,21 @@ std::uint32_t FvfStride(DWORD fvf) {
   }
   return size;
 }
+
+// Offset of the first texture coordinate set, or the stride when there is none.
+std::uint32_t TexCoordOffset(DWORD fvf) {
+  const std::uint32_t stride = FvfStride(fvf);
+  if (((fvf >> 8) & 0xF) == 0) return stride;
+  std::uint32_t tex = 0;
+  for (DWORD i = 0; i < ((fvf >> 8) & 0xF); ++i) {
+    static constexpr std::uint32_t kTexSize[] = {8, 12, 16, 4};
+    tex += kTexSize[(fvf >> (16 + 2 * i)) & 3];
+  }
+  return stride - tex;
+}
+
+// DrawScreenQuad draws 4 vertices; larger pretransformed draws are kept as they are.
+constexpr DWORD kMaxQuadVertices = 8;
 
 // Matrix key: transform state, model, and whether the draw is the second one
 // of a translucent model (sorted by depth in FlushSortedDraws).
@@ -378,9 +409,37 @@ HRESULT STDMETHODCALLTYPE H_DrawPrimitive(IDirect3DDevice7* self, D3DPRIMITIVETY
                                           LPVOID vertices, DWORD count, DWORD flags) {
   if (g_passthrough || !g_armed) return o_DrawPrimitive(self, type, fvf, vertices, count, flags);
   if (!vertices || count == 0) return D3D_OK;
+  Frame& f = *g_record;
+  const std::uint32_t stride = FvfStride(fvf);
   Cmd cmd{Op::DrawPrimitive, static_cast<std::uint32_t>(type), fvf, count, flags};
-  cmd.offset = g_record->Push(vertices, static_cast<std::size_t>(FvfStride(fvf)) * count);
-  g_record->cmds.push_back(cmd);
+  cmd.offset = f.Push(vertices, static_cast<std::size_t>(stride) * count);
+  if (g_options.screen_quads && (fvf & 0x00E) == 0x004 && count <= kMaxQuadVertices) {
+    // Key: texture, format and texture coordinates (one sprite of an atlas).
+    // The texture is the one the game set last (it is cached in g_state).
+    std::uint64_t key = 1469598103934665603ull;
+    const auto mix = [&key](std::uint32_t v) { key = (key ^ v) * 1099511628211ull; };
+    mix(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(g_state.texture[0])));
+    mix(fvf);
+    mix(count);
+    mix(static_cast<std::uint32_t>(type));
+    const auto* bytes = static_cast<const std::uint8_t*>(vertices);
+    const std::uint32_t uv = TexCoordOffset(fvf);
+    QuadSlot quad{cmd.offset, count, stride, 0.0f, 0.0f};
+    for (DWORD i = 0; i < count; ++i) {
+      const auto* v = reinterpret_cast<const float*>(bytes + i * stride);
+      quad.x += v[0] / static_cast<float>(count);
+      quad.y += v[1] / static_cast<float>(count);
+      if (uv < stride) {
+        mix(std::bit_cast<std::uint32_t>(v[uv / 4]));
+        mix(std::bit_cast<std::uint32_t>(v[uv / 4 + 1]));
+      }
+    }
+    const auto index = static_cast<std::uint32_t>(f.quads.size());
+    f.quads.push_back(quad);
+    f.quads_by_key[key].push_back(index);
+    cmd.f = std::bit_cast<float>(index + 1);
+  }
+  f.cmds.push_back(cmd);
   return D3D_OK;
 }
 
@@ -652,6 +711,105 @@ void Link(Frame& cur, const Frame& prev) {
   }
 }
 
+bool SameVertices(const Frame& a, const QuadSlot& qa, const Frame& b, const QuadSlot& qb) {
+  for (std::uint32_t i = 0; i < qa.count; ++i) {
+    const auto* va = reinterpret_cast<const float*>(a.data.data() + qa.offset + i * qa.stride);
+    const auto* vb = reinterpret_cast<const float*>(b.data.data() + qb.offset + i * qb.stride);
+    if (va[0] != vb[0] || va[1] != vb[1]) return false;
+  }
+  return true;
+}
+
+// Pairs the screen-space quads of the current tick with the previous tick's,
+// among quads with the same texture, format and texture coordinates (the same
+// sprite image): quads that did not move first, then call order while their
+// number stays the same, else the closest centres. As for matrices, a pair is
+// dropped when another sprite now sits exactly where the previous quad was
+// (a subtitle letter or digit that changed).
+void LinkQuads(Frame& cur, const Frame& prev) {
+  if (prev.tick + 1 != cur.tick) {
+    return;
+  }
+  const auto place = [](float x, float y) {
+    return (static_cast<std::uint64_t>(std::bit_cast<std::uint32_t>(x)) << 32) | std::bit_cast<std::uint32_t>(y);
+  };
+  constexpr std::uint64_t kSeveral = ~0ull;
+  std::unordered_map<std::uint64_t, std::uint64_t> taken;  // centre -> key there
+  for (const auto& [key, indices] : cur.quads_by_key) {
+    for (const std::uint32_t i : indices) {
+      const auto [it, inserted] = taken.emplace(place(cur.quads[i].x, cur.quads[i].y), key);
+      if (!inserted && it->second != key) it->second = kSeveral;
+    }
+  }
+  const auto pair_with = [&](std::uint64_t key, QuadSlot& quad, std::uint32_t p) {
+    const QuadSlot& from = prev.quads[p];
+    if (from.x != quad.x || from.y != quad.y) {
+      const auto it = taken.find(place(from.x, from.y));
+      if (it != taken.end() && it->second != key) {
+        ++g_stats.quads_replaced;
+        return;
+      }
+    }
+    quad.prev = static_cast<std::int32_t>(p);
+  };
+
+  struct Pair {
+    float cost;
+    std::uint32_t c, p;
+  };
+  std::vector<Pair> pairs;
+  std::vector<bool> used, done;
+  std::vector<std::uint32_t> rest_cur, rest_prev;
+  for (const auto& [key, indices] : cur.quads_by_key) {
+    const auto it = prev.quads_by_key.find(key);
+    if (it == prev.quads_by_key.end()) continue;
+    const auto& candidates = it->second;
+    used.assign(candidates.size(), false);
+    rest_cur.clear();
+    const bool few = indices.size() * candidates.size() <= kMaxPairs;
+    for (const std::uint32_t i : indices) {
+      bool paired = false;
+      for (std::uint32_t p = 0; few && p < candidates.size(); ++p) {
+        if (!used[p] && SameVertices(cur, cur.quads[i], prev, prev.quads[candidates[p]])) {
+          used[p] = true;
+          cur.quads[i].prev = static_cast<std::int32_t>(candidates[p]);
+          paired = true;
+          break;
+        }
+      }
+      if (!paired) rest_cur.push_back(i);
+    }
+    rest_prev.clear();
+    for (std::uint32_t p = 0; p < candidates.size(); ++p) {
+      if (!used[p]) rest_prev.push_back(candidates[p]);
+    }
+    if (rest_cur.size() == rest_prev.size()) {
+      for (std::size_t i = 0; i < rest_cur.size(); ++i) {
+        pair_with(key, cur.quads[rest_cur[i]], rest_prev[i]);
+      }
+      continue;
+    }
+    if (rest_cur.empty() || rest_prev.empty() || rest_cur.size() * rest_prev.size() > kMaxPairs) continue;
+    pairs.clear();
+    for (std::uint32_t c = 0; c < rest_cur.size(); ++c) {
+      for (std::uint32_t p = 0; p < rest_prev.size(); ++p) {
+        const float dx = cur.quads[rest_cur[c]].x - prev.quads[rest_prev[p]].x;
+        const float dy = cur.quads[rest_cur[c]].y - prev.quads[rest_prev[p]].y;
+        pairs.push_back({dx * dx + dy * dy, c, p});
+      }
+    }
+    std::sort(pairs.begin(), pairs.end(), [](const Pair& a, const Pair& b) { return a.cost < b.cost; });
+    used.assign(rest_prev.size(), false);
+    done.assign(rest_cur.size(), false);
+    for (const Pair& pair : pairs) {
+      if (done[pair.c] || used[pair.p]) continue;
+      used[pair.p] = true;
+      done[pair.c] = true;
+      pair_with(key, cur.quads[rest_cur[pair.c]], rest_prev[pair.p]);
+    }
+  }
+}
+
 // Commands that put the device into `state`, at the start of a recorded tick.
 void EmitState(Frame& f, const DeviceState& state) {
   if (state.viewport_set) {
@@ -717,7 +875,10 @@ void FinishTick() {
   g_record->Clear();
   EmitState(*g_record, g_state);
   Link(*g_cur, *g_prev);
+  LinkQuads(*g_cur, *g_prev);
 }
+
+std::vector<std::uint8_t> g_quad_scratch;
 
 void Replay(float t) {
   IDirect3DDevice7* device = Device();
@@ -771,10 +932,26 @@ void Replay(float t) {
       case Op::SetRenderState:
         o_SetRenderState(device, static_cast<D3DRENDERSTATETYPE>(c.a), c.b);
         break;
-      case Op::DrawPrimitive:
-        o_DrawPrimitive(device, static_cast<D3DPRIMITIVETYPE>(c.a), c.b,
-                        const_cast<std::uint8_t*>(data + c.offset), c.c, c.d);
+      case Op::DrawPrimitive: {
+        auto* vertices = const_cast<std::uint8_t*>(data + c.offset);
+        if (const auto quad_index = std::bit_cast<std::uint32_t>(c.f); quad_index != 0) {
+          const QuadSlot& quad = f.quads[quad_index - 1];
+          if (g_options.trace) ++g_stats.quads;
+          if (quad.prev >= 0) {
+            const QuadSlot& from = prev.quads[quad.prev];
+            g_quad_scratch.resize(static_cast<std::size_t>(quad.stride) * quad.count);
+            if (LerpScreenVertices(prev.data.data() + from.offset, vertices, quad.stride, quad.count, t,
+                                   kScreenQuadSnapPixels, g_quad_scratch.data())) {
+              vertices = g_quad_scratch.data();
+            } else if (g_options.trace) {
+              ++g_stats.quads_snapped;
+            }
+            if (g_options.trace) ++g_stats.quads_linked;
+          }
+        }
+        o_DrawPrimitive(device, static_cast<D3DPRIMITIVETYPE>(c.a), c.b, vertices, c.c, c.d);
         break;
+      }
       case Op::DrawIndexedPrimitive: {
         const auto index_count = std::bit_cast<std::uint32_t>(c.f);
         auto* vertices = const_cast<std::uint8_t*>(data + c.offset);
@@ -842,11 +1019,11 @@ void TraceStats() {
   Log(LogLevel::Info,
       "frame_interp: {:.1f} ticks/s, {:.1f} presents/s, skipped {}, resyncs {}, fallback {}; "
       "matrices {} linked {} snapped {} reordered {} replaced {}; state changed in {} ticks; "
-      "moved <0.01 {} <0.1 {} <1 {} <10 {} >=10 {}",
+      "moved <0.01 {} <0.1 {} <1 {} <10 {} >=10 {}; quads {} linked {} snapped {} replaced {}",
       g_stats.ticks / seconds, g_stats.presents / seconds, g_stats.skipped, g_stats.resyncs,
       g_stats.fallback, g_stats.matrices, g_stats.linked, g_stats.snapped, g_stats.reordered,
       g_stats.replaced, g_stats.state_changed, g_stats.delta[0], g_stats.delta[1], g_stats.delta[2], g_stats.delta[3],
-      g_stats.delta[4]);
+      g_stats.delta[4], g_stats.quads, g_stats.quads_linked, g_stats.quads_snapped, g_stats.quads_replaced);
   g_stats = Stats{};
   g_stats.since = now;
 }
@@ -958,6 +1135,28 @@ bool LerpWorldViewMatrix(const float* from, const float* to, float t, float snap
   return true;
 }
 
+bool LerpScreenVertices(const void* from, const void* to, std::size_t stride, std::size_t count, float t,
+                        float snap_pixels, void* out) {
+  const auto* a = static_cast<const std::uint8_t*>(from);
+  const auto* b = static_cast<const std::uint8_t*>(to);
+  for (std::size_t i = 0; i < count; ++i) {
+    const auto* va = reinterpret_cast<const float*>(a + i * stride);
+    const auto* vb = reinterpret_cast<const float*>(b + i * stride);
+    const float dx = vb[0] - va[0], dy = vb[1] - va[1];
+    if (dx * dx + dy * dy > snap_pixels * snap_pixels) return false;
+  }
+  auto* o = static_cast<std::uint8_t*>(out);
+  std::memcpy(o, b, stride * count);
+  for (std::size_t i = 0; i < count; ++i) {
+    const auto* va = reinterpret_cast<const float*>(a + i * stride);
+    const auto* vb = reinterpret_cast<const float*>(b + i * stride);
+    auto* vo = reinterpret_cast<float*>(o + i * stride);
+    vo[0] = va[0] + (vb[0] - va[0]) * t;
+    vo[1] = va[1] + (vb[1] - va[1]) * t;
+  }
+  return true;
+}
+
 bool InstallFrameInterp(const FrameInterpOptions& options) {
   g_options = options;
   QueryPerformanceFrequency(&g_freq);
@@ -969,8 +1168,8 @@ bool InstallFrameInterp(const FrameInterpOptions& options) {
     Log(LogLevel::Warn, "frame_interp: call at 0x{:X} does not match, not installed", hod2::kWaitFrameEndCall);
     return false;
   }
-  Log(LogLevel::Info, "frame_interp: installed (max_fps {}, snap_distance {:.2f})", options.max_fps,
-      options.snap_distance);
+  Log(LogLevel::Info, "frame_interp: installed (max_fps {}, snap_distance {:.2f}, screen quads {})",
+      options.max_fps, options.snap_distance, options.screen_quads ? "on" : "off");
   return true;
 }
 

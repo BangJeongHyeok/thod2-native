@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 0
 - **관련 코드:** `CMakeLists.txt`, `CMakePresets.json`, `src/core/`, `tests/`, `tools/deploy.ps1`, `config/`
-- **마지막 갱신:** 2026-10-28
+- **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
 
@@ -72,6 +72,7 @@ trace_files = 0
 flip_override = 0
 trace_interp = 0
 interp_snap = 2.0
+interp_2d = 1
 ```
 
 | 키 | 기본값 | 설명 | 관련 문서 |
@@ -84,8 +85,9 @@ interp_snap = 2.0
 | `trace_screen_quads` | `0` | 넓거나 화면 가장자리에 걸친 2D 사각형, 모델 행렬, 띠 모델 호출 경로, 스프라이트 호출 위치별 좌표를 기록 | [renderer.md](renderer.md) |
 | `trace_textures` | `0` | `replace_textures`가 켜져 있을 때, 교체 이미지 없이 만들어진 텍스처를 한 번씩 기록 (뱅크, 번호, 크기, PVR 형식). 업스케일이 빠진 텍스처를 찾는 데 쓴다 | [assets.md](assets.md) |
 | `flip_override` | `0` | 실험. `trace_ddraw = 1`과 함께 쓰면 primary `Flip`에 `1` = `DDFLIP_NOVSYNC`, `2` = `DDFLIP_INTERVAL2`를 더함 | [platform-timing.md](platform-timing.md) G3 |
-| `trace_interp` | `0` | `[display] interpolate`가 켜져 있을 때, 5초마다 초당 틱·화면 수, 건너뛴 틱, 보간한 행렬 수, 가까운 쌍으로 짝지은 수(`reordered`), 버린 짝(`replaced`), 시작·끝 장치 상태가 다른 틱 수, 행렬 이동량 분포를 기록 | [platform-timing.md](platform-timing.md) G4 |
+| `trace_interp` | `0` | `[display] interpolate`가 켜져 있을 때, 5초마다 초당 틱·화면 수, 건너뛴 틱, 보간한 행렬 수, 가까운 쌍으로 짝지은 수(`reordered`), 버린 짝(`replaced`), 시작·끝 장치 상태가 다른 틱 수, 행렬 이동량 분포, 2D 사각형 수(`quads`, 다시 그릴 때마다 셈)·짝·snap·버린 짝을 기록 | [platform-timing.md](platform-timing.md) G4 |
 | `interp_snap` | `2.0` | 보간하지 않고 바로 바꾸는 기준. 한 틱에 이 값 + (카메라에서의 거리의 1/4)보다 많이 움직인 행렬 | [platform-timing.md](platform-timing.md) G4 |
+| `interp_2d` | `1` | `[display] interpolate`가 켜져 있을 때 2D 사각형(조준점, HUD, 메뉴)도 보간. `0`이면 3D만 보간하고 2D는 초당 60번 움직임 (비교용) | [platform-timing.md](platform-timing.md) G4-5 |
 
 ## 개발 환경 (현재 PC, 2026-10-14 확인)
 
