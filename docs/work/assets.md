@@ -3,7 +3,7 @@
 - **상태:** 진행 중
 - **관련 로드맵:** ROADMAP 2-4
 - **관련 코드:** `src/assets/`, `tools/assets/`, `docs/formats/`
-- **마지막 갱신:** 2026-10-28
+- **마지막 갱신:** 2026-10-29
 
 ## 주요 목표
 
@@ -58,6 +58,11 @@
 - 2048보다 큰 이미지를 넣으면 `ClampTextureSize`가 줄이는지, 실패하는지
 
 ## 작업 기록
+
+### 2026-10-29 — 고해상도 UI 텍스처 팩 배포 (사용자)
+
+- 사용자가 테스트 사본의 `data\tex`를 zip으로 묶어 별도 Release `hd-ui-1`("고해상도 UI 텍스처", latest 아님)에 올렸다. `thod2-native-hd-ui.zip` 419,667,702 bytes, 항목 3,111개(맨 위 `data\tex\`, 뱅크 폴더 119개, PNG 3,110장). zip 안의 경로 구분자는 `\`다 (PowerShell 5.1 `Compress-Archive`). 목록은 zip 끝의 중앙 디렉터리만 HTTP Range로 받아 확인했다.
+- README에 받기 링크와 적용 방법("고해상도 UI 텍스처 적용")을 넣었다. 배포 zip(`thod2-native.zip`)에는 넣지 않는다.
 
 ### 2026-10-28 — 타이틀에서 들어가는 화면의 업스케일 범위 확인, common.bin 추가
 
