@@ -79,7 +79,8 @@ PC판 **The House of the Dead 2**(SEGA, 2001)를 현대 Windows에서 잘 돌게
 |---|---|
 | 와이드스크린 | `[display]` 아래 `widescreen = 1` |
 | 고주사율 모니터에서 부드럽게 | `[display]` 아래 `interpolate = 1` (60Hz 모니터에서는 켜지 마세요) |
-| 안티에일리어싱 / 끄기 | `[dgvoodoo]` 아래 `antialiasing = 8x` / `appdriven` |
+| 안티에일리어싱 세기 | `[dgvoodoo]` 아래 `antialiasing = ` 뒤에 `2x`, `4x`(기본), `8x`, `16x` 중 하나. 숫자가 클수록 테두리가 매끄럽고 그래픽 카드 부담이 늘어납니다. `16x`는 그래픽 카드가 지원할 때만 됩니다 |
+| 안티에일리어싱 끄기 | `[dgvoodoo]` 아래 `antialiasing = off` |
 | 텍스처를 부드럽게 | `[dgvoodoo]` 아래 `filtering = 16` |
 | dgVoodoo2를 직접 설정 | `[dgvoodoo]` 아래 `preset = 0` |
 

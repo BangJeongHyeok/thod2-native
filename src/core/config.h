@@ -23,7 +23,7 @@ namespace thod2::core {
 //
 //   [dgvoodoo]
 //   preset = 1                ; 1 = write the recommended dgVoodoo2 settings into dgVoodoo.conf at startup
-//   antialiasing = 4x         ; dgVoodoo2 [DirectX] Antialiasing (appdriven, 2x, 4x, 8x)
+//   antialiasing = 4x         ; dgVoodoo2 [DirectX] Antialiasing (off, appdriven, 2x, 4x, 8x, 16x)
 //   filtering =               ; dgVoodoo2 [DirectX] Filtering, empty = keep (e.g. 16 for anisotropic)
 //
 //   [assets]
