@@ -147,7 +147,7 @@ M4는 장기 목표다. M1~M3만으로도 현대화 기능과 모드 개발 대�
 - [ ] `README.md` (사용자용), `CONTRIBUTING.md` (개발자용) → README 완료 (2026-10-29), CONTRIBUTING은 아직
 - [x] 빌드 안내, CI (GitHub Actions 등) → `.github/workflows/build.yml` (2026-10-29, [work/build.md](work/build.md))
 - [ ] 원본 데이터 경로 설정 안내 (자산 미포함 원칙)
-- [ ] 배포 패키지와 릴리스 절차 → zip·절차는 완료 (`tools/package.ps1`, v* 태그로 Release). 저장소 공개와 첫 Release는 아직
+- [x] 배포 패키지와 릴리스 절차 → `tools/package.ps1`, v* 태그로 Release. 2026-10-29 저장소 공개, 첫 Release v0.1.0
 - [x] 문제 신고 양식 (`.github/ISSUE_TEMPLATE/`: 문제 신고, 지원되지 않는 `Hod2.exe`)
 - [ ] 모드 SDK 정리 (헤더, 예제, 문서)
 
